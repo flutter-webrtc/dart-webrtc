@@ -1,7 +1,7 @@
 name: dart_webrtc
-description: A webrtc interface wrapped in dart language.
-# version: 1.0.0
-#homepage: https://www.example.com
+description: Use the dart/js library to re-wrap the webrtc js interface of the browser, to adapted common browsers.
+version: 0.0.1
+homepage: https://github.com/flutter-webrtc/dart-webrtc
 
 environment:
   sdk: '>=2.9.3 <3.0.0'
