@@ -5,10 +5,18 @@ import 'dart:js_util';
 import 'package:js/js.dart';
 
 @JS()
+@anonymous
+class MediaStreamConstraints {
+  external factory MediaStreamConstraints({dynamic audio, dynamic video});
+  external dynamic get audio;
+  external dynamic get video;
+}
+
+@JS()
 class MediaDevices {
   external factory MediaDevices();
   external List<dynamic> enumerateDevices();
-  external dynamic getUserMedia();
+  external dynamic getUserMedia(MediaStreamConstraints constraints);
   external dynamic getDisplayMedia();
   external set devicechange(Function func);
 }
