@@ -13,9 +13,25 @@ class MediaStreamConstraints {
 }
 
 @JS()
+class InputDeviceInfo {
+  external String get deviceId;
+  external String get groupId;
+  external String get kind;
+  external String get label;
+}
+
+@JS()
+class MediaDeviceInfo {
+  external String get deviceId;
+  external String get groupId;
+  external String get kind;
+  external String get label;
+}
+
+@JS()
 class MediaDevices {
   external factory MediaDevices();
-  external List<dynamic> enumerateDevices();
+  external dynamic enumerateDevices();
   external dynamic getUserMedia(MediaStreamConstraints constraints);
   external dynamic getDisplayMedia();
   external set devicechange(Function func);

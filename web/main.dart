@@ -23,6 +23,16 @@ void main() {
 }
 
 void dartWebRTCTest(VideoElement video) async {
+  var list = await PromiseToFuture<List<dynamic>>(
+      navigator.mediaDevices.enumerateDevices());
+  list.forEach((e) {
+    if (e is MediaDeviceInfo) {
+      print('MediaDeviceInfo: ${e.label}');
+    } else if (e is InputDeviceInfo) {
+      print('InputDeviceInfo: ${e.label}');
+    }
+  });
+
   var pc = RTCPeerConnection();
   print('connectionState: ${pc.connectionState}');
   pc.onaddstream = allowInterop((MediaStream stream) {});

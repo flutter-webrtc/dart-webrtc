@@ -10,19 +10,9 @@ abstract class RTCVideoElement {
   external set srcObject(MediaStream stream);
 }
 
-@JS('Document')
-class Document {
-  external RTCVideoElement querySelector(String id);
-}
-
-@JS('window.document')
-class Window {
-  external Document get document;
-}
-
-@JS('window')
-external Window get window;
+@JS('window.document.querySelector')
+external RTCVideoElement querySelector(String id);
 
 RTCVideoElement ConvertToRTCVideoElement(html.VideoElement video) {
-  return window.document.querySelector('#${video.id}');
+  return querySelector('#${video.id}');
 }
