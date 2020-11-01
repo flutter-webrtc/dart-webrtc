@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:async';
+
+import 'package:js/js.dart';
+import 'package:js/js_util.dart';
 import 'random_string.dart';
 import 'simple_websocket.dart';
 
@@ -31,7 +34,7 @@ class Signaling {
   final String _selfId = randomNumeric(6);
   SimpleWebSocket _socket;
   var _sessionId;
-  var _host;
+  final _host;
   final _port = 8086;
   final _peerConnections = <String, RTCPeerConnection>{};
   final _dataChannels = <String, RTCDataChannel>{};
@@ -49,11 +52,13 @@ class Signaling {
   DataChannelMessageCallback onDataChannelMessage;
   DataChannelCallback onDataChannel;
 
-  Signaling(_host);
+  Signaling(this._host);
 
   void close() {
     if (_localStream != null) {
-      _localStream.dispose();
+      _localStream.getTracks().forEach((element) {
+        element.stop();
+      });
       _localStream = null;
     }
 
@@ -72,9 +77,7 @@ class Signaling {
   void invite(String peer_id, String media, use_screen) {
     _sessionId = _selfId + '-' + peer_id;
 
-    if (onStateChange != null) {
-      onStateChange(SignalingState.CallStateNew);
-    }
+    onStateChange?.call(SignalingState.CallStateNew);
 
     _createPeerConnection(peer_id, media, use_screen).then((pc) {
       _peerConnections[peer_id] = pc;
@@ -99,13 +102,10 @@ class Signaling {
     switch (mapData['type']) {
       case 'peers':
         List<dynamic> peers = data;
-        if (onPeersUpdate != null) {
-          var event = <String, dynamic>{};
-          event['self'] = _selfId;
-          event['peers'] = peers;
-          onPeersUpdate(event);
-        }
-
+        var event = <String, dynamic>{};
+        event['self'] = _selfId;
+        event['peers'] = peers;
+        onPeersUpdate?.call(event);
         break;
       case 'offer':
         var id = data['from'];
@@ -114,9 +114,7 @@ class Signaling {
         var sessionId = data['session_id'];
         _sessionId = sessionId;
 
-        if (onStateChange != null) {
-          onStateChange(SignalingState.CallStateNew);
-        }
+        onStateChange?.call(SignalingState.CallStateNew);
 
         var pc = await _createPeerConnection(id, media, false);
         _peerConnections[id] = pc;
@@ -137,7 +135,7 @@ class Signaling {
 
         var pc = _peerConnections[id];
         if (pc != null) {
-          await pc.setRemoteDescription(RTCSessionDescription(
+          await pc?.setRemoteDescription(RTCSessionDescription(
               sdp: description['sdp'], type: description['type']));
         }
 
@@ -163,7 +161,9 @@ class Signaling {
         _dataChannels.remove(id);
 
         if (_localStream != null) {
-          _localStream.dispose();
+          _localStream.getTracks().forEach((element) {
+            element.stop();
+          });
           _localStream = null;
         }
 
@@ -180,7 +180,9 @@ class Signaling {
         print('bye: ' + sessionId);
 
         if (_localStream != null) {
-          _localStream.dispose();
+          _localStream.getTracks().forEach((element) {
+            element.stop();
+          });
           _localStream = null;
         }
 
@@ -209,7 +211,7 @@ class Signaling {
     }
   }
 
-  void connect() async {
+  Future<void> connect() async {
     var url = 'https://$_host:$_port/ws';
     _socket = SimpleWebSocket(url);
 
@@ -231,7 +233,7 @@ class Signaling {
 
     _socket.onOpen = () {
       print('onOpen');
-      this?.onStateChange(SignalingState.ConnectionOpen);
+      onStateChange?.call(SignalingState.ConnectionOpen);
       _send('new',
           {'name': 'dart_webrtc', 'id': _selfId, 'user_agent': 'broswer'});
     };
@@ -239,21 +241,19 @@ class Signaling {
     _socket.onMessage = (message) {
       print('Received data: ' + message);
       var decoder = JsonDecoder();
-      onMessage(decoder.convert(message));
+      onMessage?.call(decoder.convert(message));
     };
 
     _socket.onClose = (int code, String reason) {
       print('Closed by server [$code => $reason]!');
-      if (onStateChange != null) {
-        onStateChange(SignalingState.ConnectionClosed);
-      }
+      onStateChange?.call(SignalingState.ConnectionClosed);
     };
 
     await _socket.connect();
   }
 
   Future<MediaStream> createStream(media, user_screen) async {
-    MediaStream stream = user_screen
+    var stream = await PromiseToFuture<MediaStream>(user_screen
         ? await navigator.mediaDevices.getDisplayMedia()
         : await navigator.mediaDevices
             .getUserMedia(MediaStreamConstraints(audio: true, video: {
@@ -265,63 +265,69 @@ class Signaling {
             },
             'facingMode': 'user',
             'optional': [],
-          }));
-    if (onLocalStream != null) {
-      onLocalStream(stream);
-    }
+          })));
+
+    onLocalStream?.call(stream);
+
     return stream;
   }
 
   Future<RTCPeerConnection> _createPeerConnection(
       id, media, user_screen) async {
     if (media != 'data') _localStream = await createStream(media, user_screen);
-    var pc = RTCPeerConnection(
-        configuration: RTCConfiguration(
-            iceServers: _iceServers.isNotEmpty
-                ? _iceServers
-                : [RTCIceServer(urls: 'stun:stun.l.google.com:19302')]));
+    var pc = RTCPeerConnection(RTCConfiguration(
+        iceServers: _iceServers.isNotEmpty
+            ? _iceServers
+            : [RTCIceServer(urls: 'stun:stun.l.google.com:19302')]));
     if (media != 'data') pc.addStream(_localStream);
-    pc.onicecandidate = (RTCIceCandidate candidate) {
-      _send('candidate', {
-        'to': id,
-        'from': _selfId,
-        'candidate': {
-          'sdpMLineIndex': candidate.sdpMLineIndex,
-          'sdpMid': candidate.sdpMid,
-          'candidate': candidate.candidate,
-        },
-        'session_id': _sessionId,
-      });
-    };
+    pc.onicecandidate = allowInterop((dynamic event) {
+      try {
+        if (event.candidate = !null) {
+          print(event.candidate.candidate);
+          _send('candidate', {
+            'to': id,
+            'from': _selfId,
+            'candidate': {
+              'sdpMLineIndex': event.candidate.sdpMLineIndex,
+              'sdpMid': event.candidate.sdpMid,
+              'candidate': event.candidate.candidate,
+            },
+            'session_id': _sessionId,
+          });
+        }
+      } catch (e) {
+        print(e.toString());
+      }
+    });
 
-    pc.oniceconnectionstatechange = (state) {};
+    pc.oniceconnectionstatechange = allowInterop((state) {
+      print(state);
+    });
 
-    pc.onaddstream = (stream) {
-      if (onAddRemoteStream != null) onAddRemoteStream(stream);
-      //_remoteStreams.add(stream);
-    };
+    pc.onaddstream = allowInterop((MediaStreamEvent event) {
+      onAddRemoteStream?.call(event.stream);
+    });
 
-    pc.onremovestream = (stream) {
-      if (onRemoveRemoteStream != null) onRemoveRemoteStream(stream);
+    pc.onremovestream = allowInterop((MediaStream stream) {
+      onRemoveRemoteStream?.call(stream);
       _remoteStreams.removeWhere((it) {
         return (it.id == stream.id);
       });
-    };
+    });
 
-    pc.ondatachannel = (channel) {
+    pc.ondatachannel = allowInterop((RTCDataChannel channel) {
       _addDataChannel(id, channel);
-    };
+    });
 
     return pc;
   }
 
   void _addDataChannel(id, RTCDataChannel channel) {
-    channel.onmessage = (RTCDataChannelMessage data) {
-      if (onDataChannelMessage != null) onDataChannelMessage(channel, data);
-    };
+    channel.onmessage = allowInterop((RTCDataChannelMessage data) {
+      onDataChannelMessage?.call(channel, data);
+    });
     _dataChannels[id] = channel;
-
-    if (onDataChannel != null) onDataChannel(channel);
+    onDataChannel?.call(channel);
   }
 
   void _createDataChannel(id, RTCPeerConnection pc,
@@ -333,16 +339,17 @@ class Signaling {
 
   void _createOffer(String id, RTCPeerConnection pc, String media) async {
     try {
-      var s = await pc.createOffer(
-          options: RTCOfferOptions(
+      var desc = await PromiseToFuture<dynamic>(pc.createOffer(RTCOfferOptions(
         offerToReceiveAudio: media == 'data' ? false : true,
         offerToReceiveVideo: media == 'data' ? false : true,
-      ));
-      pc.setLocalDescription(s);
+      )));
+      var offer = RTCSessionDescription(type: desc.type, sdp: desc.sdp);
+      //print('type => ${offer.type}, sdp => ${offer.sdp}');
+      pc.setLocalDescription(offer);
       _send('offer', {
         'to': id,
         'from': _selfId,
-        'description': {'sdp': s.sdp, 'type': s.type},
+        'description': {'sdp': offer.sdp, 'type': offer.type},
         'session_id': _sessionId,
         'media': media,
       });
@@ -353,12 +360,13 @@ class Signaling {
 
   void _createAnswer(String id, RTCPeerConnection pc, media) async {
     try {
-      var s = await pc.createAnswer();
-      pc.setLocalDescription(s);
+      var desc = await PromiseToFuture<dynamic>(pc.createAnswer());
+      var answer = RTCSessionDescription(type: desc.type, sdp: desc.sdp);
+      pc.setLocalDescription(answer);
       _send('answer', {
         'to': id,
         'from': _selfId,
-        'description': {'sdp': s.sdp, 'type': s.type},
+        'description': {'sdp': answer.sdp, 'type': answer.type},
         'session_id': _sessionId,
       });
     } catch (e) {

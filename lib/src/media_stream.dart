@@ -19,5 +19,4 @@ class MediaStream {
   external set onaddtrack(Function(MediaStreamTrack track) func);
   external set oninactive(Function(Event vent) func);
   external set onremovetrack(Function(MediaStreamTrack track) func);
-  external void dispose();
 }

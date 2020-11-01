@@ -8,6 +8,7 @@ import '../dart_webrtc.dart';
 class RTCRtpEncodingParameters {}
 
 @JS()
+@anonymous
 class RTCRtpTransceiverInit {
   external factory RTCRtpTransceiverInit(
       {String direction,

@@ -1,14 +1,14 @@
 @JS()
 library dart_webrtc;
 
-import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:dart_webrtc/src/rtc_rtp_sender.dart';
-
+import 'rtc_rtp_sender.dart';
+import '../dart_webrtc.dart';
 import 'media_stream.dart';
 import 'rtc_track_event.dart';
 import 'package:js/js.dart';
 
 @JS()
+@anonymous
 class RTCOfferOptions {
   external factory RTCOfferOptions({
     bool iceRestart,
@@ -23,12 +23,20 @@ class RTCOfferOptions {
 }
 
 @JS()
+@anonymous
 class RTCAnswerOptions {
   external factory RTCAnswerOptions({bool voiceActivityDetection});
   external bool get voiceActivityDetection;
 }
 
 @JS()
+class MediaStreamEvent {
+  external factory MediaStreamEvent();
+  MediaStream stream;
+}
+
+@JS()
+@anonymous
 class RTCConfiguration {
   external factory RTCConfiguration({
     List<RTCIceServer> iceServers,
@@ -59,6 +67,7 @@ class RTCConfiguration {
 }
 
 @JS()
+@anonymous
 class RTCIceServer {
   external factory RTCIceServer(
       {String urls, String username, String credential});
@@ -70,7 +79,7 @@ class RTCIceServer {
 
 @JS()
 class RTCPeerConnection {
-  external factory RTCPeerConnection({RTCConfiguration configuration});
+  external factory RTCPeerConnection([RTCConfiguration configuration]);
   external dynamic get connectionState;
   external dynamic get signalingState;
   external dynamic get iceConnectionState;
@@ -91,19 +100,22 @@ class RTCPeerConnection {
 
   external RTCDataChannel createDataChannel(
       String label, RTCDataChannelInit init);
-  external RTCSessionDescription createOffer({RTCOfferOptions options});
-  external RTCSessionDescription createAnswer({RTCAnswerOptions options});
+  external dynamic createOffer([RTCOfferOptions options]);
+  external dynamic createAnswer([RTCAnswerOptions options]);
   external List<RTCRtpSender> getSenders();
   external List<RTCRtpReceiver> getReceivers();
   external List<RTCRtpTransceiver> getTransceivers();
   external RTCRtpTransceiver addTransceiver(
       dynamic trackOrKind, RTCRtpTransceiverInit init);
 
-  external set onaddstream(void Function(MediaStream stream) func);
+  external Map<String, RTCStats> getStats();
+
+  external set onaddstream(void Function(MediaStreamEvent stream) func);
   external set onremovestream(void Function(MediaStream stream) func);
   external set onconnectionstatechange(void Function(dynamic state) func);
-  external set ondatachannel(void Function(dynamic channel) func);
-  external set onicecandidate(void Function(RTCIceCandidate candidate) func);
+  external set ondatachannel(void Function(RTCDataChannel channel) func);
+  external set onicecandidate(
+      void Function(RtcPeerConnectionIceEvent event) func);
   external set oniceconnectionstatechange(void Function(dynamic state) func);
   external set ontrack(RTCTrackEvent event);
   external void close();

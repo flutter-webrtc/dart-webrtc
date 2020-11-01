@@ -15,4 +15,5 @@ class MediaStreamTrack {
   external set onmute(Function func);
   external set onunmute(Function func);
   external set oneended(Function func);
+  external void stop();
 }

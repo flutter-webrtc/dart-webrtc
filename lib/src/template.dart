@@ -5,7 +5,7 @@ import 'package:js/js.dart';
 import '../dart_webrtc.dart';
 
 @JS()
-class Temp {
-  external factory Temp();
+class Template {
+  external factory Template();
   external String get ext1;
 }

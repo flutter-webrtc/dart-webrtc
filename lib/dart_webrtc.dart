@@ -10,3 +10,4 @@ export 'src/rtc_ice_candidate.dart';
 export 'src/rtc_rtp_sender.dart';
 export 'src/rtc_rtp_receiver.dart';
 export 'src/rtc_rtp_transceiver.dart';
+export 'src/rtc_stats_resport.dart';

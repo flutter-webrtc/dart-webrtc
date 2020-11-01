@@ -2,11 +2,14 @@ import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:dart_webrtc/src/media_stream.dart';
 import 'package:js/js.dart';
 import 'dart:html';
+import 'signaling.dart';
 
 void main() {
-  var element = document.querySelector('#output');
+  var signaling = Signaling('demo.cloudwebrtc.com');
 
-  var video = VideoElement()
+  var local = document.querySelector('#local');
+
+  var localVideo = VideoElement()
     ..autoplay = true
     ..muted = true
     ..controls = false
@@ -15,11 +18,59 @@ void main() {
     ..id = 'dart-webrtc-video-01';
 
   // Allows Safari iOS to play the video inline
-  video.setAttribute('playsinline', 'true');
+  localVideo.setAttribute('playsinline', 'true');
 
-  element.append(video);
+  local.append(localVideo);
 
-  dartWebRTCTest(video);
+  var remote = document.querySelector('#remote');
+
+  var remoteVideo = VideoElement()
+    ..autoplay = true
+    ..muted = false
+    ..controls = false
+    ..style.objectFit = 'contain' // contain or cover
+    ..style.border = 'none'
+    ..id = 'dart-webrtc-video-02';
+
+  // Allows Safari iOS to play the video inline
+  remoteVideo.setAttribute('playsinline', 'true');
+
+  remote.append(remoteVideo);
+
+  signaling.onLocalStream = allowInterop((MediaStream stream) {
+    var rtcVideo = ConvertToRTCVideoElement(localVideo);
+    rtcVideo.srcObject = stream;
+  });
+
+  signaling.onAddRemoteStream = allowInterop((MediaStream stream) {
+    var rtcVideo = ConvertToRTCVideoElement(remoteVideo);
+    rtcVideo.srcObject = stream;
+  });
+
+  signaling.connect();
+  signaling.onStateChange = (SignalingState state) {
+    document.querySelector('#output').text = state.toString();
+    if (state == SignalingState.ConnectionOpen) {
+      //signaling.invite('123123', 'video', false);
+    }
+  };
+}
+
+/*
+void loopBackTest() {
+  var local = document.querySelector('#local');
+  var localVideo = VideoElement()
+    ..autoplay = true
+    ..muted = true
+    ..controls = false
+    ..style.objectFit = 'contain' // contain or cover
+    ..style.border = 'none'
+    ..id = 'dart-webrtc-video-01';
+
+  // Allows Safari iOS to play the video inline
+  localVideo.setAttribute('playsinline', 'true');
+  local.append(localVideo);
+  dartWebRTCTest(localVideo);
 }
 
 void dartWebRTCTest(VideoElement video) async {
@@ -35,7 +86,7 @@ void dartWebRTCTest(VideoElement video) async {
 
   var pc = RTCPeerConnection();
   print('connectionState: ${pc.connectionState}');
-  pc.onaddstream = allowInterop((MediaStream stream) {});
+  pc.onaddstream = allowInterop((MediaStreamEvent event) {});
   var stream = await PromiseToFuture<MediaStream>(
       navigator.mediaDevices.getDisplayMedia()
       /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/);
@@ -49,3 +100,4 @@ void dartWebRTCTest(VideoElement video) async {
   var rtcVideo = ConvertToRTCVideoElement(video);
   rtcVideo.srcObject = stream;
 }
+*/
