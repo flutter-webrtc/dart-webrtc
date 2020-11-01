@@ -1,5 +1,6 @@
-import 'dart:html';
 import 'dart:convert';
+import 'dart:html';
+
 import 'package:http/http.dart' as http;
 
 typedef OnMessageCallback = void Function(dynamic msg);
@@ -7,15 +8,15 @@ typedef OnCloseCallback = void Function(int code, String reason);
 typedef OnOpenCallback = void Function();
 
 class SimpleWebSocket {
+  SimpleWebSocket(this._url) {
+    _url = _url.replaceAll('https:', 'wss:');
+  }
+
   String _url;
   var _socket;
   OnOpenCallback onOpen;
   OnMessageCallback onMessage;
   OnCloseCallback onClose;
-
-  SimpleWebSocket(this._url) {
-    _url = _url.replaceAll('https:', 'wss:');
-  }
 
   void connect() async {
     try {

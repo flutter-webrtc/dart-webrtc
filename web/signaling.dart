@@ -1,12 +1,11 @@
-import 'dart:convert';
 import 'dart:async';
-
-import 'package:js/js.dart';
-import 'package:js/js_util.dart';
-import 'random_string.dart';
-import 'simple_websocket.dart';
+import 'dart:convert';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
+import 'package:js/js.dart';
+
+import 'random_string.dart';
+import 'simple_websocket.dart';
 
 enum SignalingState {
   CallStateNew,
@@ -30,6 +29,8 @@ typedef DataChannelMessageCallback = void Function(
 typedef DataChannelCallback = void Function(RTCDataChannel dc);
 
 class Signaling {
+  Signaling(this._host);
+
   final JsonEncoder _encoder = JsonEncoder();
   final String _selfId = randomNumeric(6);
   SimpleWebSocket _socket;
@@ -52,8 +53,6 @@ class Signaling {
   DataChannelMessageCallback onDataChannelMessage;
   DataChannelCallback onDataChannel;
 
-  Signaling(this._host);
-
   void close() {
     if (_localStream != null) {
       _localStream.getTracks().forEach((element) {
@@ -70,7 +69,7 @@ class Signaling {
 
   void switchCamera() {
     if (_localStream != null) {
-      //TODO: _localStream.getVideoTracks()[0].switchCamera();
+      // TODO(cloudwebrtc): _localStream.getVideoTracks()[0].switchCamera();
     }
   }
 
@@ -310,9 +309,7 @@ class Signaling {
 
     pc.onremovestream = allowInterop((MediaStream stream) {
       onRemoveRemoteStream?.call(stream);
-      _remoteStreams.removeWhere((it) {
-        return (it.id == stream.id);
-      });
+      _remoteStreams.removeWhere((it) => it.id == stream.id);
     });
 
     pc.ondatachannel = allowInterop((RTCDataChannel channel) {

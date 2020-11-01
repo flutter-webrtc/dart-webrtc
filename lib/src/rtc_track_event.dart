@@ -1,8 +1,9 @@
 @JS()
 library dart_webrtc;
 
-import '../dart_webrtc.dart';
 import 'package:js/js.dart';
+
+import '../dart_webrtc.dart';
 
 @JS()
 class RTCTrackEvent {

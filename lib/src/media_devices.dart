@@ -1,9 +1,9 @@
 @JS()
 library dart_webrtc;
 
-import 'dart:js_util';
-import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js.dart';
+
+import '../dart_webrtc.dart';
 
 @JS()
 @anonymous
@@ -36,16 +36,4 @@ class MediaDevices {
   external dynamic getUserMedia(MediaStreamConstraints constraints);
   external dynamic getDisplayMedia();
   external set devicechange(Function(Event<MediaDevices> event) func);
-}
-
-@JS()
-class Navigator {
-  external MediaDevices get mediaDevices;
-}
-
-@JS()
-external Navigator get navigator;
-
-Future<T> PromiseToFuture<T>(dynamic promise) {
-  return promiseToFuture(promise);
 }

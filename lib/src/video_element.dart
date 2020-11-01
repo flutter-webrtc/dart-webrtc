@@ -1,9 +1,10 @@
 @JS()
 library dart_webrtc;
 
+import 'dart:html' as html;
+
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js.dart';
-import 'dart:html' as html;
 
 @JS('Element')
 abstract class RTCVideoElement {

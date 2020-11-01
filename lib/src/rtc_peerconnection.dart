@@ -1,11 +1,12 @@
 @JS()
 library dart_webrtc;
 
-import 'rtc_rtp_sender.dart';
+import 'package:js/js.dart';
+
 import '../dart_webrtc.dart';
 import 'media_stream.dart';
+import 'rtc_rtp_sender.dart';
 import 'rtc_track_event.dart';
-import 'package:js/js.dart';
 
 @JS()
 @anonymous
