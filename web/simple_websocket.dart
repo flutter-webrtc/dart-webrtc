@@ -18,7 +18,7 @@ class SimpleWebSocket {
   OnMessageCallback onMessage;
   OnCloseCallback onClose;
 
-  void connect() async {
+  Future<void> connect() async {
     try {
       _socket = WebSocket(_url);
       _socket.onOpen.listen((e) {

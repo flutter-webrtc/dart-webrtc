@@ -1,4 +1,4 @@
-import 'dart:html';
+import 'dart:html' as html;
 
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js.dart';
@@ -8,51 +8,32 @@ import 'signaling.dart';
 void main() {
   var signaling = Signaling('demo.cloudwebrtc.com');
 
-  var local = document.querySelector('#local');
+  var local = html.document.querySelector('#local');
 
-  var localVideo = VideoElement()
-    ..autoplay = true
-    ..muted = true
-    ..controls = false
-    ..style.objectFit = 'contain' // contain or cover
-    ..style.border = 'none'
-    ..id = 'dart-webrtc-video-01';
+  var localVideo = RTCVideoElement();
 
-  // Allows Safari iOS to play the video inline
-  localVideo.setAttribute('playsinline', 'true');
+  local.append(localVideo.htmlElement);
 
-  local.append(localVideo);
+  var remote = html.document.querySelector('#remote');
 
-  var remote = document.querySelector('#remote');
+  var remoteVideo = RTCVideoElement();
 
-  var remoteVideo = VideoElement()
-    ..autoplay = true
-    ..muted = false
-    ..controls = false
-    ..style.objectFit = 'contain' // contain or cover
-    ..style.border = 'none'
-    ..id = 'dart-webrtc-video-02';
-
-  // Allows Safari iOS to play the video inline
-  remoteVideo.setAttribute('playsinline', 'true');
-
-  remote.append(remoteVideo);
+  remote.append(remoteVideo.htmlElement);
 
   signaling.onLocalStream = allowInterop((MediaStream stream) {
-    var rtcVideo = ConvertToRTCVideoElement(localVideo);
-    rtcVideo.srcObject = stream;
+    localVideo.srcObject = stream;
   });
 
   signaling.onAddRemoteStream = allowInterop((MediaStream stream) {
-    var rtcVideo = ConvertToRTCVideoElement(remoteVideo);
-    rtcVideo.srcObject = stream;
+    remoteVideo.srcObject = stream;
   });
 
   signaling.connect();
   signaling.onStateChange = (SignalingState state) {
-    document.querySelector('#output').text = state.toString();
-    if (state == SignalingState.ConnectionOpen) {
-      //signaling.invite('123123', 'video', false);
+    html.document.querySelector('#output').text = state.toString();
+    if (state == SignalingState.CallStateBye) {
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
     }
   };
 }
