@@ -3,7 +3,7 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-@JS()
+@JS('RTCSessionDescription')
 @anonymous
 class RTCSessionDescription {
   external factory RTCSessionDescription({String type, String sdp});

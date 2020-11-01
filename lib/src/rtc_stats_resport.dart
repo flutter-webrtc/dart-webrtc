@@ -3,7 +3,7 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-@JS()
+@JS('RTCStats')
 class RTCStats {
   external dynamic get timestamp;
   external String get type;

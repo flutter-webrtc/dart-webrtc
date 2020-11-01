@@ -6,7 +6,7 @@ import 'package:js/js.dart';
 import 'event.dart';
 import 'media_stream_track.dart';
 
-@JS()
+@JS('MediaStream')
 class MediaStream {
   external bool get active;
   external String get id;

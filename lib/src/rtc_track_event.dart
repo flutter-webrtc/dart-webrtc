@@ -5,7 +5,7 @@ import 'package:js/js.dart';
 
 import '../dart_webrtc.dart';
 
-@JS()
+@JS('RTCTrackEvent')
 class RTCTrackEvent {
   external RTCRtpReceiver get receiver;
   external List<MediaStream> get streams;

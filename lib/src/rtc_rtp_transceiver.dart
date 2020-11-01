@@ -19,7 +19,7 @@ class RTCRtpTransceiverInit {
   external List<RTCRtpEncodingParameters> get sendEncodings;
 }
 
-@JS()
+@JS('RTCRtpTransceiver')
 class RTCRtpTransceiver {
   external factory RTCRtpTransceiver();
   external String get direction;

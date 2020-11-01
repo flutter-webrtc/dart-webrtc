@@ -78,7 +78,7 @@ class RTCIceServer {
   external String get credential;
 }
 
-@JS()
+@JS('RTCPeerConnection')
 class RTCPeerConnection {
   external factory RTCPeerConnection([RTCConfiguration configuration]);
   external dynamic get connectionState;

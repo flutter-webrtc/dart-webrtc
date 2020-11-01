@@ -3,7 +3,7 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-@JS()
+@JS('MediaStreamTrack')
 class MediaStreamTrack {
   external factory MediaStreamTrack();
   external String get kind;

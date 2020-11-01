@@ -1,7 +1,6 @@
 import 'dart:html';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:dart_webrtc/src/media_stream.dart';
 import 'package:js/js.dart';
 
 import 'signaling.dart';

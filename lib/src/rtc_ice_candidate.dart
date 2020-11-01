@@ -3,7 +3,7 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-@JS()
+@JS('RTCIceCandidate')
 @anonymous
 class RTCIceCandidate {
   external factory RTCIceCandidate(
@@ -16,5 +16,4 @@ class RTCIceCandidate {
 @JS()
 class RtcPeerConnectionIceEvent {
   external RTCIceCandidate get candidate;
-  external dynamic get target;
 }
