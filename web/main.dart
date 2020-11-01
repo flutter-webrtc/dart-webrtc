@@ -45,7 +45,7 @@ void dartWebRTCTest(VideoElement video) async {
     video.srcObject = null;
     video.remove();
   });
-
+  pc.addStream(stream);
   var rtcVideo = ConvertToRTCVideoElement(video);
   rtcVideo.srcObject = stream;
 }

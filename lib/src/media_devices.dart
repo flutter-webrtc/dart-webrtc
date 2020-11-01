@@ -2,6 +2,7 @@
 library dart_webrtc;
 
 import 'dart:js_util';
+import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js.dart';
 
 @JS()
@@ -34,7 +35,7 @@ class MediaDevices {
   external dynamic enumerateDevices();
   external dynamic getUserMedia(MediaStreamConstraints constraints);
   external dynamic getDisplayMedia();
-  external set devicechange(Function func);
+  external set devicechange(Function(Event<MediaDevices> event) func);
 }
 
 @JS()
