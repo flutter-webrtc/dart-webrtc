@@ -118,7 +118,7 @@ class RTCPeerConnectionJs {
   external set onnegotiationneeded(Function(Event event) func);
   external set onsignalingstatechange(Function(dynamic state) func);
   external set ondatachannel(Function(RTCDataChannel channel) func);
-  external set onicecandidate(Function(RtcPeerConnectionIceEvent event) func);
+  external set onicecandidate(Function(RTCPeerConnectionIceEvent event) func);
   external set ontrack(RTCTrackEvent event);
   external void close();
 }
@@ -188,7 +188,7 @@ class RTCPeerConnection {
 
   Future<void> addIceCandidate(RTCIceCandidate candidate) async {
     try {
-      await promiseToFuture<dynamic>(_internal.addIceCandidate(candidate));
+      return promiseToFuture<dynamic>(_internal.addIceCandidate(candidate));
     } catch (e) {
       rethrow;
     }
@@ -234,28 +234,28 @@ class RTCPeerConnection {
 
   set onconnectionstatechange(Function(RTCPeerConnectionState state) func) =>
       _internal.onconnectionstatechange = allowInterop((dynamic state) {
-        func(peerConnectionStateForString(state));
+        func(peerConnectionStateForString(_internal.connectionState));
       });
 
   set oniceconnectionstatechange(Function(RTCIceConnectionState state) func) =>
       _internal.oniceconnectionstatechange = allowInterop((dynamic state) {
-        func(iceConnectionStateForString(state));
+        func(iceConnectionStateForString(_internal.iceConnectionState));
       });
 
   set onsignalingstatechange(Function(RTCSignalingState state) func) =>
       _internal.onsignalingstatechange = allowInterop((dynamic state) {
-        func(signalingStateForString(state));
+        func(signalingStateForString(_internal.signalingState));
       });
 
   set onicegatheringstatechange(Function(RTCIceGatheringState state) func) =>
       _internal.onicegatheringstatechange = allowInterop((dynamic state) {
-        func(iceGatheringStateforString(state));
+        func(iceGatheringStateforString(_internal.iceGatheringState));
       });
 
   set ondatachannel(Function(RTCDataChannel channel) func) =>
       _internal.ondatachannel = allowInterop(func);
 
-  set onicecandidate(Function(RtcPeerConnectionIceEvent event) func) =>
+  set onicecandidate(Function(RTCPeerConnectionIceEvent event) func) =>
       _internal.onicecandidate = allowInterop(func);
 
   set ontrack(Function(RTCTrackEvent event) func) =>

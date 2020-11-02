@@ -14,6 +14,7 @@ class RTCIceCandidate {
 }
 
 @JS()
-class RtcPeerConnectionIceEvent {
+class RTCPeerConnectionIceEvent {
+  external factory RTCPeerConnectionIceEvent();
   external RTCIceCandidate get candidate;
 }
