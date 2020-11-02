@@ -1,85 +1,39 @@
 import 'dart:html' as html;
 
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:js/js.dart';
 
-import 'signaling.dart';
+import 'test_media_devices.dart' as media_devices_tests;
+import 'test_video_element.dart' as video_elelment_tests;
+import 'test_media_stream.dart' as media_stream_tests;
 
 void main() {
-  var signaling = Signaling('demo.cloudwebrtc.com');
+  video_elelment_tests.testFunctions.forEach((Function func) => func());
+  media_devices_tests.testFunctions.forEach((Function func) => func());
+  media_stream_tests.testFunctions.forEach((Function func) => func());
+}
 
+void loopBackTest() async {
   var local = html.document.querySelector('#local');
-
-  var localVideo = RTCVideoElement();
-
+  RTCVideoElement localVideo;
+  localVideo = RTCVideoElement();
   local.append(localVideo.htmlElement);
 
-  var remote = html.document.querySelector('#remote');
-
-  var remoteVideo = RTCVideoElement();
-
-  remote.append(remoteVideo.htmlElement);
-
-  signaling.onLocalStream = allowInterop((MediaStream stream) {
-    localVideo.srcObject = stream;
-  });
-
-  signaling.onAddRemoteStream = allowInterop((MediaStream stream) {
-    remoteVideo.srcObject = stream;
-  });
-
-  signaling.connect();
-  signaling.onStateChange = (SignalingState state) {
-    html.document.querySelector('#output').text = state.toString();
-    if (state == SignalingState.CallStateBye) {
-      localVideo.srcObject = null;
-      remoteVideo.srcObject = null;
-    }
-  };
-}
-
-/*
-void loopBackTest() {
-  var local = document.querySelector('#local');
-  var localVideo = VideoElement()
-    ..autoplay = true
-    ..muted = true
-    ..controls = false
-    ..style.objectFit = 'contain' // contain or cover
-    ..style.border = 'none'
-    ..id = 'dart-webrtc-video-01';
-
-  // Allows Safari iOS to play the video inline
-  localVideo.setAttribute('playsinline', 'true');
-  local.append(localVideo);
-  dartWebRTCTest(localVideo);
-}
-
-void dartWebRTCTest(VideoElement video) async {
-  var list = await PromiseToFuture<List<dynamic>>(
-      navigator.mediaDevices.enumerateDevices());
+  var list = await navigator.mediaDevices.enumerateDevices();
   list.forEach((e) {
-    if (e is MediaDeviceInfo) {
-      print('MediaDeviceInfo: ${e.label}');
-    } else if (e is InputDeviceInfo) {
-      print('InputDeviceInfo: ${e.label}');
-    }
+    print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
   });
 
   var pc = RTCPeerConnection();
   print('connectionState: ${pc.connectionState}');
-  pc.onaddstream = allowInterop((MediaStreamEvent event) {});
-  var stream = await PromiseToFuture<MediaStream>(
-      navigator.mediaDevices.getDisplayMedia()
-      /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/);
+  pc.onaddstream = (MediaStreamEvent event) {};
+  var stream = await navigator.mediaDevices.getUserMedia(
+      constraints: MediaStreamConstraints(audio: true, video: true));
+  /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/
   print('getDisplayMedia: stream.id => ${stream.id}');
-  stream.oninactive = allowInterop((Event event) {
+  stream.oninactive = (Event event) {
     print('oninactive: stream.id => ${event.target.id}');
-    video.srcObject = null;
-    video.remove();
-  });
+    localVideo.srcObject = null;
+  };
   pc.addStream(stream);
-  var rtcVideo = ConvertToRTCVideoElement(video);
-  rtcVideo.srcObject = stream;
+  localVideo.srcObject = stream;
 }
-*/

@@ -13,6 +13,5 @@ class RTCRtpSender {
   external dynamic getStats();
   external void setStreams(List<MediaStream> streams);
   external void replaceTrack(MediaStreamTrack track);
-
   external static dynamic getCapabilities();
 }

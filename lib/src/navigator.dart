@@ -5,10 +5,18 @@ import 'package:js/js.dart';
 
 import '../dart_webrtc.dart';
 
-@JS()
-class Navigator {
-  external MediaDevices get mediaDevices;
+@JS('Navigator')
+class NavigatorJs {
+  external MediaDevicesJs get mediaDevices;
 }
 
-@JS()
-external Navigator get navigator;
+class Navigator {
+  Navigator(this._js);
+  MediaDevices get mediaDevices => MediaDevices(_js.mediaDevices);
+  NavigatorJs _js;
+}
+
+@JS('navigator')
+external NavigatorJs get navigatorjs;
+
+final Navigator navigator = Navigator(navigatorjs);

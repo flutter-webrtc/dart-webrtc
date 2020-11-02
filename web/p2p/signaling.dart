@@ -252,10 +252,10 @@ class Signaling {
   }
 
   Future<MediaStream> createStream(media, user_screen) async {
-    var stream = await PromiseToFuture<MediaStream>(user_screen
+    var stream = await user_screen
         ? await navigator.mediaDevices.getDisplayMedia()
-        : await navigator.mediaDevices
-            .getUserMedia(MediaStreamConstraints(audio: true, video: {
+        : await navigator.mediaDevices.getUserMedia(
+            constraints: MediaStreamConstraints(audio: true, video: {
             'mandatory': {
               'minWidth':
                   '640', // Provide your own width, height and frame rate here
@@ -264,7 +264,7 @@ class Signaling {
             },
             'facingMode': 'user',
             'optional': [],
-          })));
+          }));
 
     onLocalStream?.call(stream);
 
@@ -274,12 +274,13 @@ class Signaling {
   Future<RTCPeerConnection> _createPeerConnection(
       id, media, user_screen) async {
     if (media != 'data') _localStream = await createStream(media, user_screen);
-    var pc = RTCPeerConnection(RTCConfiguration(
-        iceServers: _iceServers.isNotEmpty
-            ? _iceServers
-            : [RTCIceServer(urls: 'stun:stun.l.google.com:19302')]));
+    var pc = RTCPeerConnection(
+        configuration: RTCConfiguration(
+            iceServers: _iceServers.isNotEmpty
+                ? _iceServers
+                : [RTCIceServer(urls: 'stun:stun.l.google.com:19302')]));
     if (media != 'data') pc.addStream(_localStream);
-    pc.onicecandidate = allowInterop((dynamic event) {
+    pc.onicecandidate = (dynamic event) {
       try {
         if (event.candidate = !null) {
           print(event.candidate.candidate);
@@ -297,32 +298,32 @@ class Signaling {
       } catch (e) {
         print(e.toString());
       }
-    });
+    };
 
-    pc.oniceconnectionstatechange = allowInterop((state) {
+    pc.oniceconnectionstatechange = (state) {
       print(state);
-    });
+    };
 
-    pc.onaddstream = allowInterop((MediaStreamEvent event) {
+    pc.onaddstream = (MediaStreamEvent event) {
       onAddRemoteStream?.call(event.stream);
-    });
+    };
 
-    pc.onremovestream = allowInterop((MediaStream stream) {
+    pc.onremovestream = (MediaStream stream) {
       onRemoveRemoteStream?.call(stream);
       _remoteStreams.removeWhere((it) => it.id == stream.id);
-    });
+    };
 
-    pc.ondatachannel = allowInterop((RTCDataChannel channel) {
+    pc.ondatachannel = (RTCDataChannel channel) {
       _addDataChannel(id, channel);
-    });
+    };
 
     return pc;
   }
 
   void _addDataChannel(id, RTCDataChannel channel) {
-    channel.onmessage = allowInterop((RTCDataChannelMessage data) {
+    channel.onmessage = (RTCDataChannelMessage data) {
       onDataChannelMessage?.call(channel, data);
-    });
+    };
     _dataChannels[id] = channel;
     onDataChannel?.call(channel);
   }
@@ -330,17 +331,18 @@ class Signaling {
   void _createDataChannel(id, RTCPeerConnection pc,
       {String label = 'fileTransfer'}) async {
     var dataChannelDict = RTCDataChannelInit();
-    var channel = await pc.createDataChannel(label, dataChannelDict);
+    var channel =
+        await pc.createDataChannel(label: label, init: dataChannelDict);
     _addDataChannel(id, channel);
   }
 
   void _createOffer(String id, RTCPeerConnection pc, String media) async {
     try {
-      var desc = await PromiseToFuture<dynamic>(pc.createOffer(RTCOfferOptions(
+      var offer = await pc.createOffer(
+          options: RTCOfferOptions(
         offerToReceiveAudio: media == 'data' ? false : true,
         offerToReceiveVideo: media == 'data' ? false : true,
-      )));
-      var offer = RTCSessionDescription(type: desc.type, sdp: desc.sdp);
+      ));
       //print('type => ${offer.type}, sdp => ${offer.sdp}');
       pc.setLocalDescription(offer);
       _send('offer', {
@@ -355,10 +357,9 @@ class Signaling {
     }
   }
 
-  void _createAnswer(String id, RTCPeerConnection pc, media) async {
+  Future<void> _createAnswer(String id, RTCPeerConnection pc, media) async {
     try {
-      var desc = await PromiseToFuture<dynamic>(pc.createAnswer());
-      var answer = RTCSessionDescription(type: desc.type, sdp: desc.sdp);
+      var answer = await pc.createAnswer();
       pc.setLocalDescription(answer);
       _send('answer', {
         'to': id,

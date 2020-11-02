@@ -1,4 +1,3 @@
-export 'src/common.dart';
 export 'src/event.dart';
 export 'src/media_devices.dart';
 export 'src/media_stream.dart';
@@ -7,6 +6,7 @@ export 'src/navigator.dart';
 export 'src/rtc_data_channel.dart';
 export 'src/rtc_dtmf_sender.dart';
 export 'src/rtc_ice_candidate.dart';
+export 'src/rtc_peerconnection.dart';
 export 'src/rtc_peerconnection.dart';
 export 'src/rtc_rtp_receiver.dart';
 export 'src/rtc_rtp_sender.dart';

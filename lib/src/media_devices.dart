@@ -1,6 +1,8 @@
 @JS()
 library dart_webrtc;
 
+import 'dart:html';
+
 import 'package:js/js.dart';
 
 import '../dart_webrtc.dart';
@@ -13,15 +15,7 @@ class MediaStreamConstraints {
   external dynamic get video;
 }
 
-@JS()
-class InputDeviceInfo {
-  external String get deviceId;
-  external String get groupId;
-  external String get kind;
-  external String get label;
-}
-
-@JS()
+@JS('MediaDeviceInfo')
 class MediaDeviceInfo {
   external String get deviceId;
   external String get groupId;
@@ -29,11 +23,47 @@ class MediaDeviceInfo {
   external String get label;
 }
 
-@JS()
-class MediaDevices {
-  external factory MediaDevices();
+@JS('MediaDevices')
+class MediaDevicesJs {
+  external factory MediaDevicesJs();
   external dynamic enumerateDevices();
   external dynamic getUserMedia(MediaStreamConstraints constraints);
-  external dynamic getDisplayMedia();
-  external set devicechange(Function(Event<MediaDevices> event) func);
+  external dynamic getDisplayMedia(MediaStreamConstraints constraints);
+  external set devicechange(Function(Event<MediaDevicesJs> event) func);
+}
+
+class MediaDevices {
+  MediaDevices(this._js);
+
+  Future<List<MediaDeviceInfo>> enumerateDevices() async {
+    try {
+      var jsList = await promiseToFuture<List<dynamic>>(_js.enumerateDevices());
+      return jsList.map((e) => e as MediaDeviceInfo).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<MediaStream> getUserMedia({MediaStreamConstraints constraints}) async {
+    try {
+      var jsStream =
+          await promiseToFuture<MediaStreamJs>(_js.getUserMedia(constraints));
+      return MediaStream(jsStream);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<MediaStream> getDisplayMedia(
+      {MediaStreamConstraints constraints}) async {
+    try {
+      var jsStream = await promiseToFuture<MediaStreamJs>(
+          _js.getDisplayMedia(constraints));
+      return MediaStream(jsStream);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  final MediaDevicesJs _js;
 }
