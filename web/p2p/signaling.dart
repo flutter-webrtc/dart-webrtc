@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:js/js.dart';
 
 import 'random_string.dart';
 import 'simple_websocket.dart';
@@ -344,7 +343,7 @@ class Signaling {
         offerToReceiveVideo: media == 'data' ? false : true,
       ));
       //print('type => ${offer.type}, sdp => ${offer.sdp}');
-      pc.setLocalDescription(offer);
+      await pc.setLocalDescription(offer);
       _send('offer', {
         'to': id,
         'from': _selfId,
@@ -360,7 +359,7 @@ class Signaling {
   Future<void> _createAnswer(String id, RTCPeerConnection pc, media) async {
     try {
       var answer = await pc.createAnswer();
-      pc.setLocalDescription(answer);
+      await pc.setLocalDescription(answer);
       _send('answer', {
         'to': id,
         'from': _selfId,

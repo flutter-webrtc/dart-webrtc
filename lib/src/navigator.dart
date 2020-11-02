@@ -13,7 +13,7 @@ class NavigatorJs {
 class Navigator {
   Navigator(this._js);
   MediaDevices get mediaDevices => MediaDevices(_js.mediaDevices);
-  NavigatorJs _js;
+  final NavigatorJs _js;
 }
 
 @JS('navigator')

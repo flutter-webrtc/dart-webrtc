@@ -2,9 +2,11 @@
 library dart_webrtc;
 
 import 'dart:html';
+
 import 'package:js/js.dart';
 
 import '../dart_webrtc.dart';
+import 'enum.dart';
 import 'media_stream.dart';
 import 'rtc_rtp_sender.dart';
 import 'rtc_track_event.dart';
@@ -88,39 +90,35 @@ class RTCPeerConnectionJs {
   external dynamic get iceGatheringState;
   external dynamic get localDescription;
   external dynamic get remoteDescription;
-  external dynamic get canTrickleIceCandidates;
+  external bool get canTrickleIceCandidates;
+  external RTCConfiguration getConfiguration();
   external void addStream(MediaStreamJs stream);
   external void removeStream(MediaStreamJs stream);
-
   external RTCRtpSender addTrack(
       MediaStreamTrack track, List<MediaStreamJs> streams);
   external void removeTrack(RTCRtpSender sender);
-
-  external void setLocalDescription(RTCSessionDescription desc);
-  external void setRemoteDescription(RTCSessionDescription desc);
-  external void addIceCandidate(RTCIceCandidate candidate);
-
+  external dynamic setLocalDescription(RTCSessionDescription desc);
+  external dynamic setRemoteDescription(RTCSessionDescription desc);
+  external dynamic addIceCandidate(RTCIceCandidate candidate);
   external RTCDataChannel createDataChannel(
       String label, RTCDataChannelInit init);
-
   external dynamic createOffer([RTCOfferOptions options]);
   external dynamic createAnswer([RTCAnswerOptions options]);
-
   external List<RTCRtpSender> getSenders();
   external List<RTCRtpReceiver> getReceivers();
   external List<RTCRtpTransceiver> getTransceivers();
   external RTCRtpTransceiver addTransceiver(
       dynamic trackOrKind, RTCRtpTransceiverInit init);
-
   external Map<String, RTCStats> getStats();
-
-  external set onaddstream(void Function(MediaStreamEvent stream) func);
-  external set onremovestream(void Function(MediaStream stream) func);
-  external set onconnectionstatechange(void Function(dynamic state) func);
-  external set ondatachannel(void Function(RTCDataChannel channel) func);
-  external set onicecandidate(
-      void Function(RtcPeerConnectionIceEvent event) func);
-  external set oniceconnectionstatechange(void Function(dynamic state) func);
+  external set onaddstream(Function(MediaStreamEvent stream) func);
+  external set onremovestream(Function(MediaStreamJs stream) func);
+  external set onconnectionstatechange(Function(dynamic state) func);
+  external set oniceconnectionstatechange(Function(dynamic state) func);
+  external set onicegatheringstatechange(Function(dynamic state) func);
+  external set onnegotiationneeded(Function(Event event) func);
+  external set onsignalingstatechange(Function(dynamic state) func);
+  external set ondatachannel(Function(RTCDataChannel channel) func);
+  external set onicecandidate(Function(RtcPeerConnectionIceEvent event) func);
   external set ontrack(RTCTrackEvent event);
   external void close();
 }
@@ -131,7 +129,29 @@ class RTCPeerConnection {
   }
   RTCPeerConnectionJs _internal;
 
-  dynamic get connectionState => _internal.connectionState;
+  RTCPeerConnectionState get connectionState =>
+      peerConnectionStateForString(_internal.connectionState);
+
+  RTCSignalingState get signalingState =>
+      signalingStateForString(_internal.signalingState);
+
+  RTCIceConnectionState get iceConnectionState =>
+      iceConnectionStateForString(_internal.iceConnectionState);
+
+  RTCIceGatheringState get iceGatheringState =>
+      iceGatheringStateforString(_internal.iceGatheringState);
+
+  RTCSessionDescription get localDescription {
+    var desc = _internal.localDescription;
+    return RTCSessionDescription(type: desc.type, sdp: desc.sdp);
+  }
+
+  RTCSessionDescription get remoteDescription {
+    var desc = _internal.remoteDescription;
+    return RTCSessionDescription(type: desc.type, sdp: desc.sdp);
+  }
+
+  bool get canTrickleIceCandidates => _internal.canTrickleIceCandidates;
 
   void addStream(MediaStream stream) => _internal.addStream(stream.js);
 
@@ -150,14 +170,29 @@ class RTCPeerConnection {
 
   void removeTrack(RTCRtpSender sender) => _internal.removeTrack(sender);
 
-  void setLocalDescription(RTCSessionDescription desc) =>
-      _internal.setLocalDescription(desc);
+  Future<void> setLocalDescription(RTCSessionDescription desc) async {
+    try {
+      await promiseToFuture<dynamic>(_internal.setLocalDescription(desc));
+    } catch (e) {
+      rethrow;
+    }
+  }
 
-  void setRemoteDescription(RTCSessionDescription desc) =>
-      _internal.setRemoteDescription(desc);
+  Future<void> setRemoteDescription(RTCSessionDescription desc) async {
+    try {
+      await promiseToFuture<dynamic>(_internal.setRemoteDescription(desc));
+    } catch (e) {
+      rethrow;
+    }
+  }
 
-  void addIceCandidate(RTCIceCandidate candidate) =>
-      _internal.addIceCandidate(candidate);
+  Future<void> addIceCandidate(RTCIceCandidate candidate) async {
+    try {
+      await promiseToFuture<dynamic>(_internal.addIceCandidate(candidate));
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<RTCSessionDescription> createOffer({RTCOfferOptions options}) async {
     try {
@@ -193,19 +228,35 @@ class RTCPeerConnection {
       _internal.onaddstream = allowInterop(func);
 
   set onremovestream(Function(MediaStream stream) func) =>
-      _internal.onremovestream = allowInterop(func);
+      _internal.onremovestream = allowInterop((MediaStreamJs jsStream) {
+        func(MediaStream(jsStream));
+      });
 
-  set onconnectionstatechange(Function(dynamic state) func) =>
-      _internal.onremovestream = allowInterop(func);
+  set onconnectionstatechange(Function(RTCPeerConnectionState state) func) =>
+      _internal.onconnectionstatechange = allowInterop((dynamic state) {
+        func(peerConnectionStateForString(state));
+      });
+
+  set oniceconnectionstatechange(Function(RTCIceConnectionState state) func) =>
+      _internal.oniceconnectionstatechange = allowInterop((dynamic state) {
+        func(iceConnectionStateForString(state));
+      });
+
+  set onsignalingstatechange(Function(RTCSignalingState state) func) =>
+      _internal.onsignalingstatechange = allowInterop((dynamic state) {
+        func(signalingStateForString(state));
+      });
+
+  set onicegatheringstatechange(Function(RTCIceGatheringState state) func) =>
+      _internal.onicegatheringstatechange = allowInterop((dynamic state) {
+        func(iceGatheringStateforString(state));
+      });
 
   set ondatachannel(Function(RTCDataChannel channel) func) =>
       _internal.ondatachannel = allowInterop(func);
 
   set onicecandidate(Function(RtcPeerConnectionIceEvent event) func) =>
       _internal.onicecandidate = allowInterop(func);
-
-  set oniceconnectionstatechange(Function(dynamic state) func) =>
-      _internal.oniceconnectionstatechange = allowInterop(func);
 
   set ontrack(Function(RTCTrackEvent event) func) =>
       _internal.ontrack = allowInterop(func);
