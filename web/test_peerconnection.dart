@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:dart_webrtc/src/enum.dart';
 import 'package:test/test.dart';
@@ -7,6 +9,43 @@ RTCPeerConnection pc2;
 
 RTCSessionDescription offer;
 RTCSessionDescription answer;
+
+void addStateCallbacks(RTCPeerConnection pc, String title) {
+  pc.onconnectionstatechange = (RTCPeerConnectionState state) {
+    print('$title: onconnectionstatechange => ${state.toString()}');
+  };
+  pc.oniceconnectionstatechange = (RTCIceConnectionState state) {
+    print('$title: oniceconnectionstatechange => ${state.toString()}');
+  };
+  pc.onicegatheringstatechange = (RTCIceGatheringState state) {
+    print('$title: onicegatheringstatechange => ${state.toString()}');
+  };
+  pc.onsignalingstatechange = (RTCSignalingState state) {
+    print('$title: onsignalingstatechange => ${state.toString()}');
+  };
+  pc.onicegatheringstatechange = (RTCIceGatheringState state) {
+    print('$title: onicegatheringstatechange => ${state.toString()}');
+  };
+
+  pc.onaddstream = (MediaStreamEvent event) {
+    print('$title: onaddstream => ${event.stream.id}');
+  };
+
+  pc.ontrack = (RTCTrackEvent event) async {
+    print(
+        '$title: ontrack => ${event.track.id}, \nkind =>  ${event.track.kind}\nstream.length => ${event.streams.length}');
+    var params = event.receiver.getParameters();
+    print('reducedSize => ${params.rtcp.reducedSize}');
+    var stats =
+        await promiseToFuture<RTCStatsReport>(event.receiver.getStats());
+    print('getStats => ');
+    stats.forEach((RTCStats report) {
+      print(
+          '   type => ${report.type}, id => ${report.id}, timestamp => ${report.timestamp}');
+      print('        report => ${report.toString()}');
+    });
+  };
+}
 
 List<void Function()> testFunctions = <void Function()>[
   () => test('RTCPeerConnection.constructor()', () async {
@@ -23,6 +62,9 @@ List<void Function()> testFunctions = <void Function()>[
         expect(pc2.connectionState,
             RTCPeerConnectionState.RTCPeerConnectionStateNew);
         expect(pc2.signalingState, RTCSignalingState.RTCSignalingStateStable);
+
+        addStateCallbacks(pc1, 'pc1');
+        addStateCallbacks(pc2, 'pc2');
 
         pc1.onicecandidate = (RTCPeerConnectionIceEvent event) async {
           if (event.candidate == null) {
@@ -41,46 +83,21 @@ List<void Function()> testFunctions = <void Function()>[
           print('pc2: onicecaniddate => ${event.candidate.candidate}');
           await pc1.addIceCandidate(event.candidate);
         };
+      }),
+  () => test('RTCPeerConnection.addTransceiver()', () async {
+        await pc1.addTransceiver(
+            kind: 'audio', init: RTCRtpTransceiverInit(direction: 'sendonly'));
+        await pc1.addTransceiver(
+            kind: 'video', init: RTCRtpTransceiverInit(direction: 'sendonly'));
 
-        pc1.onconnectionstatechange = (RTCPeerConnectionState state) {
-          print('pc1: onconnectionstatechange => ${state.toString()}');
-        };
-        pc2.onconnectionstatechange = (RTCPeerConnectionState state) {
-          print('pc2: onconnectionstatechange => ${state.toString()}');
-        };
-
-        pc1.oniceconnectionstatechange = (RTCIceConnectionState state) {
-          print('pc1: oniceconnectionstatechange => ${state.toString()}');
-        };
-        pc2.oniceconnectionstatechange = (RTCIceConnectionState state) {
-          print('pc2: oniceconnectionstatechange => ${state.toString()}');
-        };
-
-        pc1.onicegatheringstatechange = (RTCIceGatheringState state) {
-          print('pc1: onicegatheringstatechange => ${state.toString()}');
-        };
-        pc2.onicegatheringstatechange = (RTCIceGatheringState state) {
-          print('pc2: onicegatheringstatechange => ${state.toString()}');
-        };
-
-        pc1.onsignalingstatechange = (RTCSignalingState state) {
-          print('pc1: onsignalingstatechange => ${state.toString()}');
-        };
-        pc2.onsignalingstatechange = (RTCSignalingState state) {
-          print('pc2: onsignalingstatechange => ${state.toString()}');
-        };
-
-        pc1.onicegatheringstatechange = (RTCIceGatheringState state) {
-          print('pc1: onicegatheringstatechange => ${state.toString()}');
-        };
-        pc2.onicegatheringstatechange = (RTCIceGatheringState state) {
-          print('pc2: onicegatheringstatechange => ${state.toString()}');
-        };
+        await pc2.addTransceiver(
+            kind: 'audio', init: RTCRtpTransceiverInit(direction: 'recvonly'));
+        await pc2.addTransceiver(
+            kind: 'video', init: RTCRtpTransceiverInit(direction: 'recvonly'));
       }),
   () => test('RTCPeerConnection.createOffer()', () async {
-        offer = await pc1.createOffer(
-            options: RTCOfferOptions(
-                offerToReceiveAudio: true, offerToReceiveVideo: true));
+        offer = await pc1.createOffer();
+        print('pc1 offer => ${offer.sdp}');
         await pc1.setLocalDescription(offer);
         expect(pc1.signalingState,
             RTCSignalingState.RTCSignalingStateHaveLocalOffer);
@@ -93,7 +110,7 @@ List<void Function()> testFunctions = <void Function()>[
         answer = await pc2.createAnswer(options: RTCAnswerOptions());
         await pc2.setLocalDescription(answer);
         expect(pc2.signalingState, RTCSignalingState.RTCSignalingStateStable);
-
+        print('pc2 answer => ${answer.sdp}');
         await pc1.setRemoteDescription(answer);
         expect(pc1.signalingState, RTCSignalingState.RTCSignalingStateStable);
       }),

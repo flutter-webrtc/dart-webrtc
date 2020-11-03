@@ -1,203 +1,112 @@
+@JS()
+library dart_webrtc;
+
+import 'package:js/js.dart';
+
 import 'rtc_rtcp_parameters.dart';
 
+@JS()
+@anonymous
 class RTCRTPCodec {
-  RTCRTPCodec(
-      {this.payloadType,
-      this.name,
-      this.kind,
-      this.clockRate,
-      this.numChannels,
-      this.parameters});
-
-  factory RTCRTPCodec.fromMap(Map<dynamic, dynamic> map) {
-    return RTCRTPCodec(
-        payloadType: map['payloadType'],
-        name: map['name'],
-        kind: map['kind'],
-        clockRate: map['clockRate'],
-        numChannels: map['numChannels'] ?? 1,
-        parameters: map['parameters']);
-  }
+  external factory RTCRTPCodec(
+      {int payloadType,
+      String name,
+      String kind,
+      int clockRate,
+      int numChannels,
+      Map<dynamic, dynamic> parameters});
   // Payload type used to identify this codec in RTP packets.
-  int payloadType;
+  external int get payloadType;
 
   /// Name used to identify the codec. Equivalent to MIME subtype.
-  String name;
+  external String get name;
 
   /// The media type of this codec. Equivalent to MIME top-level type.
-  String kind;
+  external String get kind;
 
   /// Clock rate in Hertz.
-  int clockRate;
+  external int get clockRate;
 
   /// The number of audio channels used. Set to null for video codecs.
-  int numChannels;
+  external int get numChannels;
 
   /// The "format specific parameters" field from the "a=fmtp" line in the SDP
-  Map<dynamic, dynamic> parameters;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'payloadType': payloadType,
-      'name': name,
-      'kind': kind,
-      'clockRate': clockRate,
-      'numChannels': numChannels,
-      'parameters': parameters,
-    };
-  }
+  external Map<dynamic, dynamic> get parameters;
 }
 
+@JS()
+@anonymous
 class RTCRtpEncoding {
-  RTCRtpEncoding(
-      {this.rid,
-      this.active,
-      this.maxBitrateBps,
-      this.maxFramerate,
-      this.minBitrateBps,
-      this.numTemporalLayers,
-      this.scaleResolutionDownBy,
-      this.ssrc});
-
-  factory RTCRtpEncoding.fromMap(Map<dynamic, dynamic> map) {
-    return RTCRtpEncoding(
-        rid: map['rid'],
-        active: map['active'],
-        maxBitrateBps: map['maxBitrateBps'],
-        maxFramerate: map['maxFramerate'],
-        minBitrateBps: map['minBitrateBps'],
-        numTemporalLayers: map['numTemporalLayers'],
-        scaleResolutionDownBy: map['scaleResolutionDownBy'],
-        ssrc: map['ssrc']);
-  }
+  external factory RTCRtpEncoding(
+      {String rid,
+      bool active,
+      int maxBitrateBps,
+      int maxFramerate,
+      int minBitrateBps,
+      int numTemporalLayers,
+      double scaleResolutionDownBy,
+      int ssrc});
 
   /// If non-null, this represents the RID that identifies this encoding layer.
   /// RIDs are used to identify layers in simulcast.
-  String rid;
+  external String get rid;
 
   /// Set to true to cause this encoding to be sent, and false for it not to
   /// be sent.
-  bool active = true;
+  external bool get active;
 
   /// If non-null, this represents the Transport Independent Application
   /// Specific maximum bandwidth defined in RFC3890. If null, there is no
   /// maximum bitrate.
-  int maxBitrateBps;
+  external int get maxBitrateBps;
 
   /// The minimum bitrate in bps for video.
-  int minBitrateBps;
+  external int get minBitrateBps;
 
   /// The max framerate in fps for video.
-  int maxFramerate;
+  external int get maxFramerate;
 
   /// The number of temporal layers for video.
-  int numTemporalLayers = 1;
+  external int get numTemporalLayers;
 
   /// If non-null, scale the width and height down by this factor for video. If null,
   /// implementation default scaling factor will be used.
-  double scaleResolutionDownBy = 1.0;
+  external double get scaleResolutionDownBy;
 
   /// SSRC to be used by this encoding.
   /// Can't be changed between getParameters/setParameters.
-  int ssrc;
-
-  Map<String, dynamic> toMap() {
-    return {
-      if (rid != null) 'rid': rid,
-      if (active != null) 'active': active,
-      if (maxBitrateBps != null) 'maxBitrateBps': maxBitrateBps,
-      if (maxFramerate != null) 'maxFramerate': maxFramerate,
-      if (minBitrateBps != null) 'minBitrateBps': minBitrateBps,
-      if (numTemporalLayers != null) 'numTemporalLayers': numTemporalLayers,
-      if (scaleResolutionDownBy != null)
-        'scaleResolutionDownBy': scaleResolutionDownBy,
-      if (ssrc != null) 'ssrc': ssrc,
-    };
-  }
+  external int get ssrc;
 }
 
+@JS()
+@anonymous
 class RTCHeaderExtension {
-  RTCHeaderExtension({this.uri, this.id, this.encrypted});
-  factory RTCHeaderExtension.fromMap(Map<dynamic, dynamic> map) {
-    return RTCHeaderExtension(
-        uri: map['uri'], id: map['id'], encrypted: map['encrypted']);
-  }
+  external factory RTCHeaderExtension({String uri, String id, bool encrypted});
 
   /// The URI of the RTP header extension, as defined in RFC5285.
-  String uri;
+  external String get uri;
 
   /// The value put in the RTP packet to identify the header extension.
-  int id;
+  external int get id;
 
   /// Whether the header extension is encrypted or not.
-  bool encrypted;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'uri': uri,
-      'id': id,
-      'encrypted': encrypted,
-    };
-  }
+  external bool get encrypted;
 }
 
-class RTCRtpParameters {
-  RTCRtpParameters(this.transactionId, this.rtcp, this.headerExtensions,
-      this.encodings, this.codecs);
+@JS()
+@anonymous
+class RTCRtpEncodingParameters {
+  external factory RTCRtpEncodingParameters(
+      {List<RTCRtpEncoding> encodings,
+      List<RTCHeaderExtension> headerExtensions,
+      List<RTCRTPCodec> codecs,
+      RTCRTCPParameters rtcp});
 
-  factory RTCRtpParameters.fromMap(Map<dynamic, dynamic> map) {
-    var encodings = <RTCRtpEncoding>[];
-    dynamic encodingsMap = map['encodings'];
-    encodingsMap.forEach((params) {
-      encodings.add(RTCRtpEncoding.fromMap(params));
-    });
-    var headerExtensions = <RTCHeaderExtension>[];
-    dynamic headerExtensionsMap = map['headerExtensions'];
-    headerExtensionsMap.forEach((params) {
-      headerExtensions.add(RTCHeaderExtension.fromMap(params));
-    });
-    var codecs = <RTCRTPCodec>[];
-    dynamic codecsMap = map['codecs'];
-    codecsMap.forEach((params) {
-      codecs.add(RTCRTPCodec.fromMap(params));
-    });
-    var rtcp = RTCRTCPParameters.fromMap(map['rtcp']);
-    return RTCRtpParameters(
-        map['transactionId'], rtcp, headerExtensions, encodings, codecs);
-  }
+  external RTCRTCPParameters get rtcp;
 
-  String transactionId;
+  external List<RTCHeaderExtension> get headerExtensions;
 
-  RTCRTCPParameters rtcp;
+  external List<RTCRtpEncoding> get encodings;
 
-  List<RTCHeaderExtension> headerExtensions;
-
-  List<RTCRtpEncoding> encodings;
-
-  /// Codec parameters can't currently be changed between getParameters and
-  /// setParameters. Though in the future it will be possible to reorder them or
-  /// remove them.
-  List<RTCRTPCodec> codecs;
-
-  Map<String, dynamic> toMap() {
-    var headerExtensionsList = <dynamic>[];
-    headerExtensions.forEach((params) {
-      headerExtensionsList.add(params.toMap());
-    });
-    var encodingList = <dynamic>[];
-    encodings.forEach((params) {
-      encodingList.add(params.toMap());
-    });
-    var codecsList = <dynamic>[];
-    codecs.forEach((params) {
-      codecsList.add(params.toMap());
-    });
-    return {
-      'transactionId': transactionId,
-      'rtcp': rtcp.toMap(),
-      'headerExtensions': headerExtensionsList,
-      'encodings': encodingList,
-      'codecs': codecsList,
-    };
-  }
+  external List<RTCRTPCodec> get codecs;
 }

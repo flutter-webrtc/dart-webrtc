@@ -110,6 +110,7 @@ class RTCPeerConnectionJs {
   external RTCRtpTransceiver addTransceiver(
       dynamic trackOrKind, RTCRtpTransceiverInit init);
   external Map<String, RTCStats> getStats();
+  external void restartIce();
   external set onaddstream(Function(MediaStreamEvent stream) func);
   external set onremovestream(Function(MediaStreamJs stream) func);
   external set onconnectionstatechange(Function(dynamic state) func);
@@ -117,9 +118,9 @@ class RTCPeerConnectionJs {
   external set onicegatheringstatechange(Function(dynamic state) func);
   external set onnegotiationneeded(Function(Event event) func);
   external set onsignalingstatechange(Function(dynamic state) func);
-  external set ondatachannel(Function(RTCDataChannel channel) func);
+  external set ondatachannel(Function(RTCDataChannelEvent event) func);
   external set onicecandidate(Function(RTCPeerConnectionIceEvent event) func);
-  external set ontrack(RTCTrackEvent event);
+  external set ontrack(Function(RTCTrackEvent event) func);
   external void close();
 }
 
@@ -156,6 +157,17 @@ class RTCPeerConnection {
   void addStream(MediaStream stream) => _internal.addStream(stream.js);
 
   void removeStream(MediaStream stream) => _internal.removeStream(stream.js);
+
+  Future<RTCRtpTransceiver> addTransceiver(
+      {String kind, MediaStreamTrack track, RTCRtpTransceiverInit init}) async {
+    try {
+      dynamic kindOrTrack = kind ?? track;
+      var transceiver = _internal.addTransceiver(kindOrTrack, init);
+      return transceiver;
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<RTCRtpSender> addTrack(
       {MediaStreamTrack track, List<MediaStreamJs> streams}) async {
@@ -252,7 +264,7 @@ class RTCPeerConnection {
         func(iceGatheringStateforString(_internal.iceGatheringState));
       });
 
-  set ondatachannel(Function(RTCDataChannel channel) func) =>
+  set ondatachannel(Function(RTCDataChannelEvent event) func) =>
       _internal.ondatachannel = allowInterop(func);
 
   set onicecandidate(Function(RTCPeerConnectionIceEvent event) func) =>

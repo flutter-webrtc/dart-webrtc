@@ -5,9 +5,6 @@ import 'package:js/js.dart';
 import '../dart_webrtc.dart';
 
 @JS()
-class RTCRtpEncodingParameters {}
-
-@JS()
 @anonymous
 class RTCRtpTransceiverInit {
   external factory RTCRtpTransceiverInit(

@@ -312,8 +312,8 @@ class Signaling {
       _remoteStreams.removeWhere((it) => it.id == stream.id);
     };
 
-    pc.ondatachannel = (RTCDataChannel channel) {
-      _addDataChannel(id, channel);
+    pc.ondatachannel = (RTCDataChannelEvent event) {
+      _addDataChannel(id, event.channel);
     };
 
     return pc;

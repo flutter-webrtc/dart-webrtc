@@ -9,7 +9,7 @@ class RTCRtpSender {
   external factory RTCRtpSender();
   external MediaStreamTrack get track;
   external RTCDTMFSender get dtmf;
-  external dynamic getParameters();
+  external RTCRtpEncodingParameters getParameters();
   external dynamic getStats();
   external void setStreams(List<MediaStream> streams);
   external void replaceTrack(MediaStreamTrack track);

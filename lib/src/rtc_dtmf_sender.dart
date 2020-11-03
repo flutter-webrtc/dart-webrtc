@@ -10,10 +10,7 @@ class RTCDTMFToneChangeEvent {
 }
 
 @JS('RTCDTMFSender')
-@anonymous
 class RTCDTMFSender {
-  external factory RTCDTMFSender();
-
   external void insertDTMF(String tones, int duration, int interToneGap);
 
   external String get toneBuffer;

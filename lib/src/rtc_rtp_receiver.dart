@@ -8,7 +8,7 @@ import '../dart_webrtc.dart';
 class RTCRtpReceiver {
   external factory RTCRtpReceiver();
   external MediaStreamTrack get track;
-  external dynamic getParameters();
-  external dynamic getStats();
+  external RTCRtpEncodingParameters getParameters();
+  external RTCStatsReport getStats();
   external static dynamic getCapabilities();
 }

@@ -28,6 +28,12 @@ List<void Function()> testFunctions = <void Function()>[
             mediaStream.getTrackById(mediaStream.getVideoTracks()[0].id);
         expect(track.id, mediaStream.getVideoTracks()[0].id);
       }),
+  () => test('MediaStream.removeTrack()', () {
+        var track =
+            mediaStream.getTrackById(mediaStream.getVideoTracks()[0].id);
+        mediaStream.removeTrack(track);
+        expect(mediaStream.getVideoTracks().length, 0);
+      }),
   () => test('MediaStream.close()', () {
         mediaStream.getTracks().forEach((element) {
           element.stop();
