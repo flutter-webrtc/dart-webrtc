@@ -17,9 +17,14 @@ class MediaStreamJs {
   external List<MediaStreamTrack> getAudioTracks();
   external List<MediaStreamTrack> getVideoTracks();
   external MediaStreamTrack getTrackById(String id);
-  external set onaddtrack(Function(MediaStreamTrack track) func);
+  external set onaddtrack(Function(MediaStreamTrackEvent event) func);
   external set oninactive(Function(Event vent) func);
-  external set onremovetrack(Function(MediaStreamTrack track) func);
+  external set onremovetrack(Function(MediaStreamTrackEvent event) func);
+}
+
+@JS()
+class MediaStreamTrackEvent {
+  external MediaStreamTrack get track;
 }
 
 class MediaStream {
@@ -35,10 +40,10 @@ class MediaStream {
   List<MediaStreamTrack> getAudioTracks() => _js.getAudioTracks();
   List<MediaStreamTrack> getVideoTracks() => _js.getVideoTracks();
   MediaStreamTrack getTrackById(String id) => _js.getTrackById(id);
-  set onaddtrack(Function(MediaStreamTrack track) func) =>
+  set onaddtrack(Function(MediaStreamTrackEvent event) func) =>
       _js.onaddtrack = allowInterop(func);
   set oninactive(Function(Event vent) func) =>
       _js.oninactive = allowInterop(func);
-  set onremovetrack(Function(MediaStreamTrack track) func) =>
+  set onremovetrack(Function(MediaStreamTrackEvent event) func) =>
       _js.onremovetrack = allowInterop(func);
 }

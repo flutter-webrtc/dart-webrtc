@@ -307,9 +307,9 @@ class Signaling {
       onAddRemoteStream?.call(event.stream);
     };
 
-    pc.onremovestream = (MediaStream stream) {
-      onRemoveRemoteStream?.call(stream);
-      _remoteStreams.removeWhere((it) => it.id == stream.id);
+    pc.onremovestream = (MediaStreamEvent event) {
+      onRemoveRemoteStream?.call(event.stream);
+      _remoteStreams.removeWhere((it) => it.id == event.stream.id);
     };
 
     pc.ondatachannel = (RTCDataChannelEvent event) {

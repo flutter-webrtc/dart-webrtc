@@ -1,11 +1,11 @@
 @JS()
 library dart_webrtc;
 
-import 'dart:html';
-
 import 'package:js/js.dart';
+import 'package:js/js_util.dart';
 
-import '../dart_webrtc.dart';
+import 'event.dart';
+import 'media_stream.dart';
 
 @JS()
 @anonymous
@@ -44,7 +44,9 @@ class MediaDevices {
     }
   }
 
-  Future<MediaStream> getUserMedia({MediaStreamConstraints constraints}) async {
+  Future<MediaStream> getUserMedia(
+      MediaStreamConstraints mediaStreamConstraints,
+      {MediaStreamConstraints constraints}) async {
     try {
       var jsStream =
           await promiseToFuture<MediaStreamJs>(_js.getUserMedia(constraints));

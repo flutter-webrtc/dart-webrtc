@@ -1,14 +1,21 @@
 @JS()
 library dart_webrtc;
 
-import 'dart:html';
-
 import 'package:js/js.dart';
+import 'package:js/js_util.dart';
 
-import '../dart_webrtc.dart';
-import 'enum.dart';
+import 'enums.dart';
+import 'event.dart';
 import 'media_stream.dart';
+import 'media_stream_track.dart';
+import 'rtc_data_channel.dart';
+import 'rtc_dtmf_sender.dart';
+import 'rtc_ice_candidate.dart';
+import 'rtc_rtp_receiver.dart';
 import 'rtc_rtp_sender.dart';
+import 'rtc_rtp_transceiver.dart';
+import 'rtc_session_description.dart';
+import 'rtc_stats_resport.dart';
 import 'rtc_track_event.dart';
 
 @JS()
@@ -92,8 +99,11 @@ class RTCPeerConnectionJs {
   external dynamic get remoteDescription;
   external bool get canTrickleIceCandidates;
   external RTCConfiguration getConfiguration();
+  external void setConfiguration(RTCConfiguration configuration);
   external void addStream(MediaStreamJs stream);
   external void removeStream(MediaStreamJs stream);
+  external List<MediaStreamJs> getLocalStreams();
+  external List<MediaStreamJs> getRemoteStreams();
   external RTCRtpSender addTrack(
       MediaStreamTrack track, List<MediaStreamJs> streams);
   external void removeTrack(RTCRtpSender sender);
@@ -111,8 +121,9 @@ class RTCPeerConnectionJs {
       dynamic trackOrKind, RTCRtpTransceiverInit init);
   external Map<String, RTCStats> getStats();
   external void restartIce();
+  external RTCDTMFSender createDTMFSender();
   external set onaddstream(Function(MediaStreamEvent stream) func);
-  external set onremovestream(Function(MediaStreamJs stream) func);
+  external set onremovestream(Function(MediaStreamEvent stream) func);
   external set onconnectionstatechange(Function(dynamic state) func);
   external set oniceconnectionstatechange(Function(dynamic state) func);
   external set onicegatheringstatechange(Function(dynamic state) func);
@@ -129,6 +140,19 @@ class RTCPeerConnection {
     _internal = RTCPeerConnectionJs(configuration);
   }
   RTCPeerConnectionJs _internal;
+
+  RTCConfiguration getConfiguration() => _internal.getConfiguration();
+
+  RTCDTMFSender createDTMFSender() => _internal.createDTMFSender();
+
+  List<RTCRtpSender> get senders => _internal.getSenders();
+
+  List<RTCRtpReceiver> get receivers => _internal.getReceivers();
+
+  List<RTCRtpTransceiver> get transceivers => _internal.getTransceivers();
+
+  void setConfiguration(RTCConfiguration configuration) =>
+      _internal.setConfiguration(configuration);
 
   RTCPeerConnectionState get connectionState =>
       peerConnectionStateForString(_internal.connectionState);
@@ -151,6 +175,12 @@ class RTCPeerConnection {
     var desc = _internal.remoteDescription;
     return RTCSessionDescription(type: desc.type, sdp: desc.sdp);
   }
+
+  Map<String, RTCStats> getStats() => _internal.getStats();
+
+  List<MediaStreamJs> getLocalStreams() => _internal.getLocalStreams();
+
+  List<MediaStreamJs> getRemoteStreams() => _internal.getRemoteStreams();
 
   bool get canTrickleIceCandidates => _internal.canTrickleIceCandidates;
 
@@ -239,10 +269,8 @@ class RTCPeerConnection {
   set onaddstream(Function(MediaStreamEvent stream) func) =>
       _internal.onaddstream = allowInterop(func);
 
-  set onremovestream(Function(MediaStream stream) func) =>
-      _internal.onremovestream = allowInterop((MediaStreamJs jsStream) {
-        func(MediaStream(jsStream));
-      });
+  set onremovestream(Function(MediaStreamEvent stream) func) =>
+      _internal.onremovestream = allowInterop(func);
 
   set onconnectionstatechange(Function(RTCPeerConnectionState state) func) =>
       _internal.onconnectionstatechange = allowInterop((dynamic state) {
@@ -269,6 +297,9 @@ class RTCPeerConnection {
 
   set onicecandidate(Function(RTCPeerConnectionIceEvent event) func) =>
       _internal.onicecandidate = allowInterop(func);
+
+  set onnegotiationneeded(Function(Event event) func) =>
+      _internal.onnegotiationneeded = allowInterop(func);
 
   set ontrack(Function(RTCTrackEvent event) func) =>
       _internal.ontrack = allowInterop(func);

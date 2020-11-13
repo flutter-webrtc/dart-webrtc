@@ -1,8 +1,9 @@
 @JS()
 library dart_webrtc;
 
-import 'package:dart_webrtc/src/enum.dart';
 import 'package:js/js.dart';
+
+import 'enums.dart';
 
 @JS()
 class RTCDataChannel {
@@ -18,6 +19,7 @@ class RTCDataChannel {
   external String get readyState;
 
   external bool send(dynamic data);
+  external bool sendByteBuffer(dynamic data);
   external void close();
   external set onopen(Function() func);
   external set onbufferedamountlow(Function() func);

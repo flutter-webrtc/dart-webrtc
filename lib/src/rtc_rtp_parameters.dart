@@ -76,6 +76,10 @@ class RTCRtpEncoding {
   /// SSRC to be used by this encoding.
   /// Can't be changed between getParameters/setParameters.
   external int get ssrc;
+
+  Map<String, dynamic> toMap() {
+    return {};
+  }
 }
 
 @JS()
@@ -109,4 +113,14 @@ class RTCRtpEncodingParameters {
   external List<RTCRtpEncoding> get encodings;
 
   external List<RTCRTPCodec> get codecs;
+}
+
+Map<String, dynamic> rtpEncodingParametersToMap(
+    RTCRtpEncodingParameters parameters) {
+  return {};
+}
+
+RTCRtpEncodingParameters rtpEncodingParametersFromMap(
+    Map<String, dynamic> map) {
+  return RTCRtpEncodingParameters();
 }

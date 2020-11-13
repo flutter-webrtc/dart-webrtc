@@ -140,6 +140,20 @@ RTCSignalingState signalingStateForString(String state) {
   return RTCSignalingState.RTCSignalingStateClosed;
 }
 
+RTCDataChannelState rtcDataChannelStateForString(String state) {
+  switch (state) {
+    case 'connecting':
+      return RTCDataChannelState.RTCDataChannelConnecting;
+    case 'open':
+      return RTCDataChannelState.RTCDataChannelOpen;
+    case 'closing':
+      return RTCDataChannelState.RTCDataChannelClosing;
+    case 'closed':
+      return RTCDataChannelState.RTCDataChannelClosed;
+  }
+  return RTCDataChannelState.RTCDataChannelClosed;
+}
+
 RTCPeerConnectionState peerConnectionStateForString(String state) {
   switch (state) {
     case 'new':
@@ -157,18 +171,4 @@ RTCPeerConnectionState peerConnectionStateForString(String state) {
   }
 
   return RTCPeerConnectionState.RTCPeerConnectionStateClosed;
-}
-
-RTCDataChannelState rtcDataChannelStateForString(String state) {
-  switch (state) {
-    case 'connecting':
-      return RTCDataChannelState.RTCDataChannelConnecting;
-    case 'open':
-      return RTCDataChannelState.RTCDataChannelOpen;
-    case 'closing':
-      return RTCDataChannelState.RTCDataChannelClosing;
-    case 'closed':
-      return RTCDataChannelState.RTCDataChannelClosed;
-  }
-  return RTCDataChannelState.RTCDataChannelClosed;
 }

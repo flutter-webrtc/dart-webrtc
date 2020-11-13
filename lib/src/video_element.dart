@@ -5,7 +5,7 @@ import 'dart:html' as html;
 
 import 'package:js/js.dart';
 
-import '../dart_webrtc.dart';
+import 'media_stream.dart';
 
 class RTCVideoElement {
   RTCVideoElement() {
@@ -36,6 +36,20 @@ class RTCVideoElement {
     _rtc.srcObject = _stream?.js;
   }
 
+  int get videoWidth => _html.videoWidth;
+
+  int get videoHeight => _html.videoHeight;
+
+  Stream<html.Event> get onEnded => _html.onEnded;
+
+  Stream<html.Event> get onError => _html.onError;
+
+  Stream<html.Event> get onCanPlay => _html.onCanPlay;
+
+  Stream<html.Event> get onResize => _html.onResize;
+
+  dynamic get error => _html.error;
+
   MediaStream get srcObject => _stream;
 
   set muted(bool v) => _html.muted = v;
@@ -46,6 +60,10 @@ class RTCVideoElement {
 
   set controls(bool v) => _html.controls = v;
   bool get controls => _html.controls;
+
+  void load() => _html.load();
+
+  void removeAttribute(String name) => _html.removeAttribute(name);
 }
 
 @JS('Element')

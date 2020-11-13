@@ -3,7 +3,10 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-import '../dart_webrtc.dart';
+import 'media_stream.dart';
+import 'media_stream_track.dart';
+import 'rtc_rtp_receiver.dart';
+import 'rtc_rtp_transceiver.dart';
 
 @JS('RTCTrackEvent')
 class RTCTrackEvent {

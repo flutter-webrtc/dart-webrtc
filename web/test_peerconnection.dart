@@ -1,7 +1,6 @@
 import 'dart:html';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:dart_webrtc/src/enum.dart';
 import 'package:test/test.dart';
 
 RTCPeerConnection pc1;
@@ -115,11 +114,15 @@ List<void Function()> testFunctions = <void Function()>[
         expect(pc1.signalingState, RTCSignalingState.RTCSignalingStateStable);
       }),
   () => test('RTCPeerConnection.localDescription()', () async {
+        expect(pc1.localDescription.type, 'offer');
         expect(pc1.localDescription.sdp.isNotEmpty, true);
+        expect(pc2.localDescription.type, 'answer');
         expect(pc2.localDescription.sdp.isNotEmpty, true);
       }),
   () => test('RTCPeerConnection.remoteDescription()', () async {
+        expect(pc1.remoteDescription.type, 'answer');
         expect(pc1.remoteDescription.sdp.isNotEmpty, true);
+        expect(pc2.remoteDescription.type, 'offer');
         expect(pc2.remoteDescription.sdp.isNotEmpty, true);
       }),
   () => test('RTCPeerConnection.close()', () async {

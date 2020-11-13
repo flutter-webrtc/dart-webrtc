@@ -1,5 +1,7 @@
+export 'src/enums.dart';
 export 'src/event.dart';
 export 'src/media_devices.dart';
+export 'src/media_recorder.dart';
 export 'src/media_stream.dart';
 export 'src/media_stream_track.dart';
 export 'src/navigator.dart';
