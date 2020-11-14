@@ -44,9 +44,7 @@ class MediaDevices {
     }
   }
 
-  Future<MediaStream> getUserMedia(
-      MediaStreamConstraints mediaStreamConstraints,
-      {MediaStreamConstraints constraints}) async {
+  Future<MediaStream> getUserMedia({MediaStreamConstraints constraints}) async {
     try {
       var jsStream =
           await promiseToFuture<MediaStreamJs>(_js.getUserMedia(constraints));

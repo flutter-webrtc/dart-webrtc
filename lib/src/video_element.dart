@@ -2,9 +2,7 @@
 library dart_webrtc;
 
 import 'dart:html' as html;
-
 import 'package:js/js.dart';
-
 import 'media_stream.dart';
 
 class RTCVideoElement {
@@ -14,14 +12,11 @@ class RTCVideoElement {
       ..muted = false
       ..controls = false
       ..style.objectFit = 'contain'
-      ..style.border = 'none'
-      ..id = 'dart-webrtc-video-${_idx++}';
+      ..style.border = 'none';
 
     // Allows Safari iOS to play the video inline
     _html.setAttribute('playsinline', 'true');
   }
-  static int _idx = 0;
-  Element _rtc;
   MediaStream _stream;
 
   html.VideoElement _html;
@@ -32,8 +27,7 @@ class RTCVideoElement {
 
   set srcObject(MediaStream stream) {
     _stream = stream;
-    _rtc = querySelector('#${_html.id}');
-    _rtc.srcObject = _stream?.js;
+    _html.srcObject = convertToHtmlMediaStream(stream);
   }
 
   int get videoWidth => _html.videoWidth;
@@ -66,10 +60,10 @@ class RTCVideoElement {
   void removeAttribute(String name) => _html.removeAttribute(name);
 }
 
-@JS('Element')
-abstract class Element {
-  external set srcObject(MediaStreamJs stream);
+html.MediaStream convertToHtmlMediaStream(MediaStream jsStream) {
+  var htmlStream = html.MediaStream();
+  jsStream.getTracks().forEach((track) {
+    htmlStream.addTrack(track as html.MediaStreamTrack);
+  });
+  return htmlStream;
 }
-
-@JS('window.document.querySelector')
-external Element querySelector(String id);

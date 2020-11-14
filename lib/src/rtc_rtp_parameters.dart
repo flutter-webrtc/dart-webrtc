@@ -76,10 +76,6 @@ class RTCRtpEncoding {
   /// SSRC to be used by this encoding.
   /// Can't be changed between getParameters/setParameters.
   external int get ssrc;
-
-  Map<String, dynamic> toMap() {
-    return {};
-  }
 }
 
 @JS()

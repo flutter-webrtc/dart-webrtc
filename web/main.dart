@@ -9,17 +9,19 @@ import 'test_peerconnection.dart' as peerconnection_tests;
 import 'test_video_element.dart' as video_elelment_tests;
 
 void main() {
+  /*
   video_elelment_tests.testFunctions.forEach((Function func) => func());
   media_devices_tests.testFunctions.forEach((Function func) => func());
   media_stream_tests.testFunctions.forEach((Function func) => func());
   media_stream_track_tests.testFunctions.forEach((Function func) => func());
   peerconnection_tests.testFunctions.forEach((Function func) => func());
+  */
+  loopBackTest();
 }
 
 void loopBackTest() async {
   var local = html.document.querySelector('#local');
-  RTCVideoElement localVideo;
-  localVideo = RTCVideoElement();
+  var localVideo = RTCVideoElement();
   local.append(localVideo.htmlElement);
 
   var list = await navigator.mediaDevices.enumerateDevices();

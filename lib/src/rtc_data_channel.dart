@@ -3,8 +3,6 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-import 'enums.dart';
-
 @JS()
 class RTCDataChannel {
   external int get id;
@@ -27,8 +25,6 @@ class RTCDataChannel {
   external set onclosing(Function() func);
   external set onclose(Function() func);
   external set onmessage(Function(RTCDataChannelMessage message) func);
-
-  RTCDataChannelState get state => rtcDataChannelStateForString(readyState);
 }
 
 @JS()
