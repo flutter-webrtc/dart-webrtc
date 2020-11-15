@@ -24,7 +24,7 @@ typedef SignalingStateCallback = void Function(SignalingState state);
 typedef StreamStateCallback = void Function(MediaStream stream);
 typedef OtherEventCallback = void Function(dynamic event);
 typedef DataChannelMessageCallback = void Function(
-    RTCDataChannel dc, RTCDataChannelMessage data);
+    RTCDataChannel dc, MessageEvent data);
 typedef DataChannelCallback = void Function(RTCDataChannel dc);
 
 class Signaling {
@@ -320,8 +320,8 @@ class Signaling {
   }
 
   void _addDataChannel(id, RTCDataChannel channel) {
-    channel.onmessage = (RTCDataChannelMessage data) {
-      onDataChannelMessage?.call(channel, data);
+    channel.onmessage = (MessageEvent event) {
+      onDataChannelMessage?.call(channel, event.data);
     };
     _dataChannels[id] = channel;
     onDataChannel?.call(channel);

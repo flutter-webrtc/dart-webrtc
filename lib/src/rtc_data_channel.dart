@@ -2,6 +2,7 @@
 library dart_webrtc;
 
 import 'package:js/js.dart';
+import 'event.dart';
 
 @JS()
 class RTCDataChannel {
@@ -15,20 +16,18 @@ class RTCDataChannel {
   external bool get ordered;
   external String get protocol;
   external String get readyState;
-
   external bool send(dynamic data);
-  external bool sendByteBuffer(dynamic data);
   external void close();
-  external set onopen(Function() func);
-  external set onbufferedamountlow(Function() func);
-  external set onerror(Function() func);
-  external set onclosing(Function() func);
-  external set onclose(Function() func);
-  external set onmessage(Function(RTCDataChannelMessage message) func);
+  external set onopen(Function(Event) func);
+  external set onbufferedamountlow(Function(Event) func);
+  external set onerror(Function(Event) func);
+  external set onclosing(Function(Event) func);
+  external set onclose(Function(Event) func);
+  external set onmessage(Function(MessageEvent message) func);
 }
 
 @JS()
-class RTCDataChannelMessage {
+class MessageEvent {
   external dynamic get data;
 }
 
