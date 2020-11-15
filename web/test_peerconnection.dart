@@ -35,13 +35,13 @@ void addStateCallbacks(RTCPeerConnection pc, String title) {
         '$title: ontrack => ${event.track.id}, \nkind =>  ${event.track.kind}\nstream.length => ${event.streams.length}');
     var params = event.receiver.getParameters();
     print('reducedSize => ${params.rtcp.reducedSize}');
-    var stats =
-        await promiseToFuture<RTCStatsReport>(event.receiver.getStats());
+    var stats = RTCStatsReport(
+        await promiseToFuture<RTCStatsReportJs>(event.receiver.getStats()));
     print('getStats => ');
-    stats.forEach((RTCStats report) {
+    stats.values.forEach((String key, RTCStats stats) {
       print(
-          '   type => ${report.type}, id => ${report.id}, timestamp => ${report.timestamp}');
-      print('        report => ${report.toString()}');
+          '   type => ${stats.type}, id => ${stats.id}, timestamp => ${stats.timestamp}');
+      print('        report => ${stats.values.toString()}');
     });
   };
 }

@@ -119,7 +119,7 @@ class RTCPeerConnectionJs {
   external List<RTCRtpTransceiver> getTransceivers();
   external RTCRtpTransceiver addTransceiver(
       dynamic trackOrKind, RTCRtpTransceiverInit init);
-  external Map<String, RTCStats> getStats();
+  external RTCStatsReportJs getStats();
   external void restartIce();
   external RTCDTMFSender createDTMFSender();
   external set onaddstream(Function(MediaStreamEvent stream) func);
@@ -176,7 +176,15 @@ class RTCPeerConnection {
     return RTCSessionDescription(type: desc.type, sdp: desc.sdp);
   }
 
-  Map<String, RTCStats> getStats() => _internal.getStats();
+  Future<RTCStatsReport> getStats() async {
+    try {
+      var jsStats =
+          await promiseToFuture<RTCStatsReportJs>(_internal.getStats());
+      return RTCStatsReport(jsStats);
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   List<MediaStreamJs> getLocalStreams() => _internal.getLocalStreams();
 

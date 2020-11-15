@@ -7,6 +7,7 @@ import 'media_stream.dart';
 import 'media_stream_track.dart';
 import 'rtc_dtmf_sender.dart';
 import 'rtc_rtp_parameters.dart';
+import 'rtc_stats_resport.dart';
 
 @JS('RTCRtpSender')
 class RTCRtpSender {
@@ -15,7 +16,7 @@ class RTCRtpSender {
   external RTCDTMFSender get dtmf;
   external RTCRtpEncodingParameters getParameters();
   external bool setParameters(RTCRtpEncodingParameters parameters);
-  external dynamic getStats();
+  external RTCStatsReportJs getStats();
   external void setStreams(List<MediaStream> streams);
   external void replaceTrack(MediaStreamTrack track);
   external static dynamic getCapabilities();

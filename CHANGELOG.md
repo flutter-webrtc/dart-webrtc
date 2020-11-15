@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+0.2.1
+
+* Fix getStats.
+
 0.2.0
 
 * Implement basic functions.

@@ -12,6 +12,6 @@ class RTCRtpReceiver {
   external factory RTCRtpReceiver();
   external MediaStreamTrack get track;
   external RTCRtpEncodingParameters getParameters();
-  external RTCStatsReport getStats();
+  external RTCStatsReportJs getStats();
   external static dynamic getCapabilities();
 }
