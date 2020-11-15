@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+0.2.0
+
+* Implement basic functions.
+
 0.1.0
 
 * First working version.
