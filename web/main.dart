@@ -2,12 +2,13 @@ import 'dart:html' as html;
 
 import 'package:dart_webrtc/dart_webrtc.dart';
 
+/*
 import 'test_media_devices.dart' as media_devices_tests;
 import 'test_media_stream.dart' as media_stream_tests;
 import 'test_media_stream_track.dart' as media_stream_track_tests;
 import 'test_peerconnection.dart' as peerconnection_tests;
 import 'test_video_element.dart' as video_elelment_tests;
-
+*/
 void main() {
   /*
   video_elelment_tests.testFunctions.forEach((Function func) => func());

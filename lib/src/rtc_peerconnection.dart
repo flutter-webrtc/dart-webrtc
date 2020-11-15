@@ -36,7 +36,12 @@ class RTCOfferOptions {
 @JS()
 @anonymous
 class RTCAnswerOptions {
-  external factory RTCAnswerOptions({bool voiceActivityDetection});
+  external factory RTCAnswerOptions(
+      {bool offerToReceiveAudio,
+      bool offerToReceiveVideo,
+      bool voiceActivityDetection});
+  external bool get offerToReceiveAudio;
+  external bool get offerToReceiveVideo;
   external bool get voiceActivityDetection;
 }
 
@@ -49,18 +54,14 @@ class MediaStreamEvent {
 @JS()
 @anonymous
 class RTCConfiguration {
-  external factory RTCConfiguration({
-    List<RTCIceServer> iceServers,
-    String rtcpMuxPolicy,
-    String iceTransportPolicy,
-    String bundlePolicy,
-    String peerIdentity,
-    int iceCandidatePoolSize,
-  });
+  external factory RTCConfiguration(
+      {List<RTCIceServer> iceServers,
+      String iceTransportPolicy,
+      String bundlePolicy,
+      String peerIdentity,
+      String sdpSemantics,
+      int iceCandidatePoolSize});
   external List<RTCIceServer> get iceServers;
-
-  ///Optional: 'negotiate' or 'require'
-  external String get rtcpMuxPolicy;
 
   ///Optional: 'relay' or 'all'
   external String get iceTransportPolicy;
@@ -75,6 +76,9 @@ class RTCConfiguration {
 
   ///Optional: 'balanced' | 'max-compat' | 'max-bundle'
   external String get bundlePolicy;
+
+  /// 'plan-b' | 'unified-plan'
+  external String get sdpSemantics;
 }
 
 @JS()
@@ -104,8 +108,7 @@ class RTCPeerConnectionJs {
   external void removeStream(MediaStreamJs stream);
   external List<MediaStreamJs> getLocalStreams();
   external List<MediaStreamJs> getRemoteStreams();
-  external RTCRtpSender addTrack(
-      MediaStreamTrack track, List<MediaStreamJs> streams);
+  external RTCRtpSender addTrack(MediaStreamTrack track, MediaStreamJs stream);
   external void removeTrack(RTCRtpSender sender);
   external dynamic setLocalDescription(RTCSessionDescription desc);
   external dynamic setRemoteDescription(RTCSessionDescription desc);
@@ -208,11 +211,9 @@ class RTCPeerConnection {
   }
 
   Future<RTCRtpSender> addTrack(
-      {MediaStreamTrack track, List<MediaStreamJs> streams}) async {
+      {MediaStreamTrack track, MediaStreamJs stream}) async {
     try {
-      var sender = await promiseToFuture<RTCRtpSender>(
-          _internal.addTrack(track, streams));
-      return sender;
+      return _internal.addTrack(track, stream);
     } catch (e) {
       rethrow;
     }
@@ -238,7 +239,7 @@ class RTCPeerConnection {
 
   Future<void> addIceCandidate(RTCIceCandidate candidate) async {
     try {
-      _internal.addIceCandidate(candidate);
+      await promiseToFuture<void>(_internal.addIceCandidate(candidate));
     } catch (e) {
       rethrow;
     }

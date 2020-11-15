@@ -113,10 +113,82 @@ class RTCRtpEncodingParameters {
 
 Map<String, dynamic> rtpEncodingParametersToMap(
     RTCRtpEncodingParameters parameters) {
-  return {};
+  return {
+    'rtcp': rtcpParametersToMap(parameters.rtcp),
+    'headerExtensions': parameters.headerExtensions
+        .map((e) => headerExtensionToMap(e))
+        .toList(),
+    'encodings': parameters.encodings.map((e) => rtpEncodingToMap(e)).toList(),
+    'codecs': parameters.codecs.map((e) => rtcCodecToMap(e)).toList(),
+  };
 }
 
 RTCRtpEncodingParameters rtpEncodingParametersFromMap(
     Map<String, dynamic> map) {
-  return RTCRtpEncodingParameters();
+  return RTCRtpEncodingParameters(
+      rtcp: rtcpParametersFromMap(map['rtcp']),
+      codecs: (map['codecs'] as List).map((e) => rtcCodecFromMap(e)).toList(),
+      encodings:
+          (map['encodings'] as List).map((e) => rtpEncodingFromMap(e)).toList(),
+      headerExtensions: (map['headerExtensions'] as List)
+          .map((e) => headerExtensionFromMap(e))
+          .toList());
+}
+
+Map<String, dynamic> rtpEncodingToMap(RTCRtpEncoding encoding) {
+  return {
+    'rid': encoding.rid,
+    'active': encoding.active,
+    'maxBitrateBps': encoding.maxBitrateBps,
+    'minBitrateBps': encoding.minBitrateBps,
+    'maxFramerate': encoding.maxFramerate,
+    'numTemporalLayers': encoding.numTemporalLayers,
+    'scaleResolutionDownBy': encoding.scaleResolutionDownBy,
+    'ssrc': encoding.ssrc
+  };
+}
+
+RTCRtpEncoding rtpEncodingFromMap(Map<String, dynamic> map) {
+  return RTCRtpEncoding(
+      rid: map['rid'],
+      active: map['active'],
+      maxBitrateBps: map['maxBitrateBps'],
+      minBitrateBps: map['minBitrateBps'],
+      numTemporalLayers: map['numTemporalLayers'],
+      scaleResolutionDownBy: map['scaleResolutionDownBy'],
+      ssrc: map['ssrc']);
+}
+
+Map<String, dynamic> rtcCodecToMap(RTCRTPCodec codec) {
+  return {
+    'payloadType': codec.payloadType,
+    'name': codec.name,
+    'kind': codec.kind,
+    'clockRate': codec.clockRate,
+    'numChannels': codec.numChannels,
+    'parameters': codec.parameters
+  };
+}
+
+RTCRTPCodec rtcCodecFromMap(Map<String, dynamic> map) {
+  return RTCRTPCodec(
+      payloadType: map['payloadType'],
+      name: map['name'],
+      kind: map['kind'],
+      clockRate: map['clockRate'],
+      numChannels: map['numChannels'],
+      parameters: map['parameters']);
+}
+
+Map<String, dynamic> headerExtensionToMap(RTCHeaderExtension headerExtension) {
+  return {
+    'uri': headerExtension.uri,
+    'id': headerExtension.id,
+    'encrypted': headerExtension.encrypted
+  };
+}
+
+RTCHeaderExtension headerExtensionFromMap(Map<String, dynamic> map) {
+  return RTCHeaderExtension(
+      encrypted: map['encrypted'], id: map['id'], uri: map['uri']);
 }

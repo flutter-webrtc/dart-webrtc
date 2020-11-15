@@ -17,7 +17,7 @@ class RTCRtpSender {
   external RTCRtpEncodingParameters getParameters();
   external bool setParameters(RTCRtpEncodingParameters parameters);
   external RTCStatsReportJs getStats();
-  external void setStreams(List<MediaStream> streams);
+  external void setStreams(List<MediaStreamJs> streams);
   external void replaceTrack(MediaStreamTrack track);
   external static dynamic getCapabilities();
 }

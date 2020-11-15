@@ -30,7 +30,7 @@ class RTCStatsReport {
     }));
   }
   final RTCStatsReportJs _jsStats;
-  Map<String, RTCStats> _stats = {};
+  final Map<String, RTCStats> _stats = {};
 
   int get size => _jsStats.size;
 

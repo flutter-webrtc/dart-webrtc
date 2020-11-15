@@ -13,10 +13,10 @@ import 'rtc_rtp_sender.dart';
 class RTCRtpTransceiverInit {
   external factory RTCRtpTransceiverInit(
       {String direction,
-      List<MediaStream> streams,
+      List<MediaStreamJs> streams,
       List<RTCRtpEncodingParameters> sendEncodings});
   external String get direction;
-  external List<MediaStream> get streams;
+  external List<MediaStreamJs> get streams;
   external List<RTCRtpEncodingParameters> get sendEncodings;
 }
 
@@ -24,6 +24,7 @@ class RTCRtpTransceiverInit {
 class RTCRtpTransceiver {
   external factory RTCRtpTransceiver();
   external String get direction;
+  external set direction(String dir);
   external String get mid;
   external RTCRtpReceiver get receiver;
   external RTCRtpSender get sender;

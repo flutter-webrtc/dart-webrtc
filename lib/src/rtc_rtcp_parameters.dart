@@ -14,3 +14,11 @@ class RTCRTCPParameters {
   /// Whether reduced size RTCP is configured or compound RTCP
   external bool get reducedSize;
 }
+
+Map<String, dynamic> rtcpParametersToMap(RTCRTCPParameters parameters) {
+  return {'cname': parameters.cname, 'reducedSize': parameters.reducedSize};
+}
+
+RTCRTCPParameters rtcpParametersFromMap(Map<String, dynamic> map) {
+  return RTCRTCPParameters(cname: map['cnam'], reducedSize: map['reducedSize']);
+}

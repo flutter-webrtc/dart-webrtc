@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+0.2.2
+
+* Fix bug for unified-plan.
+
+
 0.2.1
 
 * Fix getStats.
