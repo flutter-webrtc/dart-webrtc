@@ -20,5 +20,6 @@ Map<String, dynamic> rtcpParametersToMap(RTCRTCPParameters parameters) {
 }
 
 RTCRTCPParameters rtcpParametersFromMap(Map<String, dynamic> map) {
-  return RTCRTCPParameters(cname: map['cnam'], reducedSize: map['reducedSize']);
+  return RTCRTCPParameters(
+      cname: map['cname'], reducedSize: map['reducedSize']);
 }

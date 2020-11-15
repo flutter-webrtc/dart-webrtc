@@ -97,7 +97,8 @@ class RTCHeaderExtension {
 @anonymous
 class RTCRtpEncodingParameters {
   external factory RTCRtpEncodingParameters(
-      {List<RTCRtpEncoding> encodings,
+      {String transactionId,
+      List<RTCRtpEncoding> encodings,
       List<RTCHeaderExtension> headerExtensions,
       List<RTCRTPCodec> codecs,
       RTCRTCPParameters rtcp});
@@ -106,14 +107,19 @@ class RTCRtpEncodingParameters {
 
   external List<RTCHeaderExtension> get headerExtensions;
 
+  external set encodings(List<RTCRtpEncoding> encodings);
+
   external List<RTCRtpEncoding> get encodings;
 
   external List<RTCRTPCodec> get codecs;
+
+  external String get transactionId;
 }
 
 Map<String, dynamic> rtpEncodingParametersToMap(
     RTCRtpEncodingParameters parameters) {
   return {
+    'transactionId': parameters.transactionId,
     'rtcp': rtcpParametersToMap(parameters.rtcp),
     'headerExtensions': parameters.headerExtensions
         .map((e) => headerExtensionToMap(e))
@@ -126,13 +132,23 @@ Map<String, dynamic> rtpEncodingParametersToMap(
 RTCRtpEncodingParameters rtpEncodingParametersFromMap(
     Map<String, dynamic> map) {
   return RTCRtpEncodingParameters(
-      rtcp: rtcpParametersFromMap(map['rtcp']),
-      codecs: (map['codecs'] as List).map((e) => rtcCodecFromMap(e)).toList(),
-      encodings:
-          (map['encodings'] as List).map((e) => rtpEncodingFromMap(e)).toList(),
-      headerExtensions: (map['headerExtensions'] as List)
-          .map((e) => headerExtensionFromMap(e))
-          .toList());
+      transactionId: map['transactionId'],
+      rtcp: map['rtcp'] != null
+          ? rtcpParametersFromMap(map['rtcp'])
+          : RTCRTCPParameters(),
+      codecs: map['codecs'] != null
+          ? (map['codecs'] as List).map((e) => rtcCodecFromMap(e)).toList()
+          : [],
+      encodings: map['codecs'] != null
+          ? (map['encodings'] as List)
+              .map((e) => rtpEncodingFromMap(e))
+              .toList()
+          : [],
+      headerExtensions: map['headerExtensions'] != null
+          ? (map['headerExtensions'] as List)
+              .map((e) => headerExtensionFromMap(e))
+              .toList()
+          : []);
 }
 
 Map<String, dynamic> rtpEncodingToMap(RTCRtpEncoding encoding) {
@@ -151,7 +167,7 @@ Map<String, dynamic> rtpEncodingToMap(RTCRtpEncoding encoding) {
 RTCRtpEncoding rtpEncodingFromMap(Map<String, dynamic> map) {
   return RTCRtpEncoding(
       rid: map['rid'],
-      active: map['active'],
+      active: map['active'] ?? true,
       maxBitrateBps: map['maxBitrateBps'],
       minBitrateBps: map['minBitrateBps'],
       numTemporalLayers: map['numTemporalLayers'],

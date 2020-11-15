@@ -1,10 +1,13 @@
 # Changelog
 
 --------------------------------------------
+0.2.3
+
+* Fix bug for simulcast.
+
 0.2.2
 
 * Fix bug for unified-plan.
-
 
 0.2.1
 
