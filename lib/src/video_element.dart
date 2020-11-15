@@ -27,7 +27,7 @@ class RTCVideoElement {
 
   set srcObject(MediaStream stream) {
     _stream = stream;
-    _html.srcObject = convertToHtmlMediaStream(stream);
+    _html.srcObject = stream.htmlStream;
   }
 
   int get videoWidth => _html.videoWidth;
@@ -58,12 +58,4 @@ class RTCVideoElement {
   void load() => _html.load();
 
   void removeAttribute(String name) => _html.removeAttribute(name);
-}
-
-html.MediaStream convertToHtmlMediaStream(MediaStream jsStream) {
-  var htmlStream = html.MediaStream();
-  jsStream.getTracks().forEach((track) {
-    htmlStream.addTrack(track as html.MediaStreamTrack);
-  });
-  return htmlStream;
 }

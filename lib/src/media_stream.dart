@@ -1,6 +1,7 @@
 @JS()
 library dart_webrtc;
 
+import 'dart:html' as html;
 import 'package:js/js.dart';
 
 import 'event.dart';
@@ -46,4 +47,5 @@ class MediaStream {
       _js.oninactive = allowInterop(func);
   set onremovetrack(Function(MediaStreamTrackEvent event) func) =>
       _js.onremovetrack = allowInterop(func);
+  html.MediaStream get htmlStream => _js.clone() as html.MediaStream;
 }
