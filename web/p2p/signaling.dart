@@ -304,11 +304,11 @@ class Signaling {
     };
 
     pc.onaddstream = (MediaStreamEvent event) {
-      onAddRemoteStream?.call(event.stream);
+      onAddRemoteStream?.call(MediaStream(event.stream));
     };
 
     pc.onremovestream = (MediaStreamEvent event) {
-      onRemoveRemoteStream?.call(event.stream);
+      onRemoveRemoteStream?.call(MediaStream(event.stream));
       _remoteStreams.removeWhere((it) => it.id == event.stream.id);
     };
 
