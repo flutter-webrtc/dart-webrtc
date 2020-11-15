@@ -258,9 +258,7 @@ class RTCPeerConnection {
   Future<RTCDataChannel> createDataChannel(
       {String label, RTCDataChannelInit init}) async {
     try {
-      var dc = await promiseToFuture<RTCDataChannel>(
-          _internal.createDataChannel(label, init));
-      return dc;
+      return _internal.createDataChannel(label, init);
     } catch (e) {
       rethrow;
     }
