@@ -43,7 +43,7 @@ class RTCAnswerOptions {
 @JS()
 class MediaStreamEvent {
   external factory MediaStreamEvent();
-  MediaStream stream;
+  MediaStreamJs stream;
 }
 
 @JS()
@@ -230,7 +230,7 @@ class RTCPeerConnection {
 
   Future<void> addIceCandidate(RTCIceCandidate candidate) async {
     try {
-      return promiseToFuture<dynamic>(_internal.addIceCandidate(candidate));
+      _internal.addIceCandidate(candidate);
     } catch (e) {
       rethrow;
     }

@@ -11,7 +11,7 @@ import 'rtc_rtp_transceiver.dart';
 @JS('RTCTrackEvent')
 class RTCTrackEvent {
   external RTCRtpReceiver get receiver;
-  external List<MediaStream> get streams;
+  external List<MediaStreamJs> get streams;
   external MediaStreamTrack get track;
   external RTCRtpTransceiver get transceiver;
 }
