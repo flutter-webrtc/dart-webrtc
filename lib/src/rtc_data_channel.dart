@@ -2,7 +2,7 @@
 library dart_webrtc;
 
 import 'package:js/js.dart';
-import 'event.dart';
+import 'event_js.dart';
 
 @JS()
 class RTCDataChannel {

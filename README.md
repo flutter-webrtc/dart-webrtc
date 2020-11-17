@@ -14,4 +14,5 @@ This library will be used for [flutter-webrtc](https://github.com/flutter-webrtc
 * `git clone https://github.com/flutter-webrtc/dart-webrtc && cd dart-webrtc`
 * `pub get`
 * `pub global activate webdev`
+* `pub run build_runner build`
 * `webdev serve --auto=refresh`

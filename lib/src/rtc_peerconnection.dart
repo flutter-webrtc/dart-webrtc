@@ -5,9 +5,9 @@ import 'package:js/js.dart';
 import 'package:js/js_util.dart';
 
 import 'enums.dart';
-import 'event.dart';
-import 'media_stream.dart';
-import 'media_stream_track.dart';
+import 'event_js.dart';
+import 'media_stream_js.dart';
+import 'media_stream_track_js.dart';
 import 'rtc_data_channel.dart';
 import 'rtc_dtmf_sender.dart';
 import 'rtc_ice_candidate.dart';
@@ -48,7 +48,7 @@ class RTCAnswerOptions {
 @JS()
 class MediaStreamEvent {
   external factory MediaStreamEvent();
-  MediaStreamJs stream;
+  MediaStream stream;
 }
 
 @JS()
@@ -104,11 +104,11 @@ class RTCPeerConnectionJs {
   external bool get canTrickleIceCandidates;
   external RTCConfiguration getConfiguration();
   external void setConfiguration(RTCConfiguration configuration);
-  external void addStream(MediaStreamJs stream);
-  external void removeStream(MediaStreamJs stream);
-  external List<MediaStreamJs> getLocalStreams();
-  external List<MediaStreamJs> getRemoteStreams();
-  external RTCRtpSender addTrack(MediaStreamTrack track, MediaStreamJs stream);
+  external void addStream(MediaStream stream);
+  external void removeStream(MediaStream stream);
+  external List<MediaStream> getLocalStreams();
+  external List<MediaStream> getRemoteStreams();
+  external RTCRtpSender addTrack(MediaStreamTrack track, MediaStream stream);
   external void removeTrack(RTCRtpSender sender);
   external dynamic setLocalDescription(RTCSessionDescription desc);
   external dynamic setRemoteDescription(RTCSessionDescription desc);
@@ -189,15 +189,15 @@ class RTCPeerConnection {
     }
   }
 
-  List<MediaStreamJs> getLocalStreams() => _internal.getLocalStreams();
+  List<MediaStream> getLocalStreams() => _internal.getLocalStreams();
 
-  List<MediaStreamJs> getRemoteStreams() => _internal.getRemoteStreams();
+  List<MediaStream> getRemoteStreams() => _internal.getRemoteStreams();
 
   bool get canTrickleIceCandidates => _internal.canTrickleIceCandidates;
 
-  void addStream(MediaStream stream) => _internal.addStream(stream.js);
+  void addStream(MediaStream stream) => _internal.addStream(stream);
 
-  void removeStream(MediaStream stream) => _internal.removeStream(stream.js);
+  void removeStream(MediaStream stream) => _internal.removeStream(stream);
 
   Future<RTCRtpTransceiver> addTransceiver(
       {String kind, MediaStreamTrack track, RTCRtpTransceiverInit init}) async {
@@ -211,7 +211,7 @@ class RTCPeerConnection {
   }
 
   Future<RTCRtpSender> addTrack(
-      {MediaStreamTrack track, MediaStreamJs stream}) async {
+      {MediaStreamTrack track, MediaStream stream}) async {
     try {
       return _internal.addTrack(track, stream);
     } catch (e) {

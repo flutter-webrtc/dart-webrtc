@@ -1,0 +1,20 @@
+targets:
+  $default:
+    builders:
+      js_wrapping_generator:
+        generate_for:
+          include:
+          - lib/src/*_js.dart
+      build_web_compilers|entrypoint:
+        release_options:
+          dart2js_args:
+            - --no-minify
+
+builders:
+  js_wrapping_generator:
+    import: "package:js_wrapping_generator/builder.dart"
+    builder_factories: ["jsWrappingBuilder"]
+    build_extensions: {".dart": [".js_wrapping_generator.g.part"]}
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]

@@ -3,7 +3,7 @@ library dart_webrtc;
 
 import 'dart:html' as html;
 import 'package:js/js.dart';
-import 'media_stream.dart';
+import 'media_stream_js.dart';
 
 class RTCVideoElement {
   RTCVideoElement() {
@@ -27,7 +27,7 @@ class RTCVideoElement {
 
   set srcObject(MediaStream stream) {
     _stream = stream;
-    _html.srcObject = stream.htmlStream;
+    _html.srcObject = stream.jsObject as html.MediaStream;
   }
 
   int get videoWidth => _html.videoWidth;

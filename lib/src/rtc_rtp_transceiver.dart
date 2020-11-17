@@ -3,7 +3,7 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-import 'media_stream.dart';
+import 'media_stream_js.dart';
 import 'rtc_rtp_parameters.dart';
 import 'rtc_rtp_receiver.dart';
 import 'rtc_rtp_sender.dart';
@@ -13,10 +13,10 @@ import 'rtc_rtp_sender.dart';
 class RTCRtpTransceiverInit {
   external factory RTCRtpTransceiverInit(
       {String direction,
-      List<MediaStreamJs> streams,
+      List<MediaStream> streams,
       List<RTCRtpEncodingParameters> sendEncodings});
   external String get direction;
-  external List<MediaStreamJs> get streams;
+  external List<MediaStream> get streams;
   external List<RTCRtpEncodingParameters> get sendEncodings;
 }
 

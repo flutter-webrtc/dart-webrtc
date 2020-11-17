@@ -10,6 +10,7 @@ import 'test_peerconnection.dart' as peerconnection_tests;
 import 'test_video_element.dart' as video_elelment_tests;
 */
 void main() {
+  //context.callMethod('alert', ['Hello from Dart!']);
   /*
   video_elelment_tests.testFunctions.forEach((Function func) => func());
   media_devices_tests.testFunctions.forEach((Function func) => func());
@@ -26,10 +27,16 @@ void loopBackTest() async {
   local.append(localVideo.htmlElement);
 
   var list = await navigator.mediaDevices.enumerateDevices();
+
+  print(list);
   list.forEach((e) {
     print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
   });
 
+  var stream = await navigator.mediaDevices.getUserMedia(
+      constraints: MediaStreamConstraints(audio: true, video: true));
+  print(stream.id);
+  /*
   var pc = RTCPeerConnection();
   print('connectionState: ${pc.connectionState}');
   pc.onaddstream = (MediaStreamEvent event) {};
@@ -37,10 +44,20 @@ void loopBackTest() async {
       constraints: MediaStreamConstraints(audio: true, video: true));
   /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/
   print('getDisplayMedia: stream.id => ${stream.id}');
-  stream.oninactive = (Event event) {
+  
+  pc.addStream(stream);
+  */
+
+  stream.oninactive = (event) {
     print('oninactive: stream.id => ${event.target.id}');
     localVideo.srcObject = null;
   };
-  pc.addStream(stream);
   localVideo.srcObject = stream;
+
+  var tracks = stream.getAudioTracks();
+
+  print(tracks);
+  print(tracks[0].enabled);
+  print(tracks[0].readyState);
+  tracks[0].enabled = false;
 }

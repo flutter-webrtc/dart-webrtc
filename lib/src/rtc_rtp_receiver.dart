@@ -3,7 +3,7 @@ library dart_webrtc;
 
 import 'package:js/js.dart';
 
-import 'media_stream_track.dart';
+import 'media_stream_track_js.dart';
 import 'rtc_rtp_parameters.dart';
 import 'rtc_stats_resport.dart';
 
