@@ -23,24 +23,25 @@ void main() {
 void loopBackTest() async {
   var local = html.document.querySelector('#local');
   var localVideo = RTCVideoElement();
-  local.append(localVideo.htmlElement);
+  local!.append(localVideo.htmlElement);
 
   var list = await navigator.mediaDevices.enumerateDevices();
   list.forEach((e) {
     print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
   });
 
-  var pc = RTCPeerConnection();
-  print('connectionState: ${pc.connectionState}');
-  pc.onaddstream = (MediaStreamEvent event) {};
-  var stream = await navigator.mediaDevices.getUserMedia(
-      constraints: MediaStreamConstraints(audio: true, video: true));
+  var pc = await createPeerConnection({});
+  pc.onAddStream = (MediaStream stream) {};
+  var stream =
+      await navigator.mediaDevices.getUserMedia({'audio': true, 'video': true});
   /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/
   print('getDisplayMedia: stream.id => ${stream.id}');
+  /*
   stream.oninactive = (Event event) {
     print('oninactive: stream.id => ${event.target.id}');
     localVideo.srcObject = null;
   };
-  pc.addStream(stream);
+  */
+  await pc.addStream(stream);
   localVideo.srcObject = stream;
 }

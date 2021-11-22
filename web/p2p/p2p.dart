@@ -23,13 +23,13 @@ void main() {
 
   var localVideo = RTCVideoElement();
 
-  local.append(localVideo.htmlElement);
+  local?.append(localVideo.htmlElement);
 
   var remote = html.document.querySelector('#remote');
 
   var remoteVideo = RTCVideoElement();
 
-  remote.append(remoteVideo.htmlElement);
+  remote?.append(remoteVideo.htmlElement);
 
   signaling.onLocalStream = allowInterop((MediaStream stream) {
     localVideo.srcObject = stream;
@@ -41,7 +41,7 @@ void main() {
 
   signaling.connect();
   signaling.onStateChange = (SignalingState state) {
-    html.document.querySelector('#output').text = state.toString();
+    html.document.querySelector('#output')?.text = state.toString();
     if (state == SignalingState.CallStateBye) {
       localVideo.srcObject = null;
       remoteVideo.srcObject = null;

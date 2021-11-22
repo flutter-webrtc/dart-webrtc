@@ -24,7 +24,7 @@ typedef SignalingStateCallback = void Function(SignalingState state);
 typedef StreamStateCallback = void Function(MediaStream stream);
 typedef OtherEventCallback = void Function(dynamic event);
 typedef DataChannelMessageCallback = void Function(
-    RTCDataChannel dc, MessageEvent data);
+    RTCDataChannel dc, RTCDataChannelMessage data);
 typedef DataChannelCallback = void Function(RTCDataChannel dc);
 
 class Signaling {
@@ -32,29 +32,29 @@ class Signaling {
 
   final JsonEncoder _encoder = JsonEncoder();
   final String _selfId = randomNumeric(6);
-  SimpleWebSocket _socket;
+  late SimpleWebSocket _socket;
   var _sessionId;
   final _host;
   final _port = 8086;
   final _peerConnections = <String, RTCPeerConnection>{};
   final _dataChannels = <String, RTCDataChannel>{};
   final _remoteCandidates = <RTCIceCandidate>[];
-  var _iceServers = <RTCIceServer>[];
+  var _iceServers = <Map<String, dynamic>>[];
   var _turnCredential;
 
-  MediaStream _localStream;
-  List<MediaStream> _remoteStreams;
-  SignalingStateCallback onStateChange;
-  StreamStateCallback onLocalStream;
-  StreamStateCallback onAddRemoteStream;
-  StreamStateCallback onRemoveRemoteStream;
-  OtherEventCallback onPeersUpdate;
-  DataChannelMessageCallback onDataChannelMessage;
-  DataChannelCallback onDataChannel;
+  MediaStream? _localStream;
+  late List<MediaStream> _remoteStreams;
+  SignalingStateCallback? onStateChange;
+  StreamStateCallback? onLocalStream;
+  StreamStateCallback? onAddRemoteStream;
+  StreamStateCallback? onRemoveRemoteStream;
+  OtherEventCallback? onPeersUpdate;
+  DataChannelMessageCallback? onDataChannelMessage;
+  DataChannelCallback? onDataChannel;
 
   void close() {
     if (_localStream != null) {
-      _localStream.getTracks().forEach((element) {
+      _localStream?.getTracks().forEach((element) {
         element.stop();
       });
       _localStream = null;
@@ -116,12 +116,12 @@ class Signaling {
 
         var pc = await _createPeerConnection(id, media, false);
         _peerConnections[id] = pc;
-        await pc.setRemoteDescription(RTCSessionDescription(
-            sdp: description['sdp'], type: description['type']));
+        await pc.setRemoteDescription(
+            RTCSessionDescription(description['sdp'], description['type']));
         await _createAnswer(id, pc, media);
         if (_remoteCandidates.isNotEmpty) {
           _remoteCandidates.forEach((candidate) async {
-            await pc.addIceCandidate(candidate);
+            await pc.addCandidate(candidate);
           });
           _remoteCandidates.clear();
         }
@@ -133,8 +133,8 @@ class Signaling {
 
         var pc = _peerConnections[id];
         if (pc != null) {
-          await pc?.setRemoteDescription(RTCSessionDescription(
-              sdp: description['sdp'], type: description['type']));
+          await pc.setRemoteDescription(
+              RTCSessionDescription(description['sdp'], description['type']));
         }
 
         break;
@@ -142,12 +142,10 @@ class Signaling {
         var id = data['from'];
         var candidateMap = data['candidate'];
         var pc = _peerConnections[id];
-        var candidate = RTCIceCandidate(
-            candidate: candidateMap['candidate'],
-            sdpMid: candidateMap['sdpMid'],
-            sdpMLineIndex: candidateMap['sdpMLineIndex']);
+        var candidate = RTCIceCandidate(candidateMap['candidate'],
+            candidateMap['sdpMid'], candidateMap['sdpMLineIndex']);
         if (pc != null) {
-          await pc.addIceCandidate(candidate);
+          await pc.addCandidate(candidate);
         } else {
           _remoteCandidates.add(candidate);
         }
@@ -159,14 +157,14 @@ class Signaling {
         _dataChannels.remove(id);
 
         if (_localStream != null) {
-          _localStream.getTracks().forEach((element) {
+          _localStream!.getTracks().forEach((element) {
             element.stop();
           });
           _localStream = null;
         }
 
         if (pc != null) {
-          pc.close();
+          await pc.close();
         }
         _sessionId = null;
         onStateChange?.call(SignalingState.CallStateBye);
@@ -178,7 +176,7 @@ class Signaling {
         print('bye: ' + sessionId);
 
         if (_localStream != null) {
-          _localStream.getTracks().forEach((element) {
+          _localStream!.getTracks().forEach((element) {
             element.stop();
           });
           _localStream = null;
@@ -186,13 +184,13 @@ class Signaling {
 
         var pc = _peerConnections[to];
         if (pc != null) {
-          pc.close();
+          await pc.close();
           _peerConnections.remove(to);
         }
 
         var dc = _dataChannels[to];
         if (dc != null) {
-          dc.close();
+          await dc.close();
           _dataChannels.remove(to);
         }
 
@@ -219,10 +217,11 @@ class Signaling {
       try {
         _turnCredential = await getTurnCredential(_host, _port);
         _iceServers = [
-          RTCIceServer(
-              urls: _turnCredential['uris'][0],
-              username: _turnCredential['username'],
-              credential: _turnCredential['password'])
+          <String, dynamic>{
+            'urls': _turnCredential['uris'][0],
+            'username': _turnCredential['username'],
+            'credential': _turnCredential['password']
+          }
         ];
       } catch (e) {
         print('error: ${e.toString()}');
@@ -239,7 +238,7 @@ class Signaling {
     _socket.onMessage = (message) {
       print('Received data: ' + message);
       var decoder = JsonDecoder();
-      onMessage?.call(decoder.convert(message));
+      onMessage.call(decoder.convert(message));
     };
 
     _socket.onClose = (int code, String reason) {
@@ -252,18 +251,20 @@ class Signaling {
 
   Future<MediaStream> createStream(media, user_screen) async {
     var stream = await user_screen
-        ? await navigator.mediaDevices.getDisplayMedia()
-        : await navigator.mediaDevices.getUserMedia(
-            constraints: MediaStreamConstraints(audio: true, video: {
-            'mandatory': {
-              'minWidth':
-                  '640', // Provide your own width, height and frame rate here
-              'minHeight': '480',
-              'minFrameRate': '30',
-            },
-            'facingMode': 'user',
-            'optional': [],
-          }));
+        ? await navigator.mediaDevices.getDisplayMedia({})
+        : await navigator.mediaDevices.getUserMedia(<String, dynamic>{
+            'audio': true,
+            'video': <String, dynamic>{
+              'mandatory': {
+                'minWidth':
+                    '640', // Provide your own width, height and frame rate here
+                'minHeight': '480',
+                'minFrameRate': '30',
+              },
+              'facingMode': 'user',
+              'optional': [],
+            }
+          });
 
     onLocalStream?.call(stream);
 
@@ -273,23 +274,26 @@ class Signaling {
   Future<RTCPeerConnection> _createPeerConnection(
       id, media, user_screen) async {
     if (media != 'data') _localStream = await createStream(media, user_screen);
-    var pc = RTCPeerConnection(
-        configuration: RTCConfiguration(
-            iceServers: _iceServers.isNotEmpty
-                ? _iceServers
-                : [RTCIceServer(urls: 'stun:stun.l.google.com:19302')]));
-    if (media != 'data') pc.addStream(_localStream);
-    pc.onicecandidate = (dynamic event) {
+    var pc = await createPeerConnection(<String, dynamic>{
+      'iceServers': _iceServers.isNotEmpty
+          ? _iceServers
+          : [
+              {'urls': 'stun:stun.l.google.com:19302'}
+            ]
+    });
+    if (media != 'data') await pc.addStream(_localStream!);
+
+    pc.onIceCandidate = (RTCIceCandidate? candidate) {
       try {
-        if (event.candidate = !null) {
-          print(event.candidate.candidate);
+        if (candidate != null) {
+          print(candidate.candidate);
           _send('candidate', {
             'to': id,
             'from': _selfId,
             'candidate': {
-              'sdpMLineIndex': event.candidate.sdpMLineIndex,
-              'sdpMid': event.candidate.sdpMid,
-              'candidate': event.candidate.candidate,
+              'sdpMLineIndex': candidate.sdpMlineIndex,
+              'sdpMid': candidate.sdpMid,
+              'candidate': candidate.candidate,
             },
             'session_id': _sessionId,
           });
@@ -299,29 +303,29 @@ class Signaling {
       }
     };
 
-    pc.oniceconnectionstatechange = (state) {
+    pc.onIceConnectionState = (state) {
       print(state);
     };
 
-    pc.onaddstream = (MediaStreamEvent event) {
-      onAddRemoteStream?.call(MediaStream(event.stream));
+    pc.onAddStream = (MediaStream stream) {
+      onAddRemoteStream?.call(stream);
     };
 
-    pc.onremovestream = (MediaStreamEvent event) {
-      onRemoveRemoteStream?.call(MediaStream(event.stream));
-      _remoteStreams.removeWhere((it) => it.id == event.stream.id);
+    pc.onRemoveStream = (MediaStream stream) {
+      onRemoveRemoteStream?.call(stream);
+      _remoteStreams.removeWhere((it) => it.id == stream.id);
     };
 
-    pc.ondatachannel = (RTCDataChannelEvent event) {
-      _addDataChannel(id, event.channel);
+    pc.onDataChannel = (RTCDataChannel channel) {
+      _addDataChannel(id, channel);
     };
 
     return pc;
   }
 
   void _addDataChannel(id, RTCDataChannel channel) {
-    channel.onmessage = (MessageEvent event) {
-      onDataChannelMessage?.call(channel, event.data);
+    channel.onMessage = (RTCDataChannelMessage msg) {
+      onDataChannelMessage?.call(channel, msg);
     };
     _dataChannels[id] = channel;
     onDataChannel?.call(channel);
@@ -330,18 +334,16 @@ class Signaling {
   void _createDataChannel(id, RTCPeerConnection pc,
       {String label = 'fileTransfer'}) async {
     var dataChannelDict = RTCDataChannelInit();
-    var channel =
-        await pc.createDataChannel(label: label, init: dataChannelDict);
+    var channel = await pc.createDataChannel(label, dataChannelDict);
     _addDataChannel(id, channel);
   }
 
   void _createOffer(String id, RTCPeerConnection pc, String media) async {
     try {
-      var offer = await pc.createOffer(
-          options: RTCOfferOptions(
-        offerToReceiveAudio: media == 'data' ? false : true,
-        offerToReceiveVideo: media == 'data' ? false : true,
-      ));
+      var offer = await pc.createOffer(<String, dynamic>{
+        'offerToReceiveAudio': media == 'data' ? false : true,
+        'offerToReceiveVideo': media == 'data' ? false : true,
+      });
       //print('type => ${offer.type}, sdp => ${offer.sdp}');
       await pc.setLocalDescription(offer);
       _send('offer', {

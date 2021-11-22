@@ -1,8 +1,5 @@
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:dart_webrtc/src/media_devices.dart';
 import 'package:test/test.dart';
-
-MediaDevices mediaDevices;
 
 void closeMediaStream(MediaStream stream) {
   stream.getTracks().forEach((element) {
@@ -12,19 +9,18 @@ void closeMediaStream(MediaStream stream) {
 
 List<void Function()> testFunctions = <void Function()>[
   () => test('MediaDevices.constructor()', () {
-        mediaDevices = navigator.mediaDevices;
-        expect(mediaDevices != null, true);
+        expect(navigator.mediaDevices != null, true);
       }),
   () => test('MediaDevices.enumerateDevices()', () async {
-        var list = await mediaDevices.enumerateDevices();
+        var list = await navigator.mediaDevices.enumerateDevices();
         list.forEach((e) {
           print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
         });
         expect(list != null, true);
       }),
   () => test('MediaDevices.getUserMedia()', () async {
-        var stream = await mediaDevices.getUserMedia(
-            constraints: MediaStreamConstraints(audio: true, video: true));
+        var stream = await navigator.mediaDevices
+            .getUserMedia({'audio': true, 'video': true});
         print('getUserMedia: stream.id => ${stream.id}');
         expect(stream != null, true);
 
@@ -37,16 +33,16 @@ List<void Function()> testFunctions = <void Function()>[
 
         closeMediaStream(stream);
 
-        stream = await mediaDevices.getUserMedia(
-            constraints: MediaStreamConstraints(audio: false, video: true));
+        stream = await navigator.mediaDevices
+            .getUserMedia({'audio': false, 'video': true});
 
         expect(stream.getAudioTracks().isEmpty, true);
         expect(stream.getVideoTracks().isNotEmpty, true);
 
         closeMediaStream(stream);
 
-        stream = await mediaDevices.getUserMedia(
-            constraints: MediaStreamConstraints(audio: true, video: false));
+        stream = await navigator.mediaDevices
+            .getUserMedia({'audio': true, 'video': false});
 
         expect(stream.getAudioTracks().isNotEmpty, true);
         expect(stream.getVideoTracks().isEmpty, true);
