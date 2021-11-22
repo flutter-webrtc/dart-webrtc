@@ -133,7 +133,7 @@ class Signaling {
 
         var pc = _peerConnections[id];
         if (pc != null) {
-          await pc?.setRemoteDescription(
+          await pc.setRemoteDescription(
               RTCSessionDescription(description['sdp'], description['type']));
         }
 
@@ -238,7 +238,7 @@ class Signaling {
     _socket.onMessage = (message) {
       print('Received data: ' + message);
       var decoder = JsonDecoder();
-      onMessage?.call(decoder.convert(message));
+      onMessage.call(decoder.convert(message));
     };
 
     _socket.onClose = (int code, String reason) {
