@@ -1,9 +1,7 @@
-@JS()
-library dart_webrtc;
-
 import 'dart:html' as html;
-import 'package:js/js.dart';
-import 'media_stream.dart';
+
+import '../dart_webrtc.dart';
+import 'media_stream_impl.dart';
 
 class RTCVideoElement {
   RTCVideoElement() {
@@ -17,17 +15,22 @@ class RTCVideoElement {
     // Allows Safari iOS to play the video inline
     _html.setAttribute('playsinline', 'true');
   }
-  MediaStream _stream;
 
-  html.VideoElement _html;
+  MediaStream? _stream;
+
+  late html.VideoElement _html;
   html.VideoElement get htmlElement => _html;
 
   /// contain or cover
   set objectFit(String fit) => _html.style.objectFit = fit;
 
-  set srcObject(MediaStream stream) {
+  set srcObject(MediaStream? stream) {
     _stream = stream;
-    _html.srcObject = stream.htmlStream;
+    if (stream != null) {
+      _html.srcObject = (stream as MediaStreamWeb).jsStream;
+    } else {
+      _html.srcObject = null;
+    }
   }
 
   int get videoWidth => _html.videoWidth;
@@ -44,7 +47,7 @@ class RTCVideoElement {
 
   dynamic get error => _html.error;
 
-  MediaStream get srcObject => _stream;
+  MediaStream? get srcObject => _stream;
 
   set muted(bool v) => _html.muted = v;
   bool get muted => _html.muted;

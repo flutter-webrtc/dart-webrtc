@@ -1,20 +1,9 @@
-export 'src/enums.dart';
-export 'src/event.dart';
+library dart_webrtc;
+
+export 'package:webrtc_interface/webrtc_interface.dart'
+    hide MediaDevices, MediaRecorder, Navigator;
+
 export 'src/media_devices.dart';
-export 'src/media_stream.dart';
-export 'src/media_stream_track.dart';
-export 'src/navigator.dart';
-export 'src/rtc_data_channel.dart';
-export 'src/rtc_dtmf_sender.dart';
-export 'src/rtc_ice_candidate.dart';
-export 'src/rtc_peerconnection.dart';
-export 'src/rtc_peerconnection.dart';
-export 'src/rtc_rtcp_parameters.dart';
-export 'src/rtc_rtp_parameters.dart';
-export 'src/rtc_rtp_receiver.dart';
-export 'src/rtc_rtp_sender.dart';
-export 'src/rtc_rtp_transceiver.dart';
-export 'src/rtc_session_description.dart';
-export 'src/rtc_stats_resport.dart';
-export 'src/rtc_track_event.dart';
+export 'src/media_recorder.dart';
+export 'src/rtc_peerconnection_factory.dart';
 export 'src/video_element.dart';

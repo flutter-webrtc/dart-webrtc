@@ -1,7 +1,7 @@
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:test/test.dart';
 
-RTCVideoElement localVideo;
+late RTCVideoElement localVideo;
 
 List<void Function()> testFunctions = <void Function()>[
   () => test('RTCVideoElement.constructor()', () {

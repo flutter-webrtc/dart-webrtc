@@ -14,9 +14,9 @@ class SimpleWebSocket {
 
   String _url;
   var _socket;
-  OnOpenCallback onOpen;
-  OnMessageCallback onMessage;
-  OnCloseCallback onClose;
+  OnOpenCallback? onOpen;
+  OnMessageCallback? onMessage;
+  OnCloseCallback? onClose;
 
   Future<void> connect() async {
     try {
@@ -53,7 +53,7 @@ class SimpleWebSocket {
 
 Future<Map> getTurnCredential(String host, int port) async {
   var url = 'https://$host:$port/api/turn?service=turn&username=flutter-webrtc';
-  final res = await http.get(url);
+  final res = await http.get(Uri.parse(url));
   if (res.statusCode == 200) {
     var data = json.decode(res.body);
     print('getTurnCredential:response => $data.');

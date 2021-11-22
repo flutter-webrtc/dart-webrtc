@@ -1,69 +1,25 @@
-@JS()
-library dart_webrtc;
-
-import 'package:js/js.dart';
-import 'package:js/js_util.dart';
-
-import 'event.dart';
-import 'media_stream.dart';
-
-@JS()
-@anonymous
-class MediaStreamConstraints {
-  external factory MediaStreamConstraints({dynamic audio, dynamic video});
-  external dynamic get audio;
-  external dynamic get video;
-}
-
-@JS('MediaDeviceInfo')
-class MediaDeviceInfo {
-  external String get deviceId;
-  external String get groupId;
-  external String get kind;
-  external String get label;
-}
-
-@JS('MediaDevices')
-class MediaDevicesJs {
-  external factory MediaDevicesJs();
-  external dynamic enumerateDevices();
-  external dynamic getUserMedia(MediaStreamConstraints constraints);
-  external dynamic getDisplayMedia(MediaStreamConstraints constraints);
-  external set devicechange(Function(Event<MediaDevicesJs> event) func);
-}
+import 'package:webrtc_interface/webrtc_interface.dart';
+import '../dart_webrtc.dart';
+import 'rtc_peerconnection_factory.dart';
 
 class MediaDevices {
-  MediaDevices(this._js);
-
-  Future<List<MediaDeviceInfo>> enumerateDevices() async {
-    try {
-      var jsList = await promiseToFuture<List<dynamic>>(_js.enumerateDevices());
-      return jsList.map((e) => e as MediaDeviceInfo).toList();
-    } catch (e) {
-      rethrow;
-    }
+  @Deprecated(
+      'Use the navigator.mediaDevices.getUserMedia(Map<String, dynamic>) provide from the facrory instead')
+  static Future<MediaStream> getUserMedia(
+      Map<String, dynamic> mediaConstraints) async {
+    return navigator.mediaDevices.getUserMedia(mediaConstraints);
   }
 
-  Future<MediaStream> getUserMedia({MediaStreamConstraints constraints}) async {
-    try {
-      var jsStream =
-          await promiseToFuture<MediaStreamJs>(_js.getUserMedia(constraints));
-      return MediaStream(jsStream);
-    } catch (e) {
-      rethrow;
-    }
+  @Deprecated(
+      'Use the navigator.mediaDevices.getDisplayMedia(Map<String, dynamic>) provide from the facrory instead')
+  static Future<MediaStream> getDisplayMedia(
+      Map<String, dynamic> mediaConstraints) async {
+    return navigator.mediaDevices.getDisplayMedia(mediaConstraints);
   }
 
-  Future<MediaStream> getDisplayMedia(
-      {MediaStreamConstraints constraints}) async {
-    try {
-      var jsStream = await promiseToFuture<MediaStreamJs>(
-          _js.getDisplayMedia(constraints));
-      return MediaStream(jsStream);
-    } catch (e) {
-      rethrow;
-    }
+  @Deprecated(
+      'Use the navigator.mediaDevices.getSources() provide from the facrory instead')
+  static Future<List<dynamic>> getSources() {
+    return navigator.mediaDevices.getSources();
   }
-
-  final MediaDevicesJs _js;
 }
