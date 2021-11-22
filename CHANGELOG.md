@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+1.0.0
+
+* Refactor using webrtc_interface.
+
 0.2.3
 
 * Fix bug for simulcast.
