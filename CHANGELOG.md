@@ -1,6 +1,15 @@
 # Changelog
 
 --------------------------------------------
+[1.0.1] - 2021-11-25
+
+* Bump interface version to 1.0.1
+* Reduce code.
+
+1.0.0
+
+* Refactor using webrtc_interface.
+
 0.2.3
 
 * Fix bug for simulcast.
