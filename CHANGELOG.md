@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.0.2] - 2021-11-27
+
+* Fix the type error of minified function in release mode.
+
 [1.0.1] - 2021-11-25
 
 * Bump interface version to 1.0.1

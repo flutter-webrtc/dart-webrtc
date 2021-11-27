@@ -36,18 +36,16 @@ class MediaStreamWeb extends MediaStream {
   @override
   List<MediaStreamTrack> getAudioTracks() {
     var audioTracks = <MediaStreamTrack>[];
-    jsStream
-        .getAudioTracks()
-        .forEach((jsTrack) => audioTracks.add(MediaStreamTrackWeb(jsTrack)));
+    jsStream.getAudioTracks().forEach(
+        (dynamic jsTrack) => audioTracks.add(MediaStreamTrackWeb(jsTrack)));
     return audioTracks;
   }
 
   @override
   List<MediaStreamTrack> getVideoTracks() {
     var audioTracks = <MediaStreamTrack>[];
-    jsStream
-        .getVideoTracks()
-        .forEach((jsTrack) => audioTracks.add(MediaStreamTrackWeb(jsTrack)));
+    jsStream.getVideoTracks().forEach(
+        (dynamic jsTrack) => audioTracks.add(MediaStreamTrackWeb(jsTrack)));
     return audioTracks;
   }
 
