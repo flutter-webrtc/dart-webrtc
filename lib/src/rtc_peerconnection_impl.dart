@@ -113,7 +113,8 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
                 jsutil.getProperty(trackEvent, 'transceiver')),
             streams: (trackEvent.streams != null)
                 ? trackEvent.streams!
-                    .map((e) => MediaStreamWeb(e, _peerConnectionId))
+                    .map((dynamic stream) =>
+                        MediaStreamWeb(stream, _peerConnectionId))
                     .toList()
                 : [],
           ),
