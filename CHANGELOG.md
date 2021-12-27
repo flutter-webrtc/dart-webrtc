@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.0.3] - 2021-12-28
+
+* export media_stream_impl.dart to fix do not import impl files.
+
 [1.0.2] - 2021-11-27
 
 * Fix the type error of minified function in release mode.
