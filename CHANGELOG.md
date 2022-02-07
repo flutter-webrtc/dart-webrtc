@@ -1,10 +1,14 @@
 # Changelog
 
 --------------------------------------------
-[1.0.3] - 2022-02-07
+[1.0.4] - 2022-02-07
 
 * Add restartIce.
 * Bump version for webrtc-interface.
+
+[1.0.3] - 2021-12-28
+
+* export media_stream_impl.dart to fix do not import impl files.
 
 [1.0.2] - 2021-11-27
 

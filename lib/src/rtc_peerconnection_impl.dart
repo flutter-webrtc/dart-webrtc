@@ -227,18 +227,9 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   }
 
   @override
-  Future<void> addCandidate(RTCIceCandidate candidate) async {
-    try {
-      Completer completer = Completer<void>();
-      var success = js.allowInterop(() => completer.complete());
-      var failure = js.allowInterop((e) => completer.completeError(e));
-      jsutil.callMethod(
-          _jsPc, 'addIceCandidate', [_iceToJs(candidate), success, failure]);
-
-      return completer.future;
-    } catch (e) {
-      print(e.toString());
-    }
+  Future<void> addCandidate(RTCIceCandidate candidate) {
+    return jsutil.promiseToFuture<void>(
+        jsutil.callMethod(_jsPc, 'addIceCandidate', [_iceToJs(candidate)]));
   }
 
   @override
