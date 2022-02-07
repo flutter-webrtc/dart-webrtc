@@ -32,7 +32,7 @@ class Signaling {
 
   final JsonEncoder _encoder = JsonEncoder();
   final String _selfId = randomNumeric(6);
-  late SimpleWebSocket _socket;
+  late SimpleWebSocket? _socket;
   var _sessionId;
   final _host;
   final _port = 8086;
@@ -63,7 +63,7 @@ class Signaling {
     _peerConnections.forEach((key, pc) {
       pc.close();
     });
-    if (_socket != null) _socket.close();
+    _socket?.close();
   }
 
   void switchCamera() {
@@ -228,25 +228,25 @@ class Signaling {
       }
     }
 
-    _socket.onOpen = () {
+    _socket?.onOpen = () {
       print('onOpen');
       onStateChange?.call(SignalingState.ConnectionOpen);
       _send('new',
           {'name': 'dart_webrtc', 'id': _selfId, 'user_agent': 'broswer'});
     };
 
-    _socket.onMessage = (message) {
+    _socket?.onMessage = (message) {
       print('Received data: ' + message);
       var decoder = JsonDecoder();
       onMessage.call(decoder.convert(message));
     };
 
-    _socket.onClose = (int code, String reason) {
+    _socket?.onClose = (int code, String reason) {
       print('Closed by server [$code => $reason]!');
       onStateChange?.call(SignalingState.ConnectionClosed);
     };
 
-    await _socket.connect();
+    await _socket?.connect();
   }
 
   Future<MediaStream> createStream(media, user_screen) async {
@@ -291,7 +291,7 @@ class Signaling {
             'to': id,
             'from': _selfId,
             'candidate': {
-              'sdpMLineIndex': candidate.sdpMlineIndex,
+              'sdpMLineIndex': candidate.sdpMLineIndex,
               'sdpMid': candidate.sdpMid,
               'candidate': candidate.candidate,
             },
@@ -377,6 +377,6 @@ class Signaling {
     var request = {};
     request['type'] = event;
     request['data'] = data;
-    _socket.send(_encoder.convert(request));
+    _socket?.send(_encoder.convert(request));
   }
 }

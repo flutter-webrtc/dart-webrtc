@@ -283,6 +283,12 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   }
 
   @override
+  Future<void> restartIce() {
+    jsutil.callMethod(_jsPc, 'restartIce', []);
+    return Future.value();
+  }
+
+  @override
   Future<void> close() async {
     _jsPc.close();
     return Future.value();

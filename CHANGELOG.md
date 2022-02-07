@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+[1.0.3] - 2022-02-07
+
+* Add restartIce.
+* Bump version for webrtc-interface.
+
 [1.0.2] - 2021-11-27
 
 * Fix the type error of minified function in release mode.
