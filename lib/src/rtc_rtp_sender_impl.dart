@@ -19,21 +19,29 @@ class RTCRtpSenderWeb extends RTCRtpSender {
   bool _ownsTrack = false;
 
   @override
-  Future<void> replaceTrack(MediaStreamTrack track) async {
+  Future<void> replaceTrack(MediaStreamTrack? track) async {
     try {
-      var nativeTrack = track as MediaStreamTrackWeb;
-      jsutil.callMethod(_jsRtpSender, 'replaceTrack', [nativeTrack.jsTrack]);
+      if (track != null) {
+        var nativeTrack = track as MediaStreamTrackWeb;
+        jsutil.callMethod(_jsRtpSender, 'replaceTrack', [nativeTrack.jsTrack]);
+      } else {
+        jsutil.callMethod(_jsRtpSender, 'replaceTrack', [null]);
+      }
     } on Exception catch (e) {
       throw 'Unable to RTCRtpSender::replaceTrack: ${e.toString()}';
     }
   }
 
   @override
-  Future<void> setTrack(MediaStreamTrack track,
+  Future<void> setTrack(MediaStreamTrack? track,
       {bool takeOwnership = true}) async {
     try {
-      var nativeTrack = track as MediaStreamTrackWeb;
-      jsutil.callMethod(_jsRtpSender, 'replaceTrack', [nativeTrack.jsTrack]);
+      if (track != null) {
+        var nativeTrack = track as MediaStreamTrackWeb;
+        jsutil.callMethod(_jsRtpSender, 'setTrack', [nativeTrack.jsTrack]);
+      } else {
+        jsutil.callMethod(_jsRtpSender, 'setTrack', [null]);
+      }
     } on Exception catch (e) {
       throw 'Unable to RTCRtpSender::setTrack: ${e.toString()}';
     }
