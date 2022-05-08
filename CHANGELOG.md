@@ -1,6 +1,9 @@
 # Changelog
 
 --------------------------------------------
+[1.0.6] - 2022-05-08
+
+* Support null tracks in replaceTrack/setTrack.
 
 [1.0.5] - 2022-03-31
 
