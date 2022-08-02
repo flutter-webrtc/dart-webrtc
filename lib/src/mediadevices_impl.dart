@@ -126,4 +126,64 @@ class MediaDevicesWeb extends MediaDevices {
         width: _mapConstraints['width'],
         zoom: _mapConstraints['zoom']);
   }
+
+  @override
+  Future<MediaDeviceInfo> selectAudioOutput(
+      [AudioOutputOptions? options]) async {
+    try {
+      final mediaDevices = html.window.navigator.mediaDevices;
+      if (mediaDevices == null) throw Exception('MediaDevices is null');
+
+      if (jsutil.hasProperty(mediaDevices, 'selectAudioOutput')) {
+        if (options != null) {
+          final arg = jsutil.jsify(options);
+          final deviceInfo = await jsutil.promiseToFuture<html.MediaDeviceInfo>(
+              jsutil.callMethod(mediaDevices, 'selectAudioOutput', [arg]));
+          return MediaDeviceInfo(
+            kind: deviceInfo.kind,
+            label: deviceInfo.label ?? '',
+            deviceId: deviceInfo.deviceId ?? '',
+            groupId: deviceInfo.groupId,
+          );
+        } else {
+          final deviceInfo = await jsutil.promiseToFuture<html.MediaDeviceInfo>(
+              jsutil.callMethod(mediaDevices, 'selectAudioOutput', []));
+          return MediaDeviceInfo(
+            kind: deviceInfo.kind,
+            label: deviceInfo.label ?? '',
+            deviceId: deviceInfo.deviceId ?? '',
+            groupId: deviceInfo.groupId,
+          );
+        }
+      } else {
+        throw UnimplementedError('selectAudioOutput is missing');
+      }
+    } catch (e) {
+      throw 'Unable to selectAudioOutput: ${e.toString()}';
+    }
+  }
+
+  @override
+  set ondevicechange(Function(dynamic event)? listener) {
+    try {
+      final mediaDevices = html.window.navigator.mediaDevices;
+      if (mediaDevices == null) throw Exception('MediaDevices is null');
+
+      jsutil.setProperty(mediaDevices, 'ondevicechange', listener);
+    } catch (e) {
+      throw 'Unable to set ondevicechange: ${e.toString()}';
+    }
+  }
+
+  @override
+  Function(dynamic event)? get ondevicechange {
+    try {
+      final mediaDevices = html.window.navigator.mediaDevices;
+      if (mediaDevices == null) throw Exception('MediaDevices is null');
+
+      jsutil.getProperty(mediaDevices, 'ondevicechange');
+    } catch (e) {
+      throw 'Unable to get ondevicechange: ${e.toString()}';
+    }
+  }
 }
