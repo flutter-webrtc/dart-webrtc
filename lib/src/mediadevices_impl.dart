@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:html' as html;
+import 'dart:js' as js;
 import 'dart:js_util' as jsutil;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
@@ -169,7 +170,8 @@ class MediaDevicesWeb extends MediaDevices {
       final mediaDevices = html.window.navigator.mediaDevices;
       if (mediaDevices == null) throw Exception('MediaDevices is null');
 
-      jsutil.setProperty(mediaDevices, 'ondevicechange', listener);
+      jsutil.setProperty(mediaDevices, 'ondevicechange',
+          js.allowInterop((evt) => listener?.call(evt)));
     } catch (e) {
       throw 'Unable to set ondevicechange: ${e.toString()}';
     }
