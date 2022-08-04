@@ -1,6 +1,4 @@
-import 'package:webrtc_interface/webrtc_interface.dart';
 import '../dart_webrtc.dart';
-import 'factory_impl.dart';
 
 class MediaDevices {
   @Deprecated(

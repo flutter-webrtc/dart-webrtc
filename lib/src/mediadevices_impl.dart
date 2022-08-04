@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:html' as html;
-import 'dart:html_common';
 import 'dart:js' as js;
 import 'dart:js_util' as jsutil;
 import 'package:webrtc_interface/webrtc_interface.dart';

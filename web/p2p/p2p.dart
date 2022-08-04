@@ -1,8 +1,8 @@
 import 'dart:html' as html;
-import 'package:test/test.dart';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js.dart';
+import 'package:test/test.dart';
 
 import 'signaling.dart';
 
