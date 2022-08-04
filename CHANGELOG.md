@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.0.7] - 2022-08-04
+
+* Bump version for webrtc-interface.
+
 [1.0.6] - 2022-05-08
 
 * Support null tracks in replaceTrack/setTrack.
