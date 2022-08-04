@@ -1,7 +1,6 @@
 import 'dart:html' as html;
 
 import '../dart_webrtc.dart';
-import 'media_stream_impl.dart';
 
 class RTCVideoElement {
   RTCVideoElement() {
@@ -61,4 +60,6 @@ class RTCVideoElement {
   void load() => _html.load();
 
   void removeAttribute(String name) => _html.removeAttribute(name);
+
+  Future<void> setSinkId(String sinkId) => _html.setSinkId(sinkId);
 }

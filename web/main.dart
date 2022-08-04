@@ -37,12 +37,15 @@ void loopBackTest() async {
   list.forEach((e) {
     print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
   });
-
-  await navigator.mediaDevices.selectAudioOutput(AudioOutputOptions(
-      deviceId: list
-          .where((element) => element.kind == 'audiooutput')
-          .last
-          .deviceId));
+  var sinkId =
+      list.where((element) => element.kind == 'audiooutput').last.deviceId;
+  try {
+    await navigator.mediaDevices
+        .selectAudioOutput(AudioOutputOptions(deviceId: sinkId));
+  } catch (e) {
+    print('selectAudioOutput error: ${e.toString()}');
+    await localVideo.setSinkId(sinkId);
+  }
 
   var pc = await createPeerConnection({});
   pc.onAddStream = (MediaStream stream) {};
