@@ -25,6 +25,13 @@ void loopBackTest() async {
   var localVideo = RTCVideoElement();
   local!.append(localVideo.htmlElement);
 
+  //var pc = await createPeerConnection({});
+  //pc.onAddStream = (MediaStream stream) {};
+  var stream =
+      await navigator.mediaDevices.getUserMedia({'audio': true, 'video': true});
+  /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/
+  print('getDisplayMedia: stream.id => ${stream.id}');
+
   navigator.mediaDevices.ondevicechange = (event) async {
     var list = await navigator.mediaDevices.enumerateDevices();
     print('ondevicechange: ');
@@ -37,28 +44,24 @@ void loopBackTest() async {
   list.forEach((e) {
     print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
   });
-  var sinkId =
-      list.where((element) => element.kind == 'audiooutput').last.deviceId;
-  try {
-    await navigator.mediaDevices
-        .selectAudioOutput(AudioOutputOptions(deviceId: sinkId));
-  } catch (e) {
-    print('selectAudioOutput error: ${e.toString()}');
-    await localVideo.setSinkId(sinkId);
+  var outputList = list.where((element) => element.kind == 'audiooutput');
+  if (outputList.isNotEmpty) {
+    var sinkId = outputList.last.deviceId;
+    try {
+      await navigator.mediaDevices
+          .selectAudioOutput(AudioOutputOptions(deviceId: sinkId));
+    } catch (e) {
+      print('selectAudioOutput error: ${e.toString()}');
+      await localVideo.setSinkId(sinkId);
+    }
   }
 
-  var pc = await createPeerConnection({});
-  pc.onAddStream = (MediaStream stream) {};
-  var stream =
-      await navigator.mediaDevices.getUserMedia({'audio': true, 'video': true});
-  /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/
-  print('getDisplayMedia: stream.id => ${stream.id}');
   /*
   stream.oninactive = (Event event) {
     print('oninactive: stream.id => ${event.target.id}');
     localVideo.srcObject = null;
   };
   */
-  await pc.addStream(stream);
+  //await pc.addStream(stream);
   localVideo.srcObject = stream;
 }
