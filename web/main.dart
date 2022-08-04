@@ -25,10 +25,24 @@ void loopBackTest() async {
   var localVideo = RTCVideoElement();
   local!.append(localVideo.htmlElement);
 
+  navigator.mediaDevices.ondevicechange = (event) async {
+    var list = await navigator.mediaDevices.enumerateDevices();
+    print('ondevicechange: ');
+    list.where((element) => element.kind == 'audiooutput').forEach((e) {
+      print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
+    });
+  };
+
   var list = await navigator.mediaDevices.enumerateDevices();
   list.forEach((e) {
     print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
   });
+
+  await navigator.mediaDevices.selectAudioOutput(AudioOutputOptions(
+      deviceId: list
+          .where((element) => element.kind == 'audiooutput')
+          .last
+          .deviceId));
 
   var pc = await createPeerConnection({});
   pc.onAddStream = (MediaStream stream) {};
