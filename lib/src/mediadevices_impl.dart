@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:html' as html;
+import 'dart:html_common';
 import 'dart:js' as js;
 import 'dart:js_util' as jsutil;
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -160,7 +161,7 @@ class MediaDevicesWeb extends MediaDevices {
         throw UnimplementedError('selectAudioOutput is missing');
       }
     } catch (e) {
-      throw 'Unable to selectAudioOutput: ${e.toString()}';
+      throw 'Unable to selectAudioOutput: ${e.toString()}, Please try to use MediaElement.setSinkId instead.';
     }
   }
 
@@ -187,5 +188,6 @@ class MediaDevicesWeb extends MediaDevices {
     } catch (e) {
       throw 'Unable to get ondevicechange: ${e.toString()}';
     }
+    return null;
   }
 }
