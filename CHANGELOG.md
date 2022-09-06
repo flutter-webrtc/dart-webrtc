@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.0.8] - 2022-09-06
+
+* Bump version for webrtc-interface.
+
 [1.0.7] - 2022-08-04
 
 * Bump version for webrtc-interface.
