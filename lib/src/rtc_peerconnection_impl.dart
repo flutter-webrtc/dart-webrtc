@@ -94,8 +94,8 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
       onSignalingState?.call(_signalingState!);
     });
 
-    _jsPc.onIceConnectionStateChange.listen((_) {
-      _connectionState = peerConnectionStateForString(_jsPc.iceConnectionState);
+    _jsPc.onConnectionStateChange.listen((_) {
+      _connectionState = peerConnectionStateForString(_jsPc.connectionState);
       onConnectionState?.call(_connectionState!);
     });
 
