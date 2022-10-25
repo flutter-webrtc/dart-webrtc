@@ -19,7 +19,12 @@ class MediaRecorder extends _interface.MediaRecorder {
     MediaStream stream, {
     Function(dynamic blob, bool isLastOne)? onDataChunk,
     String? mimeType,
+    int timeSlice = 1000,
   }) =>
-      _delegate.startWeb(stream,
-          onDataChunk: onDataChunk, mimeType: mimeType ?? 'video/webm');
+      _delegate.startWeb(
+        stream,
+        onDataChunk: onDataChunk,
+        mimeType: mimeType ?? 'video/webm',
+        timeSlice: timeSlice,
+      );
 }
