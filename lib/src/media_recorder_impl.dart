@@ -25,6 +25,7 @@ class MediaRecorderWeb extends MediaRecorder {
     MediaStream stream, {
     Function(dynamic blob, bool isLastOne)? onDataChunk,
     String mimeType = 'video/webm',
+    int timeSlice = 1000,
   }) {
     var _native = stream as MediaStreamWeb;
     _recorder = html.MediaRecorder(_native.jsStream, {'mimeType': mimeType});
@@ -52,7 +53,7 @@ class MediaRecorderWeb extends MediaRecorder {
         );
       });
     }
-    _recorder.start();
+    _recorder.start(timeSlice);
   }
 
   @override
