@@ -3,7 +3,7 @@
 --------------------------------------------
 [1.0.10] - 2022-11-02
 
-* Use RTCPeerConnection::onConnectionStateChange.
+* Update MediaRecorder interface.
 
 [1.0.9] - 2022-10-10
 
