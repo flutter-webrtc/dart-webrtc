@@ -58,7 +58,7 @@ class MediaStreamWeb extends MediaStream {
   bool? get active => jsStream.active;
 
   @override
-  MediaStream clone() {
+  Future<MediaStream> clone() async {
     return MediaStreamWeb(jsStream.clone(), ownerTag);
   }
 }

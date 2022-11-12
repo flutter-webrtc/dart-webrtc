@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.0.11] - 2022-11-12
+
+* Change MediaStream.clone to async.
+
 [1.0.10] - 2022-11-02
 
 * Update MediaRecorder interface.
