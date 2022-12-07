@@ -7,6 +7,7 @@ environment:
   sdk: '>=2.13.0 <3.0.0'
 
 dependencies:
+  platform_detect: ^2.0.7
   webrtc_interface: ^1.0.10
 
 dev_dependencies:
