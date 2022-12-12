@@ -25,8 +25,29 @@ void loopBackTest() async {
   var localVideo = RTCVideoElement();
   local!.append(localVideo.htmlElement);
 
-  //var pc = await createPeerConnection({});
-  //pc.onAddStream = (MediaStream stream) {};
+  var remote = html.document.querySelector('#remote');
+  var remotelVideo = RTCVideoElement();
+  remote!.append(remotelVideo.htmlElement);
+
+  var pc2 = await createPeerConnection({});
+  pc2.onTrack = (event) {
+    if (event.track.kind == 'video') {
+      remotelVideo.srcObject = event.streams[0];
+    }
+  };
+  pc2.onConnectionState = (state) {
+    print('connectionState $state');
+  };
+
+  pc2.onIceConnectionState = (state) {
+    print('iceConnectionState $state');
+  };
+
+  var pc1 = await createPeerConnection({});
+
+  pc1.onIceCandidate = (candidate) => pc2.addCandidate(candidate);
+  pc2.onIceCandidate = (candidate) => pc1.addCandidate(candidate);
+
   var stream =
       await navigator.mediaDevices.getUserMedia({'audio': true, 'video': true});
   /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/
@@ -56,12 +77,26 @@ void loopBackTest() async {
     }
   }
 
-  /*
-  stream.oninactive = (Event event) {
-    print('oninactive: stream.id => ${event.target.id}');
-    localVideo.srcObject = null;
-  };
-  */
-  //await pc.addStream(stream);
+  stream.getTracks().forEach((track) async {
+    await pc1.addTrack(track, stream);
+  });
+
+  var offer = await pc1.createOffer();
+
+  await pc2.addTransceiver(
+      kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
+      init: RTCRtpTransceiverInit(direction: TransceiverDirection.RecvOnly));
+  await pc2.addTransceiver(
+      kind: RTCRtpMediaType.RTCRtpMediaTypeVideo,
+      init: RTCRtpTransceiverInit(direction: TransceiverDirection.RecvOnly));
+
+  await pc1.setLocalDescription(offer);
+  await pc2.setRemoteDescription(offer);
+  var answer = await pc2.createAnswer({});
+  await pc2.setLocalDescription(answer);
+
+  await pc1.setRemoteDescription(answer);
+
+  localVideo.muted = true;
   localVideo.srcObject = stream;
 }

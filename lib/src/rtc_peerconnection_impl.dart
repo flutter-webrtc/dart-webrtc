@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:html' as html;
 import 'dart:js' as js;
 import 'dart:js_util' as jsutil;
+
+import 'package:platform_detect/platform_detect.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_impl.dart';
@@ -72,6 +74,37 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
       _iceConnectionState =
           iceConnectionStateForString(_jsPc.iceConnectionState);
       onIceConnectionState?.call(_iceConnectionState!);
+
+      if (browser.isFirefox) {
+        switch (_iceConnectionState!) {
+          case RTCIceConnectionState.RTCIceConnectionStateNew:
+            _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateChecking:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateConnecting;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateConnected:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateConnected;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateFailed:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateFailed;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateDisconnected;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateClosed:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateClosed;
+            break;
+          default:
+            break;
+        }
+        onConnectionState?.call(_connectionState!);
+      }
     });
 
     jsutil.setProperty(_jsPc, 'onicegatheringstatechange', js.allowInterop((_) {
@@ -94,10 +127,12 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
       onSignalingState?.call(_signalingState!);
     });
 
-    _jsPc.onConnectionStateChange.listen((_) {
-      _connectionState = peerConnectionStateForString(_jsPc.connectionState);
-      onConnectionState?.call(_connectionState!);
-    });
+    if (!browser.isFirefox) {
+      _jsPc.onConnectionStateChange.listen((_) {
+        _connectionState = peerConnectionStateForString(_jsPc.connectionState);
+        onConnectionState?.call(_connectionState!);
+      });
+    }
 
     _jsPc.onNegotiationNeeded.listen((_) {
       onRenegotiationNeeded?.call();
