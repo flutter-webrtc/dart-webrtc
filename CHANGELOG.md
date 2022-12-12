@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.0.12] - 2022-12-12
+
+* fix: Convert iceconnectionstate to connectionstate for Firefox.
+
 [1.0.11] - 2022-11-12
 
 * Change MediaStream.clone to async.
