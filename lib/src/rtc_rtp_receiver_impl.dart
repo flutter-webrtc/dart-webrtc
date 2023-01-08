@@ -11,6 +11,8 @@ class RTCRtpReceiverWeb extends RTCRtpReceiver {
   /// private:
   final RtcRtpReceiver _jsRtpReceiver;
 
+  RtcRtpReceiver get jsRtpReceiver => _jsRtpReceiver;
+
   @override
   Future<List<StatsReport>> getStats() async {
     var stats = await jsutil.promiseToFuture<dynamic>(
