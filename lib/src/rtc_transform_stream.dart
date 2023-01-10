@@ -47,6 +47,7 @@ class RTCEncodedFrame {
   external ByteBuffer get data;
   external set data(ByteBuffer data);
   external RTCEncodedFrameMetadata getMetadata();
+  external String? get type;
 }
 
 @JS()

@@ -35,7 +35,7 @@ class AesGcmParams {
     required String name,
     required ByteBuffer iv,
     ByteBuffer? additionalData,
-    required int tagLength,
+    int tagLength = 128,
   });
 }
 

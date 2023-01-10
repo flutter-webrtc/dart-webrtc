@@ -1,16 +1,17 @@
 import 'dart:html';
-import 'dart:js_util' as jsutil;
-import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js.dart';
+
+import 'cryptor.dart';
 
 @JS('self')
 external DedicatedWorkerGlobalScope get self;
 
 void main() async {
   print('Worker created');
+
+  var cryptors = <String, Cryptor>{};
 
   var secretKey = await cryptoKeyFromAesSecretKey([
     200,
@@ -47,8 +48,6 @@ void main() async {
     253
   ], webCryptoAlgorithm: 'AES-GCM');
 
-  var iv = makeIV();
-
   self.onMessage.listen((e) {
     var msg = e.data;
     var msgType = msg['msgType'];
@@ -57,79 +56,24 @@ void main() async {
       case 'decode':
       case 'encode':
         var kind = msg['kind'];
-        var participantId = msg['participantId'];
+        var participantId = msg['participantId'] as String;
         var trackId = msg['trackId'];
         var readable = msg['readableStream'] as ReadableStream;
         var writable = msg['writableStream'] as WritableStream;
         print(
             'worker: got $msgType, kind $kind, trackId $trackId, participantId $participantId, ${readable.runtimeType} ${writable.runtimeType}}');
-        readable
-            .pipeThrough(TransformStream(jsutil.jsify({
-              'transform': allowInterop((RTCEncodedFrame frame,
-                  TransformStreamDefaultController controller) async {
-                var buffer = frame.data.asUint8List();
-                var headerLength = kind == 'video' ? 10 : 1;
-                var metaData = frame.getMetadata();
-
-                if (msgType == 'encode') {
-                  var cipherText =
-                      await jsutil.promiseToFuture<ByteBuffer>(encrypt(
-                    AesGcmParams(
-                      name: 'AES-GCM',
-                      iv: jsArrayBufferFrom(iv),
-                      additionalData:
-                          jsArrayBufferFrom(buffer.sublist(0, headerLength)),
-                      tagLength: 128,
-                    ),
-                    secretKey,
-                    jsArrayBufferFrom(
-                        buffer.sublist(headerLength, buffer.length)),
-                  ));
-
-                  print(
-                      'buffer: ${buffer.length}, cipherText: ${cipherText.asUint8List().length}');
-                  var finalBuffer = BytesBuilder();
-
-                  finalBuffer
-                      .add(Uint8List.fromList(buffer.sublist(0, headerLength)));
-
-                  finalBuffer.add(cipherText.asUint8List());
-                  frame.data = jsArrayBufferFrom(finalBuffer.toBytes());
-
-                  controller.enqueue(frame);
-                } else {
-                  var decrypted =
-                      await jsutil.promiseToFuture<ByteBuffer>(decrypt(
-                    AesGcmParams(
-                      name: 'AES-GCM',
-                      iv: jsArrayBufferFrom(iv),
-                      additionalData:
-                          jsArrayBufferFrom(buffer.sublist(0, headerLength)),
-                      tagLength: 128,
-                    ),
-                    secretKey,
-                    jsArrayBufferFrom(
-                        buffer.sublist(headerLength, buffer.length)),
-                  ));
-                  print(
-                      'buffer: ${buffer.length}, decrypted: ${decrypted.asUint8List().length}');
-                  var finalBuffer = BytesBuilder();
-
-                  finalBuffer
-                      .add(Uint8List.fromList(buffer.sublist(0, headerLength)));
-
-                  finalBuffer.add(decrypted.asUint8List());
-                  frame.data = jsArrayBufferFrom(finalBuffer.toBytes());
-                  controller.enqueue(frame);
-                }
-
-                print(
-                    '$msgType => timestamp: ${frame.timestamp}, ssrc: ${metaData.synchronizationSource}, data length: ${buffer.length}, key ${secretKey.toString()} , iv ${iv.buffer.lengthInBytes}');
-              })
-            })))
-            .pipeTo(writable);
-
-        print('worker: enabling $kind for  $participantId $trackId');
+        var cryptor = Cryptor(
+            participantId: participantId,
+            trackId: trackId,
+            kind: kind,
+            secretKey: secretKey,
+            sharedKey: false);
+        cryptor.setupTransform(
+            operation: msgType,
+            readable: readable,
+            writable: writable,
+            trackId: trackId);
+        cryptors[participantId] = cryptor;
         break;
       case 'removeTransform':
         var removeMsg = msg as RemoveTransformMessage;
@@ -139,18 +83,7 @@ void main() async {
       default:
         print('worker: unknown message kind ${msg.msgType}');
     }
-    //print('worker: got ${dog.name} from master, raising it from ${dog.age}...');
-
     var olderDog = Dog(name: '2.0', age: 1);
     self.postMessage(olderDog);
   });
-}
-
-Uint8List makeIV() {
-  var iv = Uint8List(12);
-  var random = Random.secure();
-  for (var i = 0; i < iv.length; i++) {
-    iv[i] = random.nextInt(256);
-  }
-  return iv;
 }
