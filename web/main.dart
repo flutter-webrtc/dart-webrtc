@@ -8,6 +8,8 @@ import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:dart_webrtc/src/rtc_rtp_receiver_impl.dart';
 import 'package:dart_webrtc/src/rtc_rtp_sender_impl.dart';
 
+import 'utils.dart';
+
 /*
 import 'test_media_devices.dart' as media_devices_tests;
 import 'test_media_stream.dart' as media_stream_tests;
@@ -175,6 +177,10 @@ void loopBackTest(html.Worker w) async {
   });
 
   var offer = await pc1.createOffer();
+  var audioCodec = 'opus';
+  var videoCodec = 'h264';
+  setPreferredCodec(offer, audio: audioCodec, video: videoCodec);
+  print('offer: ${offer.sdp}');
 
   await pc2.addTransceiver(
       kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
@@ -204,7 +210,7 @@ void loopBackTest(html.Worker w) async {
           'kind': jsSender.track!.kind!,
           'participantId': jsSender.track!.id!,
           'trackId': jsSender.track!.id!,
-          'codec': 'vp8',
+          'codec': jsSender.track!.kind == 'audio' ? audioCodec : videoCodec,
           'readableStream': readable,
           'writableStream': writable
         }),
@@ -231,7 +237,7 @@ void loopBackTest(html.Worker w) async {
         'kind': jsReceiver.track!.kind!,
         'participantId': jsReceiver.track!.id!,
         'trackId': jsReceiver.track!.id!,
-        'codec': 'vp8',
+        'codec': jsReceiver.track!.kind == 'audio' ? audioCodec : videoCodec,
         'readableStream': readable,
         'writableStream': writable
       }),

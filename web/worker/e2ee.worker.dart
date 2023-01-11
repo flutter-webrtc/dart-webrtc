@@ -60,6 +60,7 @@ void main() async {
         var trackId = msg['trackId'];
         var readable = msg['readableStream'] as ReadableStream;
         var writable = msg['writableStream'] as WritableStream;
+        var codec = msg['codec'] as String;
         print(
             'worker: got $msgType, kind $kind, trackId $trackId, participantId $participantId, ${readable.runtimeType} ${writable.runtimeType}}');
         var cryptor = Cryptor(
@@ -72,7 +73,8 @@ void main() async {
             operation: msgType,
             readable: readable,
             writable: writable,
-            trackId: trackId);
+            trackId: trackId,
+            codec: codec);
         cryptors[participantId] = cryptor;
         break;
       case 'removeTransform':
