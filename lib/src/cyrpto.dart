@@ -10,21 +10,17 @@ class Promise<T> {
   external factory Promise._();
 }
 
-@anonymous
-@JS('CryptoKey')
-class AesCryptoKey {}
-
 @JS('crypto.subtle.encrypt')
 external Promise<ByteBuffer> encrypt(
   dynamic algorithm,
-  AesCryptoKey key,
+  html.CryptoKey key,
   ByteBuffer data,
 );
 
 @JS('crypto.subtle.decrypt')
 external Promise<ByteBuffer> decrypt(
   dynamic algorithm,
-  AesCryptoKey key,
+  html.CryptoKey key,
   ByteBuffer data,
 );
 
@@ -51,7 +47,7 @@ ByteBuffer jsArrayBufferFrom(List<int> data) {
 }
 
 @JS('crypto.subtle.importKey')
-external Promise<AesCryptoKey> importKey(
+external Promise<html.CryptoKey> importKey(
   String format,
   dynamic keyData,
   dynamic algorithm,
@@ -59,7 +55,7 @@ external Promise<AesCryptoKey> importKey(
   List<String> keyUsages,
 );
 
-FutureOr<AesCryptoKey> cryptoKeyFromAesSecretKey(
+FutureOr<html.CryptoKey> cryptoKeyFromAesSecretKey(
   List<int> secretKeyData, {
   required String webCryptoAlgorithm,
 }) async {

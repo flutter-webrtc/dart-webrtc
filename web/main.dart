@@ -10,6 +10,8 @@ import 'package:dart_webrtc/src/rtc_rtp_sender_impl.dart';
 
 import 'utils.dart';
 
+import 'worker/e2ee.worker.dart' as e2ee;
+
 /*
 import 'test_media_devices.dart' as media_devices_tests;
 import 'test_media_stream.dart' as media_stream_tests;
@@ -19,7 +21,13 @@ import 'test_video_element.dart' as video_elelment_tests;
 */
 
 void main() {
-  var w = html.Worker('worker/e2ee.worker.dart.js');
+  var worker = Uri.base.queryParameters['worker'];
+  if (worker != null && worker == 'e2ee') {
+    print('worker started');
+    return e2ee.e2eeWorker();
+  }
+
+  var w = html.Worker('main.dart.js?worker=e2ee');
   /*
   video_elelment_tests.testFunctions.forEach((Function func) => func());
   media_devices_tests.testFunctions.forEach((Function func) => func());
@@ -178,7 +186,7 @@ void loopBackTest(html.Worker w) async {
 
   var offer = await pc1.createOffer();
   var audioCodec = 'opus';
-  var videoCodec = 'h264';
+  var videoCodec = 'vp8';
   setPreferredCodec(offer, audio: audioCodec, video: videoCodec);
   print('offer: ${offer.sdp}');
 

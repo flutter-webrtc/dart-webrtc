@@ -8,7 +8,7 @@ import 'cryptor.dart';
 @JS('self')
 external DedicatedWorkerGlobalScope get self;
 
-void main() async {
+void e2eeWorker() async {
   print('Worker created');
 
   var cryptors = <String, Cryptor>{};

@@ -1,3 +1,4 @@
+import 'dart:html';
 import 'dart:js';
 import 'dart:js_util';
 import 'dart:math';
@@ -115,7 +116,7 @@ class Cryptor {
   String codec;
   final bool sharedKey;
   final String kind;
-  final AesCryptoKey secretKey;
+  final CryptoKey secretKey;
   final int keyIndex = 0;
 
   Uint8List makeIv(
