@@ -48,8 +48,8 @@ class RemoveTransformMessage {
 external html.DedicatedWorkerGlobalScope get self;
 
 extension PropsRTCTransformEventHandler on html.DedicatedWorkerGlobalScope {
-  set onrtctransform(dynamic callback) =>
-      js_util.setProperty(this, 'onrtctransform', callback);
+  set onrtctransform(Function(dynamic) callback) =>
+      js_util.setProperty<Function>(this, 'onrtctransform', callback);
 }
 
 void e2eeWorker() async {
