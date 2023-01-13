@@ -126,7 +126,6 @@ void e2eeWorker() async {
   self.onMessage.listen((e) {
     var msg = e.data;
     var msgType = msg['msgType'];
-
     switch (msgType) {
       case 'decode':
       case 'encode':

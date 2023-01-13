@@ -25,6 +25,9 @@ void main() {
     return e2eeWorker();
   }
 
+  print(
+      'isScriptTransformSupported: ${isScriptTransformSupported()}, isInsertableStreamSupported: ${isInsertableStreamSupported()}');
+
   var w = html.Worker('main.dart.js?worker=e2ee');
   w.onMessage.listen((msg) {
     print('master got ${msg.data}');
