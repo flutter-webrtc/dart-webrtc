@@ -10,8 +10,6 @@ import 'package:dart_webrtc/src/rtc_rtp_sender_impl.dart';
 
 import 'utils.dart';
 
-import 'worker/e2ee.worker.dart' as e2ee;
-
 /*
 import 'test_media_devices.dart' as media_devices_tests;
 import 'test_media_stream.dart' as media_stream_tests;
@@ -24,10 +22,16 @@ void main() {
   var worker = Uri.base.queryParameters['worker'];
   if (worker != null && worker == 'e2ee') {
     print('worker started');
-    return e2ee.e2eeWorker();
+    return e2eeWorker();
   }
 
   var w = html.Worker('main.dart.js?worker=e2ee');
+  w.onMessage.listen((msg) {
+    print('master got ${msg.data}');
+  });
+  //aesGcmTest();
+  loopBackTest(w);
+
   /*
   video_elelment_tests.testFunctions.forEach((Function func) => func());
   media_devices_tests.testFunctions.forEach((Function func) => func());
@@ -35,14 +39,6 @@ void main() {
   media_stream_track_tests.testFunctions.forEach((Function func) => func());
   peerconnection_tests.testFunctions.forEach((Function func) => func());
   */
-  //js.context.callMethod('alert', ['Hello from Dart!']);
-  w.onMessage.listen((msg) {
-    print('master got ${msg.data}');
-    var dog = Dog(name: msg.data['name'], age: msg.data['age']);
-    print('master took back ${dog.name} and she turns into ${dog.age}!');
-  });
-  //aesGcmTest();
-  loopBackTest(w);
 }
 
 void aesGcmTest() async {
@@ -81,7 +77,7 @@ void aesGcmTest() async {
     253
   ], webCryptoAlgorithm: 'AES-GCM');
 
-  String clearText = 'Hello World!';
+  var clearText = 'Hello World!';
 
   var iv = makeIV();
 
@@ -186,7 +182,7 @@ void loopBackTest(html.Worker w) async {
 
   var offer = await pc1.createOffer();
   var audioCodec = 'opus';
-  var videoCodec = 'vp8';
+  var videoCodec = 'h264';
   setPreferredCodec(offer, audio: audioCodec, video: videoCodec);
   print('offer: ${offer.sdp}');
 
@@ -207,6 +203,15 @@ void loopBackTest(html.Worker w) async {
     var jsSender = (rtpSender as RTCRtpSenderWeb).jsRtpSender;
     if (js.context['RTCRtpScriptTransform'] != null) {
       print('support RTCRtpScriptTransform');
+      var options = {
+        'msgType': 'encode',
+        'kind': jsSender.track!.kind!,
+        'participantId': jsSender.track!.id!,
+        'trackId': jsSender.track!.id!,
+        'codec': videoCodec,
+      };
+      jsutil.setProperty(jsSender, 'transform',
+          RTCRtpScriptTransform(w, jsutil.jsify(options)));
     } else {
       EncodedStreams streams =
           jsutil.callMethod(jsSender, 'createEncodedStreams', []);
@@ -234,22 +239,35 @@ void loopBackTest(html.Worker w) async {
   receivers.forEach((receiver) {
     var jsReceiver = (receiver as RTCRtpReceiverWeb).jsRtpReceiver;
 
-    EncodedStreams streams =
-        jsutil.callMethod(jsReceiver, 'createEncodedStreams', []);
-    var readable = streams.readable;
-    var writable = streams.writable;
-
-    jsutil.callMethod(w, 'postMessage', [
-      jsutil.jsify({
+    if (js.context['RTCRtpScriptTransform'] != null) {
+      print('support RTCRtpScriptTransform');
+      var options = {
         'msgType': 'decode',
         'kind': jsReceiver.track!.kind!,
         'participantId': jsReceiver.track!.id!,
         'trackId': jsReceiver.track!.id!,
-        'codec': jsReceiver.track!.kind == 'audio' ? audioCodec : videoCodec,
-        'readableStream': readable,
-        'writableStream': writable
-      }),
-      jsutil.jsify([readable, writable]),
-    ]);
+        'codec': videoCodec,
+      };
+      jsutil.setProperty(jsReceiver, 'transform',
+          RTCRtpScriptTransform(w, jsutil.jsify(options)));
+    } else {
+      EncodedStreams streams =
+          jsutil.callMethod(jsReceiver, 'createEncodedStreams', []);
+      var readable = streams.readable;
+      var writable = streams.writable;
+
+      jsutil.callMethod(w, 'postMessage', [
+        jsutil.jsify({
+          'msgType': 'decode',
+          'kind': jsReceiver.track!.kind!,
+          'participantId': jsReceiver.track!.id!,
+          'trackId': jsReceiver.track!.id!,
+          'codec': jsReceiver.track!.kind == 'audio' ? audioCodec : videoCodec,
+          'readableStream': readable,
+          'writableStream': writable
+        }),
+        jsutil.jsify([readable, writable]),
+      ]);
+    }
   });
 }
