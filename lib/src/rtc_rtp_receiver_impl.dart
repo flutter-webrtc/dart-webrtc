@@ -37,4 +37,6 @@ class RTCRtpReceiverWeb extends RTCRtpReceiver {
 
   @override
   String get receiverId => jsutil.getProperty(_jsRtpReceiver, 'receiverId');
+
+  RtcRtpReceiver get jsRtpReceiver => _jsRtpReceiver;
 }
