@@ -91,7 +91,7 @@ class RTCRtpSenderWeb extends RTCRtpSender {
   }
 
   @override
-  String get senderId => jsutil.getProperty(_jsRtpSender, 'senderId');
+  String get senderId => '${_jsRtpSender.hashCode}';
 
   @override
   bool get ownsTrack => _ownsTrack;
