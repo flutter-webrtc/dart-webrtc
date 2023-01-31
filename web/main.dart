@@ -29,8 +29,20 @@ void loopBackTest() async {
   var remotelVideo = RTCVideoElement();
   remote!.append(remotelVideo.htmlElement);
 
+  var acaps = await getRtpSenderCapabilities('audio');
+  print('sender audio capabilities: ${acaps.toMap()}');
+
+  var vcaps = await getRtpSenderCapabilities('video');
+  print('sender video capabilities: ${vcaps.toMap()}');
+  /*
+  capabilities = await getRtpReceiverCapabilities('audio');
+  print('receiver audio capabilities: ${capabilities.toMap()}');
+
+  capabilities = await getRtpReceiverCapabilities('video');
+  print('receiver video capabilities: ${capabilities.toMap()}');
+  */
   var pc2 = await createPeerConnection({});
-  pc2.onTrack = (event) {
+  pc2.onTrack = (event) async {
     if (event.track.kind == 'video') {
       remotelVideo.srcObject = event.streams[0];
     }
@@ -79,6 +91,27 @@ void loopBackTest() async {
 
   stream.getTracks().forEach((track) async {
     await pc1.addTrack(track, stream);
+  });
+
+  var transceivers = await pc1.getTransceivers();
+  transceivers.forEach((transceiver) {
+    print('transceiver: ${transceiver.sender.track!.kind!}');
+    if (transceiver.sender.track!.kind! == 'video') {
+      transceiver.setCodecPreferences([
+        RTCRtpCodecCapability(
+          mimeType: 'video/AV1',
+          clockRate: 90000,
+        )
+      ]);
+    } else if (transceiver.sender.track!.kind! == 'audio') {
+      transceiver.setCodecPreferences([
+        RTCRtpCodecCapability(
+          mimeType: 'audio/PCMA',
+          clockRate: 8000,
+          channels: 1,
+        )
+      ]);
+    }
   });
 
   var offer = await pc1.createOffer();

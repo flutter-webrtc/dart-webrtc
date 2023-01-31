@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:js_util' as jsutil;
 
+import 'package:webrtc_interface/src/rtc_rtp_capabilities.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_impl.dart';
@@ -52,6 +53,8 @@ extension RTCRtpTransceiverInitWebExt on RTCRtpTransceiverInit {
           'sendEncodings': sendEncodings!.map((e) => e.toMap()).toList(),
       });
 }
+
+
 
 class RTCRtpTransceiverWeb extends RTCRtpTransceiver {
   RTCRtpTransceiverWeb(this._jsTransceiver, _peerConnectionId);
@@ -107,6 +110,16 @@ class RTCRtpTransceiverWeb extends RTCRtpTransceiver {
       jsutil.callMethod(_jsTransceiver, 'stop', []);
     } on Exception catch (e) {
       throw 'Unable to RTCRtpTransceiver::stop: ${e..toString()}';
+    }
+  }
+
+  @override
+  Future<void> setCodecPreferences(List<RTCRtpCodecCapability> codecs) async {
+    try {
+      jsutil.callMethod(_jsTransceiver, 'setCodecPreferences',
+          [jsutil.jsify(codecs.map((e) => e.toMap()).toList())]);
+    } on Exception catch (e) {
+      throw 'Unable to RTCRtpTransceiver::setCodecPreferences: ${e..toString()}';
     }
   }
 }
