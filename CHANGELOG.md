@@ -1,6 +1,14 @@
 # Changelog
 
 --------------------------------------------
+[1.0.14] - 2023-01-30
+
+* Add support for getCapabilities/setCodecPreferences.
+
+[1.0.13] - 2022-12-12
+
+* export jsRtpReciver.
+
 [1.0.12] - 2022-12-12
 
 * fix: Convert iceconnectionstate to connectionstate for Firefox.

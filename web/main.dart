@@ -131,11 +131,26 @@ void loopBackTest(html.Worker w) async {
   remote!.append(remotelVideo.htmlElement);
 
   var pc2 = await createPeerConnection({'encodedInsertableStreams': true});
-  pc2.onTrack = (event) {
+
+  var acaps = await getRtpSenderCapabilities('audio');
+  print('sender audio capabilities: ${acaps.toMap()}');
+
+  var vcaps = await getRtpSenderCapabilities('video');
+  print('sender video capabilities: ${vcaps.toMap()}');
+  /*
+  capabilities = await getRtpReceiverCapabilities('audio');
+  print('receiver audio capabilities: ${capabilities.toMap()}');
+
+  capabilities = await getRtpReceiverCapabilities('video');
+  print('receiver video capabilities: ${capabilities.toMap()}');
+  */
+
+  pc2.onTrack = (event) async {
     if (event.track.kind == 'video') {
       remotelVideo.srcObject = event.streams[0];
     }
   };
+
   pc2.onConnectionState = (state) {
     print('connectionState $state');
   };
@@ -183,12 +198,34 @@ void loopBackTest(html.Worker w) async {
     senders.add(rtpSender);
   });
 
+  var transceivers = await pc1.getTransceivers();
+  transceivers.forEach((transceiver) {
+    print('transceiver: ${transceiver.sender.track!.kind!}');
+    if (transceiver.sender.track!.kind! == 'video') {
+      transceiver.setCodecPreferences([
+        RTCRtpCodecCapability(
+          mimeType: 'video/AV1',
+          clockRate: 90000,
+        )
+      ]);
+    } else if (transceiver.sender.track!.kind! == 'audio') {
+      transceiver.setCodecPreferences([
+        RTCRtpCodecCapability(
+          mimeType: 'audio/PCMA',
+          clockRate: 8000,
+          channels: 1,
+        )
+      ]);
+    }
+  });
+
   var offer = await pc1.createOffer();
   var audioCodec = 'opus';
-  var videoCodec = 'h264';
+  var videoCodec = 'vp8';
+  /*
   setPreferredCodec(offer, audio: audioCodec, video: videoCodec);
   print('offer: ${offer.sdp}');
-
+  */
   await pc2.addTransceiver(
       kind: RTCRtpMediaType.RTCRtpMediaTypeAudio,
       init: RTCRtpTransceiverInit(direction: TransceiverDirection.RecvOnly));
