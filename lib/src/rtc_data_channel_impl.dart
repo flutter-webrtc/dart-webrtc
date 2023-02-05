@@ -22,6 +22,9 @@ class RTCDataChannelWeb extends RTCDataChannel {
       _messageController.add(msg);
       onMessage?.call(msg);
     });
+    _jsDc.addEventListener('bufferedamountlow', (_) {
+      onBufferedAmountLow?.call(bufferedAmount ?? 0);
+    });
   }
 
   final html.RtcDataChannel _jsDc;
@@ -39,10 +42,15 @@ class RTCDataChannelWeb extends RTCDataChannel {
   @override
   int? get bufferedAmount => _jsDc.bufferedAmount;
 
+  @override
+  set bufferedAmountLowThreshold(int? bufferedAmountLowThreshold) {
+    _jsDc.bufferedAmountLowThreshold = bufferedAmountLowThreshold;
+  }
+
   final _stateChangeController =
-      StreamController<RTCDataChannelState>.broadcast(sync: true);
+  StreamController<RTCDataChannelState>.broadcast(sync: true);
   final _messageController =
-      StreamController<RTCDataChannelMessage>.broadcast(sync: true);
+  StreamController<RTCDataChannelMessage>.broadcast(sync: true);
 
   Future<RTCDataChannelMessage> _parse(dynamic data) async {
     if (data is String) return RTCDataChannelMessage(data);
