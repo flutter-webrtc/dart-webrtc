@@ -5,15 +5,19 @@ class RTCRtpParametersWeb {
   static RTCRtpParameters fromJsObject(Object object) {
     return RTCRtpParameters(
         transactionId: jsutil.getProperty(object, 'transactionId'),
-        rtcp: RTCRTCPParametersWeb.fromJsObject(
-            jsutil.getProperty(object, 'rtcp')),
+        rtcp: jsutil.hasProperty(object, 'transactionId')
+            ? RTCRTCPParametersWeb.fromJsObject(
+                jsutil.getProperty(object, 'rtcp'))
+            : null,
         headerExtensions: headerExtensionsFromJsObject(object),
         encodings: encodingsFromJsObject(object),
         codecs: codecsFromJsObject(object));
   }
 
   static List<RTCHeaderExtension> headerExtensionsFromJsObject(Object object) {
-    var headerExtensions = jsutil.getProperty(object, 'headerExtensions');
+    var headerExtensions = jsutil.hasProperty(object, 'headerExtensions')
+        ? jsutil.getProperty(object, 'headerExtensions')
+        : [];
     var list = <RTCHeaderExtension>[];
     headerExtensions.forEach((e) {
       list.add(RTCHeaderExtensionWeb.fromJsObject(e));
@@ -22,7 +26,9 @@ class RTCRtpParametersWeb {
   }
 
   static List<RTCRtpEncoding> encodingsFromJsObject(Object object) {
-    var encodings = jsutil.getProperty(object, 'encodings');
+    var encodings = jsutil.hasProperty(object, 'encodings')
+        ? jsutil.getProperty(object, 'encodings')
+        : [];
     var list = <RTCRtpEncoding>[];
     encodings.forEach((e) {
       list.add(RTCRtpEncodingWeb.fromJsObject(e));
@@ -31,7 +37,9 @@ class RTCRtpParametersWeb {
   }
 
   static List<RTCRTPCodec> codecsFromJsObject(Object object) {
-    var encodings = jsutil.getProperty(object, 'codecs');
+    var encodings = jsutil.hasProperty(object, 'codecs')
+        ? jsutil.getProperty(object, 'codecs')
+        : [];
     var list = <RTCRTPCodec>[];
     encodings.forEach((e) {
       list.add(RTCRTPCodecWeb.fromJsObject(e));
