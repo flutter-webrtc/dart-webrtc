@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+[1.0.15] - 2023-02-10
+
+* add bufferedamountlow
+* Fix bug for firefox.
+
 [1.0.14] - 2023-01-30
 
 * Add support for getCapabilities/setCodecPreferences.
