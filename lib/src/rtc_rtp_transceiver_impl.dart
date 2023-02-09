@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:js_util' as jsutil;
 
-import 'package:webrtc_interface/src/rtc_rtp_capabilities.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_impl.dart';
@@ -53,8 +52,6 @@ extension RTCRtpTransceiverInitWebExt on RTCRtpTransceiverInit {
           'sendEncodings': sendEncodings!.map((e) => e.toMap()).toList(),
       });
 }
-
-
 
 class RTCRtpTransceiverWeb extends RTCRtpTransceiver {
   RTCRtpTransceiverWeb(this._jsTransceiver, _peerConnectionId);
