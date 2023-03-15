@@ -100,7 +100,7 @@ class MediaDevicesWeb extends MediaDevices {
         channelCount: _mapConstraints['channelCount'],
         colorTemperature: _mapConstraints['colorTemperature'],
         contrast: _mapConstraints['contrast'],
-        deviceId: _mapConstraints['_mapConstraints'],
+        deviceId: _mapConstraints['deviceId'],
         echoCancellation: _mapConstraints['echoCancellation'],
         exposureCompensation: _mapConstraints['exposureCompensation'],
         exposureMode: _mapConstraints['exposureMode'],
