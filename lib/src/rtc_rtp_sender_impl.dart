@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:js_util' as jsutil;
 
+import 'package:dart_webrtc/src/media_stream_impl.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_track_impl.dart';
@@ -44,6 +45,17 @@ class RTCRtpSenderWeb extends RTCRtpSender {
       }
     } on Exception catch (e) {
       throw 'Unable to RTCRtpSender::setTrack: ${e.toString()}';
+    }
+  }
+
+  @override
+  Future<void> setStreams(List<MediaStream> streams) async {
+    try {
+      final nativeStreams = streams as List<MediaStreamWeb>;
+      jsutil.callMethod(_jsRtpSender, 'setStreams',
+          nativeStreams.map((e) => e.jsStream).toList());
+    } on Exception catch (e) {
+      throw 'Unable to RTCRtpSender::setStreams: ${e.toString()}';
     }
   }
 
