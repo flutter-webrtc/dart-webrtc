@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.0.17] - 2023-06-14
+
+* Fix facingMode for mobile.
+
 [1.0.16] - 2023-04-10
 
 * Add addStreams to RTCRtpSender.
