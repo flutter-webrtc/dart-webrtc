@@ -5,14 +5,16 @@ import 'dart:js_util' as jsutil;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_impl.dart';
+import 'utils.dart';
 
 class MediaDevicesWeb extends MediaDevices {
   @override
   Future<MediaStream> getUserMedia(
       Map<String, dynamic> mediaConstraints) async {
     try {
-      if (mediaConstraints['video'] is Map) {
-        if (mediaConstraints['video']['facingMode'] != null) {
+      if (!isMobile) {
+        if (mediaConstraints['video'] is Map &&
+            mediaConstraints['video']['facingMode'] != null) {
           mediaConstraints['video'].remove('facingMode');
         }
       }
