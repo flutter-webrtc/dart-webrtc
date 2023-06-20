@@ -6,14 +6,11 @@ import 'dart:js_util' as jsutil;
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
-import 'package:dart_webrtc/src/rtc_rtp_receiver_impl.dart';
-import 'package:dart_webrtc/src/rtc_rtp_sender_impl.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
+import 'rtc_rtp_receiver_impl.dart';
+import 'rtc_rtp_sender_impl.dart';
 import 'rtc_transform_stream.dart';
-
-// ignore: implementation_imports
-// ignore: implementation_imports
 
 extension RtcRtpReceiverExt on html.RtcRtpReceiver {
   static Map<int, ReadableStream> readableStreams_ = {};
