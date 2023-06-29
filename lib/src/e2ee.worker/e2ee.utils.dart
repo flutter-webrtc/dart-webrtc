@@ -1,6 +1,5 @@
 import 'dart:html';
 import 'dart:js' as js;
-import 'dart:js_util';
 import 'dart:typed_data';
 
 import 'crypto.dart' as crypto;

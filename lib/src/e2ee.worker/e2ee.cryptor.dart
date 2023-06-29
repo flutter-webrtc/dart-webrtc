@@ -1,9 +1,9 @@
+import 'dart:async';
 import 'dart:html';
 import 'dart:js';
 import 'dart:js_util' as jsutil;
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:async';
 
 import '../rtc_transform_stream.dart';
 import 'crypto.dart' as crypto;
@@ -173,6 +173,7 @@ class FrameCryptor {
         _ratchetCompleter = null;
         return;
       }
+      // ignore: unawaited_futures
       ratchetMaterial(currentMaterial).then((newMaterial) {
         deriveKeys(newMaterial, keyOptions.ratchetSalt).then((newKeySet) {
           setKeySetFromMaterial(newKeySet, keyIndex ?? currentKeyIndex)
@@ -487,7 +488,7 @@ class FrameCryptor {
     var buffer = frame.data.asUint8List();
     ByteBuffer? decrypted;
     KeySet? initialKeySet;
-    int initialKeyIndex = currentKeyIndex;
+    var initialKeyIndex = currentKeyIndex;
 
     if (!enabled ||
         // skip for encryption for empty dtx frames
@@ -540,8 +541,8 @@ class FrameCryptor {
         controller.enqueue(frame);
         return;
       }
-      bool endDecLoop = false;
-      KeySet currentkeySet = initialKeySet;
+      var endDecLoop = false;
+      var currentkeySet = initialKeySet;
       while (!endDecLoop) {
         try {
           decrypted = await jsutil.promiseToFuture<ByteBuffer>(crypto.decrypt(
