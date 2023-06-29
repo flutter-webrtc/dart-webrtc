@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.1.1] - 2023-06-29
+
+* downgrade collection to ^1.17.1.
+
 [1.1.0] - 2023-06-29
 
 * Add FrameCryptor support.
