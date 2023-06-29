@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.1.0] - 2023-06-29
+
+* Add FrameCryptor support.
+
 [1.0.17] - 2023-06-14
 
 * Fix facingMode for mobile.

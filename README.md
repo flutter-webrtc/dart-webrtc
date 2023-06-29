@@ -6,6 +6,12 @@ Use the [dart/js](https://pub.dev/packages/js) library to re-wrap the [webrtc](h
 
 This library will be used for [flutter-webrtc](https://github.com/flutter-webrtc/flutter-webrtc) for [flutter web](https://flutter.dev/web) plugin.
 
+## compile E2EE worker
+
+```bash
+dart compile js ./lib/src/e2ee.worker/e2ee.worker.dart -o web/e2ee.worker.dart.js
+```
+
 ## How to develop
 
 * `git clone https://github.com/flutter-webrtc/dart-webrtc && cd dart-webrtc`
