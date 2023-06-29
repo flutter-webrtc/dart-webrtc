@@ -4,6 +4,7 @@ import 'dart:html' as html;
 import 'package:js/js.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
+import 'frame_cryptor_impl.dart';
 import 'media_recorder_impl.dart';
 import 'media_stream_impl.dart';
 import 'navigator_impl.dart';
@@ -63,6 +64,10 @@ class RTCFactoryWeb extends RTCFactory {
   Navigator get navigator => NavigatorWeb();
 
   @override
+  FrameCryptorFactory get frameCryptorFactory =>
+      FrameCryptorFactoryImpl.instance;
+
+  @override
   Future<RTCRtpCapabilities> getRtpReceiverCapabilities(String kind) async {
     var caps = RTCRtpReceiverJs.getCapabilities(kind);
     return RTCRtpCapabilitiesWeb.fromJsObject(caps);
@@ -103,3 +108,7 @@ VideoRenderer videoRenderer() {
 }
 
 Navigator get navigator => RTCFactoryWeb.instance.navigator;
+
+FrameCryptorFactory get frameCryptorFactory => FrameCryptorFactoryImpl.instance;
+
+MediaDevices get mediaDevices => navigator.mediaDevices;
