@@ -159,7 +159,7 @@ class FrameCryptor {
   CryptorError lastError = CryptorError.kNew;
   final DedicatedWorkerGlobalScope worker;
   int currentKeyIndex = 0;
-
+  bool hasValidKey = false;
   Completer? _ratchetCompleter;
 
   List<KeySet?> cryptoKeyRing = List.filled(KEYRING_SIZE, null);
@@ -242,6 +242,7 @@ class FrameCryptor {
       keyOptions.ratchetSalt,
     );
     await setKeySetFromMaterial(keySet, keyIndex);
+    hasValidKey = true;
   }
 
   Future<void> setKeySetFromMaterial(KeySet keySet, int keyIndex) async {
@@ -499,10 +500,13 @@ class FrameCryptor {
 
     if (keyOptions.uncryptedMagicBytes != null) {
       var magicBytes = keyOptions.uncryptedMagicBytes!;
-      if (buffer.length >= magicBytes.length + 1) {
+      if (buffer.length > magicBytes.length + 1) {
         var magicBytesBuffer = buffer.sublist(
-            buffer.length - (magicBytes.length + 1), magicBytes.length);
+            buffer.length - magicBytes.length - 1, buffer.length - 1);
+        //print('magicBytesBuffer $magicBytesBuffer, magicBytes $magicBytes, ');
         if (magicBytesBuffer.toString() == magicBytes.toString()) {
+          var frameType = buffer.sublist(buffer.length - 1)[0];
+          print('skip uncrypted frame, type $frameType');
           var finalBuffer = BytesBuilder();
           finalBuffer.add(Uint8List.fromList(
               buffer.sublist(0, buffer.length - (magicBytes.length + 1))));
@@ -526,7 +530,7 @@ class FrameCryptor {
       var initialKeySet = getKeySet(keyIndex);
       initialKeyIndex = keyIndex;
 
-      if (initialKeySet == null) {
+      if (initialKeySet == null || !hasValidKey) {
         if (lastError != CryptorError.kMissingKey) {
           lastError = CryptorError.kMissingKey;
           postMessage({
@@ -635,6 +639,7 @@ class FrameCryptor {
       /// yet and ratcheting, of course, did not solve the problem. So if we fail RATCHET_WINDOW_SIZE times,
       ///  we come back to the initial key.
       await setKeySetFromMaterial(initialKeySet!, initialKeyIndex);
+      hasValidKey = false;
     }
   }
 }
