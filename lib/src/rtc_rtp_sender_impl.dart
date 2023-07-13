@@ -51,7 +51,7 @@ class RTCRtpSenderWeb extends RTCRtpSender {
   @override
   Future<void> setStreams(List<MediaStream> streams) async {
     try {
-      final nativeStreams = streams as List<MediaStreamWeb>;
+      final nativeStreams = streams.cast<MediaStreamWeb>();
       jsutil.callMethod(_jsRtpSender, 'setStreams',
           nativeStreams.map((e) => e.jsStream).toList());
     } on Exception catch (e) {
