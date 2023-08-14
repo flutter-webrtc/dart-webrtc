@@ -96,4 +96,9 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
   Future<void> setTorch(bool torch) {
     throw UnimplementedError('The web implementation does not support torch');
   }
+
+  @override
+  Future<MediaStreamTrack> clone() async {
+    return MediaStreamTrackWeb(jsTrack.clone());
+  }
 }

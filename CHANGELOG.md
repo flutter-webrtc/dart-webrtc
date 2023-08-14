@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.1.2] - 2023-08-14
+
+* Add async functions for get pc states.
+
 [1.1.1] - 2023-06-29
 
 * downgrade collection to ^1.17.1.

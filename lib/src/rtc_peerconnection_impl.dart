@@ -173,13 +173,70 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   RTCSignalingState? get signalingState => _signalingState;
 
   @override
+  Future<RTCSignalingState?> getSignalingState() async {
+    _signalingState = signalingStateForString(_jsPc.signalingState);
+    return signalingState;
+  }
+
+  @override
   RTCIceGatheringState? get iceGatheringState => _iceGatheringState;
+
+  @override
+  Future<RTCIceGatheringState?> getIceGatheringState() async {
+    _iceGatheringState = iceGatheringStateforString(_jsPc.iceGatheringState);
+    return _iceGatheringState;
+  }
 
   @override
   RTCIceConnectionState? get iceConnectionState => _iceConnectionState;
 
   @override
+  Future<RTCIceConnectionState?> getIceConnectionState() async {
+    _iceConnectionState = iceConnectionStateForString(_jsPc.iceConnectionState);
+    if (browser.isFirefox) {
+      switch (_iceConnectionState!) {
+        case RTCIceConnectionState.RTCIceConnectionStateNew:
+          _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
+          break;
+        case RTCIceConnectionState.RTCIceConnectionStateChecking:
+          _connectionState =
+              RTCPeerConnectionState.RTCPeerConnectionStateConnecting;
+          break;
+        case RTCIceConnectionState.RTCIceConnectionStateConnected:
+          _connectionState =
+              RTCPeerConnectionState.RTCPeerConnectionStateConnected;
+          break;
+        case RTCIceConnectionState.RTCIceConnectionStateFailed:
+          _connectionState =
+              RTCPeerConnectionState.RTCPeerConnectionStateFailed;
+          break;
+        case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
+          _connectionState =
+              RTCPeerConnectionState.RTCPeerConnectionStateDisconnected;
+          break;
+        case RTCIceConnectionState.RTCIceConnectionStateClosed:
+          _connectionState =
+              RTCPeerConnectionState.RTCPeerConnectionStateClosed;
+          break;
+        default:
+          break;
+      }
+    }
+    return _iceConnectionState;
+  }
+
+  @override
   RTCPeerConnectionState? get connectionState => _connectionState;
+
+  @override
+  Future<RTCPeerConnectionState?> getConnectionState() async {
+    if (browser.isFirefox) {
+      await getIceConnectionState();
+    } else {
+      _connectionState = peerConnectionStateForString(_jsPc.connectionState);
+    }
+    return _connectionState;
+  }
 
   @override
   Future<void> dispose() {
