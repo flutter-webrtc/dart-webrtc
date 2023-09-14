@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.1.2] - 2023-09-14
+
+* Add more frame cryptor api.
+
 [1.1.2] - 2023-08-14
 
 * Add async functions for get pc states.

@@ -228,6 +228,49 @@ class KeyProviderImpl implements KeyProvider {
 
     return _ratchetKeyCompleter!.future;
   }
+
+  @override
+  Future<Uint8List> exportKey(
+      {required String participantId, required int index}) {
+    throw UnimplementedError('exportKey not supported for web');
+  }
+
+  @override
+  Future<Uint8List> exportSharedKey({int index = 0}) {
+    throw UnimplementedError('exportSharedKey not supported for web');
+  }
+
+  @override
+  Future<Uint8List> ratchetSharedKey({int index = 0}) async {
+    jsutil.callMethod(worker, 'postMessage', [
+      jsutil.jsify({
+        'msgType': 'ratchetSharedKey',
+        'keyIndex': index,
+      })
+    ]);
+    return Uint8List(0);
+  }
+
+  @override
+  Future<void> setSharedKey({required Uint8List key, int index = 0}) async {
+    jsutil.callMethod(worker, 'postMessage', [
+      jsutil.jsify({
+        'msgType': 'setSharedKey',
+        'keyIndex': index,
+        'key': base64Encode(key),
+      })
+    ]);
+  }
+
+  @override
+  Future<void> setSifTrailer({required Uint8List trailer}) async {
+    jsutil.callMethod(worker, 'postMessage', [
+      jsutil.jsify({
+        'msgType': 'setSifTrailer',
+        'sifTrailer': base64Encode(trailer),
+      })
+    ]);
+  }
 }
 
 class FrameCryptorFactoryImpl implements FrameCryptorFactory {

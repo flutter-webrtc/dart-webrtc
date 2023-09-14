@@ -209,6 +209,18 @@ void main() async {
           }
         }
         break;
+      case 'setSharedKey':
+        {
+          var key = Uint8List.fromList(base64Decode(msg['key'] as String));
+          var keyIndex = msg['keyIndex'];
+          if (keyProviderOptions.sharedKey) {
+            for (var c in participantCryptors) {
+              c.setKey(keyIndex, key);
+            }
+            return;
+          }
+        }
+        break;
       case 'ratchetKey':
         {
           var keyIndex = msg['keyIndex'];
@@ -233,6 +245,17 @@ void main() async {
           }
         }
         break;
+      case 'ratchetSharedKey':
+        {
+          var keyIndex = msg['keyIndex'];
+          for (var c in participantCryptors) {
+            var keySet = c.getKeySet(keyIndex);
+            c.ratchetKey(keyIndex).then((_) async {
+              await c.ratchet(keySet!.material, keyProviderOptions.ratchetSalt);
+            });
+          }
+        }
+        break;
       case 'setKeyIndex':
         {
           var keyIndex = msg['index'];
@@ -243,6 +266,16 @@ void main() async {
               .toList();
           for (var c in cryptors) {
             c.setKeyIndex(keyIndex);
+          }
+        }
+        break;
+      case 'setSifTrailer':
+        {
+          var sifTrailer =
+              Uint8List.fromList(base64Decode(msg['sifTrailer'] as String));
+          keyProviderOptions.uncryptedMagicBytes = sifTrailer;
+          for (var c in participantCryptors) {
+            c.keyOptions.uncryptedMagicBytes = sifTrailer;
           }
         }
         break;
