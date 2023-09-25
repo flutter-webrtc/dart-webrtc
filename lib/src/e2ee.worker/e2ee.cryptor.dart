@@ -7,25 +7,9 @@ import 'dart:typed_data';
 
 import '../rtc_transform_stream.dart';
 import 'crypto.dart' as crypto;
-import 'e2ee.utils.dart';
-
-class KeyOptions {
-  KeyOptions({
-    required this.sharedKey,
-    required this.ratchetSalt,
-    required this.ratchetWindowSize,
-    this.uncryptedMagicBytes,
-  });
-  bool sharedKey;
-  Uint8List ratchetSalt;
-  int ratchetWindowSize;
-  Uint8List? uncryptedMagicBytes;
-
-  @override
-  String toString() {
-    return 'KeyOptions{sharedKey: $sharedKey, ratchetWindowSize: $ratchetWindowSize}';
-  }
-}
+import 'e2ee.participant_key_handler.dart';
+import 'e2ee.sfi_guard.dart';
+import 'e2ee.worker.dart';
 
 const IV_LENGTH = 12;
 
@@ -146,63 +130,23 @@ class KeySet {
 class FrameCryptor {
   FrameCryptor(
       {required this.worker,
-      required this.participantId,
+      required this.keyHander,
+      required this.participantIdentity,
       required this.trackId,
       required this.keyOptions});
   Map<int, int> sendCounts = {};
-  String? participantId;
+  String? participantIdentity;
   String? trackId;
   String? codec;
-  final KeyOptions keyOptions;
+  final KeyProviderOptions keyOptions;
   late String kind;
-  bool enabled = false;
+  Uint8List? sifTrailer;
   CryptorError lastError = CryptorError.kNew;
   final DedicatedWorkerGlobalScope worker;
-  int currentKeyIndex = 0;
-  bool hasValidKey = false;
-  Completer? _ratchetCompleter;
 
+  ParticipantKeyHandler keyHander;
   List<KeySet?> cryptoKeyRing = List.filled(KEYRING_SIZE, null);
-
-  Future<void> ratchetKey(int? keyIndex) async {
-    if (_ratchetCompleter == null) {
-      _ratchetCompleter = Completer<void>();
-      var currentMaterial = getKeySet(keyIndex)?.material;
-      if (currentMaterial == null) {
-        _ratchetCompleter!.complete();
-        _ratchetCompleter = null;
-        return;
-      }
-      // ignore: unawaited_futures
-      ratchetMaterial(currentMaterial).then((newMaterial) {
-        deriveKeys(newMaterial, keyOptions.ratchetSalt).then((newKeySet) {
-          setKeySetFromMaterial(newKeySet, keyIndex ?? currentKeyIndex)
-              .then((_) {
-            _ratchetCompleter!.complete();
-            _ratchetCompleter = null;
-          });
-        });
-      });
-    }
-
-    return _ratchetCompleter!.future;
-  }
-
-  Future<CryptoKey> ratchetMaterial(CryptoKey currentMaterial) async {
-    var newMaterial = await jsutil.promiseToFuture(crypto.importKey(
-      'raw',
-      crypto.jsArrayBufferFrom(
-          await ratchet(currentMaterial, keyOptions.ratchetSalt)),
-      (currentMaterial.algorithm as crypto.Algorithm).name,
-      false,
-      ['deriveBits', 'deriveKey'],
-    ));
-    return newMaterial;
-  }
-
-  KeySet? getKeySet(int? keyIndex) {
-    return cryptoKeyRing[keyIndex ?? currentKeyIndex];
-  }
+  SifGuard sifGuard = SifGuard();
 
   void setParticipantId(String participantId) {
     if (lastError != CryptorError.kOk) {
@@ -210,87 +154,39 @@ class FrameCryptor {
           'setParticipantId: lastError != CryptorError.kOk, reset state to kNew');
       lastError = CryptorError.kNew;
     }
-    this.participantId = participantId;
+    participantIdentity = participantId;
   }
 
-  void setKeyIndex(int keyIndex) {
-    if (lastError != CryptorError.kOk) {
-      print('setKeyIndex: lastError != CryptorError.kOk, reset state to kNew');
-      lastError = CryptorError.kNew;
+  void setParticipant(String id, ParticipantKeyHandler keys) {
+    participantIdentity = id;
+    keyHander = keys;
+    sifGuard.reset();
+  }
+
+  void unsetParticipant() {
+    participantIdentity = null;
+  }
+
+  String? getParticipantIdentity() {
+    return participantIdentity;
+  }
+
+  String? getTrackId() {
+    return trackId;
+  }
+
+  bool isEnabled() {
+    if (participantIdentity != null) {
+      return encryptionEnabledMap[participantIdentity] ?? false;
     }
-    currentKeyIndex = keyIndex;
+    return false;
   }
 
-  void setEnabled(bool enabled) {
-    if (lastError != CryptorError.kOk) {
-      print(
-          'setEnabled[$enabled]: lastError != CryptorError.kOk, reset state to kNew');
-      lastError = CryptorError.kNew;
-    }
-    this.enabled = enabled;
-  }
-
-  Future<void> setKey(int keyIndex, Uint8List key) async {
-    if (lastError != CryptorError.kOk) {
-      print('setKey: lastError != CryptorError.kOk, reset state to kNew');
-      lastError = CryptorError.kNew;
-    }
-    var keyMaterial = await crypto.impportKeyFromRawData(key,
-        webCryptoAlgorithm: 'PBKDF2', keyUsages: ['deriveBits', 'deriveKey']);
-    var keySet = await deriveKeys(
-      keyMaterial,
-      keyOptions.ratchetSalt,
-    );
-    await setKeySetFromMaterial(keySet, keyIndex);
-    hasValidKey = true;
-  }
-
-  Future<void> setKeySetFromMaterial(KeySet keySet, int keyIndex) async {
-    print('setting new key');
-    if (keyIndex >= 0) {
-      currentKeyIndex = keyIndex % cryptoKeyRing.length;
-    }
-    cryptoKeyRing[currentKeyIndex] = keySet;
-  }
-
-  /// Derives a set of keys from the master key.
-  /// See https://tools.ietf.org/html/draft-omara-sframe-00#section-4.3.1
-  Future<KeySet> deriveKeys(CryptoKey material, Uint8List salt) async {
-    var algorithmOptions =
-        getAlgoOptions((material.algorithm as crypto.Algorithm).name, salt);
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#HKDF
-    // https://developer.mozilla.org/en-US/docs/Web/API/HkdfParams
-    var encryptionKey =
-        await jsutil.promiseToFuture<CryptoKey>(crypto.deriveKey(
-      jsutil.jsify(algorithmOptions),
-      material,
-      jsutil.jsify({'name': 'AES-GCM', 'length': 128}),
-      false,
-      ['encrypt', 'decrypt'],
-    ));
-
-    return KeySet(material, encryptionKey);
-  }
-
-  /// Ratchets a key. See
-  /// https://tools.ietf.org/html/draft-omara-sframe-00#section-4.3.5.1
-
-  Future<Uint8List> ratchet(CryptoKey material, Uint8List salt) async {
-    var algorithmOptions = getAlgoOptions('PBKDF2', salt);
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveBits
-    var newKey = await jsutil.promiseToFuture<ByteBuffer>(
-        crypto.deriveBits(jsutil.jsify(algorithmOptions), material, 256));
-    return newKey.asUint8List();
+  void setSifTrailer(Uint8List trailer) {
+    sifTrailer = trailer;
   }
 
   void updateCodec(String codec) {
-    if (lastError != CryptorError.kOk) {
-      print(
-          'updateCodec[$codec]: lastError != CryptorError.kOk, reset state to kNew');
-      lastError = CryptorError.kNew;
-    }
     this.codec = codec;
   }
 
@@ -345,7 +241,7 @@ class FrameCryptor {
         lastError = CryptorError.kInternalError;
         postMessage({
           'type': 'cryptorState',
-          'participantId': participantId,
+          'participantId': participantIdentity,
           'state': 'internalError',
           'error': 'Internal error: ${e.toString()}'
         });
@@ -391,22 +287,22 @@ class FrameCryptor {
   ) async {
     var buffer = frame.data.asUint8List();
 
-    if (!enabled ||
+    if (!isEnabled() ||
         // skip for encryption for empty dtx frames
         buffer.isEmpty) {
       controller.enqueue(frame);
       return;
     }
 
-    var secretKey = getKeySet(currentKeyIndex)?.encryptionKey;
-    var keyIndex = currentKeyIndex;
+    var secretKey = keyHander.getKeySet()?.encryptionKey;
+    var keyIndex = keyHander.getCurrentKeyIndex();
 
     if (secretKey == null) {
       if (lastError != CryptorError.kMissingKey) {
         lastError = CryptorError.kMissingKey;
         postMessage({
           'type': 'cryptorState',
-          'participantId': participantId,
+          'participantId': participantIdentity,
           'trackId': trackId,
           'kind': kind,
           'state': 'missingKey',
@@ -455,7 +351,7 @@ class FrameCryptor {
         lastError = CryptorError.kOk;
         postMessage({
           'type': 'cryptorState',
-          'participantId': participantId,
+          'participantId': participantIdentity,
           'trackId': trackId,
           'kind': kind,
           'state': 'ok',
@@ -471,7 +367,7 @@ class FrameCryptor {
         lastError = CryptorError.kEncryptError;
         postMessage({
           'type': 'cryptorState',
-          'participantId': participantId,
+          'participantId': participantIdentity,
           'trackId': trackId,
           'kind': kind,
           'state': 'encryptError',
@@ -489,27 +385,23 @@ class FrameCryptor {
     var buffer = frame.data.asUint8List();
     ByteBuffer? decrypted;
     KeySet? initialKeySet;
-    var initialKeyIndex = currentKeyIndex;
+    var initialKeyIndex = keyHander.currentKeyIndex;
 
-    if (!enabled ||
+    if (!isEnabled() ||
         // skip for encryption for empty dtx frames
         buffer.isEmpty) {
       controller.enqueue(frame);
       return;
     }
 
-    if (keyOptions.uncryptedMagicBytes != null) {
-      var magicBytes = keyOptions.uncryptedMagicBytes!;
-      if (buffer.length > magicBytes.length + 1) {
-        var magicBytesBuffer = buffer.sublist(
-            buffer.length - magicBytes.length - 1, buffer.length - 1);
-        //print('magicBytesBuffer $magicBytesBuffer, magicBytes $magicBytes, ');
-        if (magicBytesBuffer.toString() == magicBytes.toString()) {
-          var frameType = buffer.sublist(buffer.length - 1)[0];
-          print('skip uncrypted frame, type $frameType');
+    if (sifTrailer != null) {
+      if (buffer.length > sifTrailer!.length) {
+        var magicBytesBuffer =
+            buffer.sublist(buffer.length - sifTrailer!.length, buffer.length);
+        if (magicBytesBuffer.toString() == sifTrailer.toString()) {
           var finalBuffer = BytesBuilder();
           finalBuffer.add(Uint8List.fromList(
-              buffer.sublist(0, buffer.length - (magicBytes.length + 1))));
+              buffer.sublist(0, buffer.length - sifTrailer!.length)));
           frame.data = crypto.jsArrayBufferFrom(finalBuffer.toBytes());
           controller.enqueue(frame);
           return;
@@ -527,15 +419,15 @@ class FrameCryptor {
       var keyIndex = frameTrailer[1];
       var iv = buffer.sublist(buffer.length - ivLength - 2, buffer.length - 2);
 
-      var initialKeySet = getKeySet(keyIndex);
+      var initialKeySet = keyHander.getKeySet(keyIndex);
       initialKeyIndex = keyIndex;
 
-      if (initialKeySet == null || !hasValidKey) {
+      if (initialKeySet == null || !keyHander.hasValidKey) {
         if (lastError != CryptorError.kMissingKey) {
           lastError = CryptorError.kMissingKey;
           postMessage({
             'type': 'cryptorState',
-            'participantId': participantId,
+            'participantId': participantIdentity,
             'trackId': trackId,
             'kind': kind,
             'state': 'missingKey',
@@ -562,7 +454,8 @@ class FrameCryptor {
           ));
 
           if (currentkeySet != initialKeySet) {
-            await setKeySetFromMaterial(currentkeySet, initialKeyIndex);
+            await keyHander.setKeySetFromMaterial(
+                currentkeySet, initialKeyIndex);
           }
 
           endDecLoop = true;
@@ -571,14 +464,14 @@ class FrameCryptor {
               lastError != CryptorError.kKeyRatcheted &&
               ratchetCount > 0) {
             print(
-                'KeyRatcheted: ssrc ${metaData.synchronizationSource} timestamp ${frame.timestamp} ratchetCount $ratchetCount  participantId: $participantId');
+                'KeyRatcheted: ssrc ${metaData.synchronizationSource} timestamp ${frame.timestamp} ratchetCount $ratchetCount  participantId: $participantIdentity');
             print(
                 'ratchetKey: lastError != CryptorError.kKeyRatcheted, reset state to kKeyRatcheted');
 
             lastError = CryptorError.kKeyRatcheted;
             postMessage({
               'type': 'cryptorState',
-              'participantId': participantId,
+              'participantId': participantIdentity,
               'trackId': trackId,
               'kind': kind,
               'state': 'keyRatcheted',
@@ -592,8 +485,10 @@ class FrameCryptor {
           if (endDecLoop) {
             rethrow;
           }
-          var newMaterial = await ratchetMaterial(currentkeySet.material);
-          currentkeySet = await deriveKeys(newMaterial, keyOptions.ratchetSalt);
+          var newMaterial =
+              await keyHander.ratchetMaterial(currentkeySet.material);
+          currentkeySet =
+              await keyHander.deriveKeys(newMaterial, keyOptions.ratchetSalt);
           ratchetCount++;
         }
       }
@@ -611,7 +506,7 @@ class FrameCryptor {
         lastError = CryptorError.kOk;
         postMessage({
           'type': 'cryptorState',
-          'participantId': participantId,
+          'participantId': participantIdentity,
           'trackId': trackId,
           'kind': kind,
           'state': 'ok',
@@ -626,7 +521,7 @@ class FrameCryptor {
         lastError = CryptorError.kDecryptError;
         postMessage({
           'type': 'cryptorState',
-          'participantId': participantId,
+          'participantId': participantIdentity,
           'trackId': trackId,
           'kind': kind,
           'state': 'decryptError',
@@ -638,8 +533,8 @@ class FrameCryptor {
       /// situations when the decrypting failed due to the fact that the received frame was not encrypted
       /// yet and ratcheting, of course, did not solve the problem. So if we fail RATCHET_WINDOW_SIZE times,
       ///  we come back to the initial key.
-      await setKeySetFromMaterial(initialKeySet!, initialKeyIndex);
-      hasValidKey = false;
+      await keyHander.setKeySetFromMaterial(initialKeySet!, initialKeyIndex);
+      keyHander.decryptionFailure();
     }
   }
 }

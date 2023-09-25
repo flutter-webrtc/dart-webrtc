@@ -170,6 +170,7 @@ class KeyProviderImpl implements KeyProvider {
           'sharedKey': options.sharedKey,
           'ratchetSalt': base64Encode(options.ratchetSalt),
           'ratchetWindowSize': options.ratchetWindowSize,
+          'failureTolerance': options.failureTolerance,
           if (options.uncryptedMagicBytes != null)
             'uncryptedMagicBytes': base64Encode(options.uncryptedMagicBytes!),
         },

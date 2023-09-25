@@ -8,6 +8,7 @@ import 'package:js/js.dart';
 
 import '../rtc_transform_stream.dart';
 import 'e2ee.cryptor.dart';
+import 'e2ee.participant_key_handler.dart';
 
 @JS()
 abstract class TransformMessage {
@@ -55,13 +56,75 @@ extension PropsRTCTransformEventHandler on html.DedicatedWorkerGlobalScope {
 }
 
 var participantCryptors = <FrameCryptor>[];
-var publisherKeys = <String, html.CryptoKey>{};
-bool isEncryptionEnabled = false;
+var participantKeys = <String, ParticipantKeyHandler>{};
+Map<String, bool> encryptionEnabledMap = {};
+Uint8List sifTrailer = Uint8List(0);
 
-KeyOptions keyProviderOptions = KeyOptions(
+KeyProviderOptions keyProviderOptions = KeyProviderOptions(
     sharedKey: true,
-    ratchetSalt: Uint8List.fromList('ratchetSalt'.codeUnits),
-    ratchetWindowSize: 16);
+    ratchetSalt: Uint8List(0),
+    ratchetWindowSize: 0,
+    failureTolerance: -1);
+bool useSharedKey = false;
+
+void setEncryptionEnabled(bool enabled, String participantId) {
+  encryptionEnabledMap[participantId] = enabled;
+}
+
+void unsetCryptorParticipant(trackId) {
+  participantCryptors
+      .firstWhereOrNull((c) => c.getTrackId() == trackId)
+      ?.unsetParticipant();
+}
+
+ParticipantKeyHandler? getParticipantKeyHandler(String participantIdentity) {
+  if (useSharedKey) {
+    return getSharedKeyHandler();
+  }
+  var keys = participantKeys[participantIdentity];
+  if (keys == null) {
+    keys = ParticipantKeyHandler(keyProviderOptions, participantIdentity);
+    if (sharedKey != null) {
+      keys.setKey(sharedKey!);
+    }
+    //keys.on(KeyHandlerEvent.KeyRatcheted, emitRatchetedKeys);
+    participantKeys[participantIdentity] = keys;
+  }
+  return keys;
+}
+
+ParticipantKeyHandler? sharedKeyHandler;
+Uint8List? sharedKey;
+
+ParticipantKeyHandler? getSharedKeyHandler() {
+  sharedKeyHandler ??= ParticipantKeyHandler(keyProviderOptions, 'shared-key');
+  return sharedKeyHandler;
+}
+
+void setSharedKey(Uint8List key, int? index) {
+  sharedKey = key;
+  getSharedKeyHandler()?.setKey(key, keyIndex: index!);
+}
+
+void handleRatchetRequest(int keyIndex, [String? participantIdentity]) async {
+  if (useSharedKey) {
+    var keyHandler = getSharedKeyHandler();
+    await keyHandler?.ratchetKey(keyIndex);
+    keyHandler?.resetKeyStatus();
+  } else if (participantIdentity != null) {
+    var keyHandler = getParticipantKeyHandler(participantIdentity);
+    await keyHandler?.ratchetKey(keyIndex);
+    keyHandler?.resetKeyStatus();
+  } else {
+    print(
+        'no participant Id was provided for ratchet request and shared key usage is disabled');
+  }
+}
+
+void handleSifTrailer(Uint8List trailer) {
+  sifTrailer = trailer;
+  participantCryptors.forEach((c) => c.setSifTrailer(trailer));
+}
 
 void main() async {
   print('E2EE Worker created');
@@ -84,8 +147,9 @@ void main() async {
 
       if (cryptor == null) {
         cryptor = FrameCryptor(
+          keyHander: getParticipantKeyHandler(participantId)!,
           worker: self,
-          participantId: participantId,
+          participantIdentity: participantId,
           trackId: trackId,
           keyOptions: keyProviderOptions,
         );
@@ -108,15 +172,17 @@ void main() async {
     switch (msgType) {
       case 'init':
         var options = msg['keyOptions'];
-        keyProviderOptions = KeyOptions(
+        keyProviderOptions = KeyProviderOptions(
             sharedKey: options['sharedKey'],
             ratchetSalt: Uint8List.fromList(
                 base64Decode(options['ratchetSalt'] as String)),
             ratchetWindowSize: options['ratchetWindowSize'],
+            failureTolerance: options['failureTolerance'] ?? -1,
             uncryptedMagicBytes: options['ratchetSalt'] != null
                 ? Uint8List.fromList(
                     base64Decode(options['uncryptedMagicBytes'] as String))
                 : null);
+        useSharedKey = keyProviderOptions.sharedKey;
         print('worker: init with keyOptions ${keyProviderOptions.toString()}');
         break;
       case 'enable':
@@ -124,12 +190,7 @@ void main() async {
           var enabled = msg['enabled'] as bool;
           var participantId = msg['participantId'] as String;
           print('worker: set enable $enabled for participantId $participantId');
-          var cryptors = participantCryptors
-              .where((c) => c.participantId == participantId)
-              .toList();
-          for (var cryptor in cryptors) {
-            cryptor.setEnabled(enabled);
-          }
+          setEncryptionEnabled(enabled, participantId);
           self.postMessage({
             'type': 'cryptorEnabled',
             'participantId': participantId,
@@ -154,13 +215,13 @@ void main() async {
 
           if (cryptor == null) {
             cryptor = FrameCryptor(
+                keyHander: getParticipantKeyHandler(participantId)!,
                 worker: self,
-                participantId: participantId,
+                participantIdentity: participantId,
                 trackId: trackId,
                 keyOptions: keyProviderOptions);
             participantCryptors.add(cryptor);
           }
-
           if (!exist) {
             cryptor.setupTransform(
                 operation: msgType,
@@ -169,7 +230,8 @@ void main() async {
                 trackId: trackId,
                 kind: kind);
           }
-          cryptor.setParticipantId(participantId);
+          cryptor.setParticipant(
+              participantId, getParticipantKeyHandler(participantId)!);
           self.postMessage({
             'type': 'cryptorSetup',
             'participantId': participantId,
@@ -183,29 +245,20 @@ void main() async {
       case 'removeTransform':
         {
           var trackId = msg['trackId'] as String;
-          print('worker: removing trackId $trackId');
-          participantCryptors.removeWhere((c) => c.trackId == trackId);
+          unsetCryptorParticipant(trackId);
         }
         break;
       case 'setKey':
         {
           var key = Uint8List.fromList(base64Decode(msg['key'] as String));
           var keyIndex = msg['keyIndex'];
-          //print('worker: got setKey ${msg['key']}, key $key');
           var participantId = msg['participantId'] as String;
           print('worker: setup key for participant $participantId');
-
-          if (keyProviderOptions.sharedKey) {
-            for (var c in participantCryptors) {
-              c.setKey(keyIndex, key);
-            }
-            return;
-          }
-          var cryptors = participantCryptors
-              .where((c) => c.participantId == participantId)
-              .toList();
-          for (var c in cryptors) {
-            c.setKey(keyIndex, key);
+          if (useSharedKey) {
+            getSharedKeyHandler()?.setKey(key, keyIndex: keyIndex);
+          } else {
+            var keyHandler = getParticipantKeyHandler(participantId);
+            keyHandler?.setKey(key, keyIndex: keyIndex);
           }
         }
         break;
@@ -213,12 +266,7 @@ void main() async {
         {
           var key = Uint8List.fromList(base64Decode(msg['key'] as String));
           var keyIndex = msg['keyIndex'];
-          if (keyProviderOptions.sharedKey) {
-            for (var c in participantCryptors) {
-              c.setKey(keyIndex, key);
-            }
-            return;
-          }
+          getSharedKeyHandler()?.setKey(key, keyIndex: keyIndex);
         }
         break;
       case 'ratchetKey':
@@ -227,19 +275,13 @@ void main() async {
           var participantId = msg['participantId'] as String;
           print(
               'worker: ratchetKey for participant $participantId, keyIndex $keyIndex');
-          var cryptors = participantCryptors
-              .where((c) => c.participantId == participantId)
-              .toList();
-          for (var c in cryptors) {
-            var keySet = c.getKeySet(keyIndex);
-            c.ratchetKey(keyIndex).then((_) async {
-              var newKey = await c.ratchet(
-                  keySet!.material, keyProviderOptions.ratchetSalt);
+          var keys = getParticipantKeyHandler(participantId);
+          if (keys != null) {
+            keys.ratchetKey(keyIndex).then((newKeySet) {
               self.postMessage({
                 'type': 'ratchetKey',
                 'participantId': participantId,
-                'trackId': c.trackId,
-                'key': base64Encode(newKey),
+                'key': '',
               });
             });
           }
@@ -248,12 +290,8 @@ void main() async {
       case 'ratchetSharedKey':
         {
           var keyIndex = msg['keyIndex'];
-          for (var c in participantCryptors) {
-            var keySet = c.getKeySet(keyIndex);
-            c.ratchetKey(keyIndex).then((_) async {
-              await c.ratchet(keySet!.material, keyProviderOptions.ratchetSalt);
-            });
-          }
+          var keys = getSharedKeyHandler();
+          keys?.ratchetKey(keyIndex);
         }
         break;
       case 'setKeyIndex':
@@ -261,12 +299,8 @@ void main() async {
           var keyIndex = msg['index'];
           var participantId = msg['participantId'] as String;
           print('worker: setup key index for participant $participantId');
-          var cryptors = participantCryptors
-              .where((c) => c.participantId == participantId)
-              .toList();
-          for (var c in cryptors) {
-            c.setKeyIndex(keyIndex);
-          }
+          var keys = getParticipantKeyHandler(participantId);
+          keys?.setCurrentKeyIndex(keyIndex);
         }
         break;
       case 'setSifTrailer':
@@ -299,7 +333,7 @@ void main() async {
             cryptor.lastError = CryptorError.kDisposed;
             self.postMessage({
               'type': 'cryptorDispose',
-              'participantId': cryptor.participantId,
+              'participantId': cryptor.participantIdentity,
               'trackId': trackId,
             });
           }
