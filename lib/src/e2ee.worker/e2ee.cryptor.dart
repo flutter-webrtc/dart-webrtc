@@ -428,7 +428,7 @@ class FrameCryptor {
       var keyIndex = frameTrailer[1];
       var iv = buffer.sublist(buffer.length - ivLength - 2, buffer.length - 2);
 
-      var initialKeySet = keyHandler.getKeySet(keyIndex);
+      initialKeySet = keyHandler.getKeySet(keyIndex);
       initialKeyIndex = keyIndex;
 
       if (initialKeySet == null || !keyHandler.hasValidKey) {
@@ -542,7 +542,9 @@ class FrameCryptor {
       /// situations when the decrypting failed due to the fact that the received frame was not encrypted
       /// yet and ratcheting, of course, did not solve the problem. So if we fail RATCHET_WINDOW_SIZE times,
       ///  we come back to the initial key.
-      await keyHandler.setKeySetFromMaterial(initialKeySet!, initialKeyIndex);
+      if (initialKeySet != null) {
+        await keyHandler.setKeySetFromMaterial(initialKeySet, initialKeyIndex);
+      }
       keyHandler.decryptionFailure();
     }
   }
