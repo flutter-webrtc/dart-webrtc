@@ -133,7 +133,7 @@ class FrameCryptor {
   ParticipantKeyHandler keyHandler;
   KeyOptions get keyOptions => keyHandler.keyOptions;
   late String kind;
-  bool enabled = false;
+  bool _enabled = false;
   CryptorError lastError = CryptorError.kNew;
   int currentKeyIndex = 0;
   final DedicatedWorkerGlobalScope worker;
@@ -173,7 +173,14 @@ class FrameCryptor {
           'setEnabled[$enabled]: lastError != CryptorError.kOk, reset state to kNew');
       lastError = CryptorError.kNew;
     }
-    this.enabled = enabled;
+    _enabled = enabled;
+  }
+
+  bool get enabled {
+    if (participantIdentity == null) {
+      return false;
+    }
+    return _enabled;
   }
 
   void updateCodec(String codec) {
