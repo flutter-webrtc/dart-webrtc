@@ -60,10 +60,8 @@ extension PropsRTCTransformEventHandler on html.DedicatedWorkerGlobalScope {
 var participantCryptors = <FrameCryptor>[];
 var participantKeys = <String, ParticipantKeyHandler>{};
 ParticipantKeyHandler? sharedKeyHandler;
-var publisherKeys = <String, html.CryptoKey>{};
 var sharedKey = Uint8List(0);
 
-bool isEncryptionEnabled = false;
 KeyOptions keyProviderOptions = KeyOptions(
   sharedKey: true,
   ratchetSalt: Uint8List.fromList('ratchetSalt'.codeUnits),
@@ -248,6 +246,7 @@ void main() async {
         }
         break;
       case 'setKey':
+      case 'setSharedKey':
         {
           var key = Uint8List.fromList(base64Decode(msg['key'] as String));
           var keyIndex = msg['keyIndex'] as int;
@@ -264,6 +263,7 @@ void main() async {
         }
         break;
       case 'ratchetKey':
+      case 'ratchetSharedKey':
         {
           var keyIndex = msg['keyIndex'];
           var participantId = msg['participantId'] as String;
