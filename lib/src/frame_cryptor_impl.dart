@@ -6,11 +6,19 @@ import 'dart:js_util' as jsutil;
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
+import 'package:dart_webrtc/src/event.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'rtc_transform_stream.dart';
+import 'utils.dart';
+
+class WorkerResponse {
+  WorkerResponse(this.msgId, this.data);
+  String msgId;
+  dynamic data;
+}
 
 extension RtcRtpReceiverExt on html.RtcRtpReceiver {
   static Map<int, ReadableStream> readableStreams_ = {};
@@ -92,9 +100,11 @@ class FrameCryptorImpl extends FrameCryptor {
 
   @override
   Future<void> dispose() async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'dispose',
+        'msgId': msgId,
         'trackId': _trackId,
       })
     ]);
@@ -115,9 +125,11 @@ class FrameCryptorImpl extends FrameCryptor {
 
   @override
   Future<bool> setEnabled(bool enabled) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'enable',
+        'msgId': msgId,
         'participantId': participantId,
         'enabled': enabled
       })
@@ -128,9 +140,11 @@ class FrameCryptorImpl extends FrameCryptor {
 
   @override
   Future<bool> setKeyIndex(int index) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'setKeyIndex',
+        'msgId': msgId,
         'participantId': participantId,
         'index': index,
       })
@@ -141,9 +155,11 @@ class FrameCryptorImpl extends FrameCryptor {
 
   @override
   Future<void> updateCodec(String codec) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'updateCodec',
+        'msgId': msgId,
         'trackId': _trackId,
         'codec': codec,
       })
@@ -152,19 +168,22 @@ class FrameCryptorImpl extends FrameCryptor {
 }
 
 class KeyProviderImpl implements KeyProvider {
-  KeyProviderImpl(this._id, this.worker, this.options);
+  KeyProviderImpl(this._id, this.worker, this.options, this.events);
   final String _id;
   final html.Worker worker;
   final KeyProviderOptions options;
   final Map<String, List<Uint8List>> _keys = {};
+  final EventsEmitter<WorkerResponse> events;
 
   @override
   String get id => _id;
 
   Future<void> init() async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'init',
+        'msgId': msgId,
         'id': id,
         'keyOptions': {
           'sharedKey': options.sharedKey,
@@ -175,6 +194,10 @@ class KeyProviderImpl implements KeyProvider {
         },
       })
     ]);
+
+    await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
   }
 
   @override
@@ -187,14 +210,21 @@ class KeyProviderImpl implements KeyProvider {
       {required String participantId,
       required int index,
       required Uint8List key}) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'setKey',
+        'msgId': msgId,
         'participantId': participantId,
         'keyIndex': index,
         'key': base64Encode(key),
       })
     ]);
+
+    await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
+
     _keys[participantId] ??= [];
     if (_keys[participantId]!.length <= index) {
       _keys[participantId]!.add(key);
@@ -204,72 +234,112 @@ class KeyProviderImpl implements KeyProvider {
     return true;
   }
 
-  Completer<Uint8List>? _ratchetKeyCompleter;
-
-  void onRatchetKey(Uint8List key) {
-    if (_ratchetKeyCompleter != null) {
-      _ratchetKeyCompleter!.complete(key);
-      _ratchetKeyCompleter = null;
-    }
-  }
-
   @override
   Future<Uint8List> ratchetKey(
       {required String participantId, required int index}) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'ratchetKey',
+        'msgId': msgId,
         'participantId': participantId,
         'keyIndex': index,
       })
     ]);
 
-    _ratchetKeyCompleter ??= Completer();
+    var res = await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
 
-    return _ratchetKeyCompleter!.future;
+    return base64Decode(res.data['newKey']);
   }
 
   @override
   Future<Uint8List> exportKey(
-      {required String participantId, required int index}) {
-    throw UnimplementedError('exportKey not supported for web');
+      {required String participantId, required int index}) async {
+    var msgId = randomString(12);
+    jsutil.callMethod(worker, 'postMessage', [
+      jsutil.jsify({
+        'msgType': 'exportKey',
+        'msgId': msgId,
+        'participantId': participantId,
+        'keyIndex': index,
+      })
+    ]);
+
+    var res = await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
+
+    return base64Decode(res.data['exportedKey']);
   }
 
   @override
-  Future<Uint8List> exportSharedKey({int index = 0}) {
-    throw UnimplementedError('exportSharedKey not supported for web');
+  Future<Uint8List> exportSharedKey({int index = 0}) async {
+    var msgId = randomString(12);
+    jsutil.callMethod(worker, 'postMessage', [
+      jsutil.jsify({
+        'msgType': 'exportSharedKey',
+        'msgId': msgId,
+        'keyIndex': index,
+      })
+    ]);
+
+    var res = await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
+
+    return base64Decode(res.data['exportedKey']);
   }
 
   @override
   Future<Uint8List> ratchetSharedKey({int index = 0}) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'ratchetSharedKey',
+        'msgId': msgId,
         'keyIndex': index,
       })
     ]);
-    return Uint8List(0);
+    var res = await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
+
+    return base64Decode(res.data['newKey']);
   }
 
   @override
   Future<void> setSharedKey({required Uint8List key, int index = 0}) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'setSharedKey',
+        'msgId': msgId,
         'keyIndex': index,
         'key': base64Encode(key),
       })
     ]);
+
+    await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
   }
 
   @override
   Future<void> setSifTrailer({required Uint8List trailer}) async {
+    var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
         'msgType': 'setSifTrailer',
+        'msgId': msgId,
         'sifTrailer': base64Encode(trailer),
       })
     ]);
+
+    await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
   }
 }
 
@@ -277,48 +347,47 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   FrameCryptorFactoryImpl._internal() {
     worker = html.Worker('e2ee.worker.dart.js');
     worker.onMessage.listen((msg) {
-      print('master got ${msg.data}');
+      //print('master got ${msg.data}');
       var type = msg.data['type'];
-      if (type == 'cryptorState') {
-        var trackId = msg.data['trackId'];
-        var participantId = msg.data['participantId'];
-        var frameCryptor = _frameCryptors.values.firstWhereOrNull(
-            (element) => (element as FrameCryptorImpl).trackId == trackId);
-        var state = msg.data['state'];
-        var frameCryptorState = FrameCryptorState.FrameCryptorStateNew;
-        switch (state) {
-          case 'ok':
-            frameCryptorState = FrameCryptorState.FrameCryptorStateOk;
-            break;
-          case 'decryptError':
-            frameCryptorState =
-                FrameCryptorState.FrameCryptorStateDecryptionFailed;
-            break;
-          case 'encryptError':
-            frameCryptorState =
-                FrameCryptorState.FrameCryptorStateEncryptionFailed;
-            break;
-          case 'missingKey':
-            frameCryptorState = FrameCryptorState.FrameCryptorStateMissingKey;
-            break;
-          case 'internalError':
-            frameCryptorState =
-                FrameCryptorState.FrameCryptorStateInternalError;
-            break;
-          case 'keyRatcheted':
-            frameCryptorState = FrameCryptorState.FrameCryptorStateKeyRatcheted;
-            break;
-        }
-        frameCryptor?.onFrameCryptorStateChanged
-            ?.call(participantId, frameCryptorState);
-      } else if (type == 'ratchetKey') {
-        var trackId = msg.data['trackId'];
-        var frameCryptor = _frameCryptors.values.firstWhereOrNull(
-            (element) => (element as FrameCryptorImpl).trackId == trackId);
-        if (frameCryptor != null) {
-          (frameCryptor as FrameCryptorImpl)
-              .keyProvider
-              .onRatchetKey(base64Decode(msg.data['key']));
+      var msgId = msg.data['msgId'];
+      var msgType = msg.data['msgType'];
+
+      if (msgType == 'response') {
+        events.emit(WorkerResponse(msgId, msg.data));
+      } else if (msgType == 'event') {
+        if (type == 'cryptorState') {
+          var trackId = msg.data['trackId'];
+          var participantId = msg.data['participantId'];
+          var frameCryptor = _frameCryptors.values.firstWhereOrNull(
+              (element) => (element as FrameCryptorImpl).trackId == trackId);
+          var state = msg.data['state'];
+          var frameCryptorState = FrameCryptorState.FrameCryptorStateNew;
+          switch (state) {
+            case 'ok':
+              frameCryptorState = FrameCryptorState.FrameCryptorStateOk;
+              break;
+            case 'decryptError':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateDecryptionFailed;
+              break;
+            case 'encryptError':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateEncryptionFailed;
+              break;
+            case 'missingKey':
+              frameCryptorState = FrameCryptorState.FrameCryptorStateMissingKey;
+              break;
+            case 'internalError':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateInternalError;
+              break;
+            case 'keyRatcheted':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateKeyRatcheted;
+              break;
+          }
+          frameCryptor?.onFrameCryptorStateChanged
+              ?.call(participantId, frameCryptorState);
         }
       }
     });
@@ -332,11 +401,12 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
 
   late html.Worker worker;
   final Map<String, FrameCryptor> _frameCryptors = {};
+  final EventsEmitter<WorkerResponse> events = EventsEmitter<WorkerResponse>();
 
   @override
   Future<KeyProvider> createDefaultKeyProvider(
       KeyProviderOptions options) async {
-    var keyProvider = KeyProviderImpl('default', worker, options);
+    var keyProvider = KeyProviderImpl('default', worker, options, events);
     await keyProvider.init();
     return keyProvider;
   }
@@ -354,8 +424,10 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
 
     if (js.context['RTCRtpScriptTransform'] != null) {
       print('support RTCRtpScriptTransform');
+      var msgId = randomString(12);
       var options = {
         'msgType': 'decode',
+        'msgId': msgId,
         'kind': kind,
         'participantId': participantId,
         'trackId': trackId,
@@ -375,10 +447,11 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
         jsReceiver.writableStream = writable;
         exist = false;
       }
-
+      var msgId = randomString(12);
       jsutil.callMethod(worker, 'postMessage', [
         jsutil.jsify({
           'msgType': 'decode',
+          'msgId': msgId,
           'kind': kind,
           'exist': exist,
           'participantId': participantId,
@@ -408,8 +481,10 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
 
     if (js.context['RTCRtpScriptTransform'] != null) {
       print('support RTCRtpScriptTransform');
+      var msgId = randomString(12);
       var options = {
         'msgType': 'encode',
+        'msgId': msgId,
         'kind': kind,
         'participantId': participantId,
         'trackId': trackId,
@@ -430,9 +505,11 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
         jsSender.writableStream = writable;
         exist = false;
       }
+      var msgId = randomString(12);
       jsutil.callMethod(worker, 'postMessage', [
         jsutil.jsify({
           'msgType': 'encode',
+          'msgId': msgId,
           'kind': kind,
           'exist': exist,
           'participantId': participantId,
