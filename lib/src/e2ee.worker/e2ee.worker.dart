@@ -58,38 +58,10 @@ extension PropsRTCTransformEventHandler on html.DedicatedWorkerGlobalScope {
 }
 
 var participantCryptors = <FrameCryptor>[];
-var participantKeys = <String, ParticipantKeyHandler>{};
-ParticipantKeyHandler? sharedKeyHandler;
-var sharedKey = Uint8List(0);
+var keyProviders = <String, KeyProvider>{};
 
-KeyOptions keyProviderOptions = KeyOptions(
-  sharedKey: true,
-  ratchetSalt: Uint8List.fromList('ratchetSalt'.codeUnits),
-  ratchetWindowSize: 16,
-  failureTolerance: -1,
-);
-
-ParticipantKeyHandler getParticipantKeyHandler(String participantIdentity) {
-  if (keyProviderOptions.sharedKey) {
-    return getSharedKeyHandler();
-  }
-  var keys = participantKeys[participantIdentity];
-  if (keys == null) {
-    keys = ParticipantKeyHandler(
-      worker: self,
-      participantIdentity: participantIdentity,
-      keyOptions: keyProviderOptions,
-    );
-    if (sharedKey.isNotEmpty) {
-      keys.setKey(sharedKey);
-    }
-    //keys.on(KeyHandlerEvent.KeyRatcheted, emitRatchetedKeys);
-    participantKeys[participantIdentity] = keys;
-  }
-  return keys;
-}
-
-FrameCryptor getTrackCryptor(String participantIdentity, String trackId) {
+FrameCryptor getTrackCryptor(
+    String participantIdentity, String trackId, KeyProvider keyProvider) {
   var cryptor =
       participantCryptors.firstWhereOrNull((c) => c.trackId == trackId);
   if (cryptor == null) {
@@ -100,16 +72,16 @@ FrameCryptor getTrackCryptor(String participantIdentity, String trackId) {
       worker: self,
       participantIdentity: participantIdentity,
       trackId: trackId,
-      keyHandler: getParticipantKeyHandler(participantIdentity),
+      keyHandler: keyProvider.getParticipantKeyHandler(participantIdentity),
     );
     //setupCryptorErrorEvents(cryptor);
     participantCryptors.add(cryptor);
   } else if (participantIdentity != cryptor.participantIdentity) {
     // assign new participant id to track cryptor and pass in correct key handler
-    cryptor.setParticipant(
-        participantIdentity, getParticipantKeyHandler(participantIdentity));
+    cryptor.setParticipant(participantIdentity,
+        keyProvider.getParticipantKeyHandler(participantIdentity));
   }
-  if (keyProviderOptions.sharedKey) {}
+  if (keyProvider.keyProviderOptions.sharedKey) {}
   return cryptor;
 }
 
@@ -119,24 +91,9 @@ void unsetCryptorParticipant(String trackId) {
       ?.unsetParticipant();
 }
 
-ParticipantKeyHandler getSharedKeyHandler() {
-  sharedKeyHandler ??= ParticipantKeyHandler(
-    worker: self,
-    participantIdentity: 'shared-key',
-    keyOptions: keyProviderOptions,
-  );
-  return sharedKeyHandler!;
-}
-
-void setSharedKey(Uint8List key, {int keyIndex = 0}) {
-  logger.info('setting shared key');
-  sharedKey = key;
-  getSharedKeyHandler().setKey(key, keyIndex: keyIndex);
-}
-
 void main() async {
   // configure logs for debugging
-  Logger.root.level = Level.CONFIG;
+  Logger.root.level = Level.WARNING;
   Logger.root.onRecord.listen((record) {
     print('[${record.loggerName}] ${record.level.name}: ${record.message}');
   });
@@ -148,15 +105,25 @@ void main() async {
     self.onrtctransform = allowInterop((event) {
       logger.info('Got onrtctransform event');
       var transformer = (event as RTCTransformEvent).transformer;
-      transformer.handled = true;
-      var options = transformer.options;
-      var kind = options.kind;
-      var participantId = options.participantId;
-      var trackId = options.trackId;
-      var codec = options.codec;
-      var msgType = options.msgType;
 
-      var cryptor = getTrackCryptor(participantId, trackId);
+      transformer.handled = true;
+
+      var options = transformer.options;
+      var kind = js_util.getProperty(options, 'kind');
+      var participantId = js_util.getProperty(options, 'participantId');
+      var trackId = js_util.getProperty(options, 'trackId');
+      var codec = js_util.getProperty(options, 'codec');
+      var msgType = js_util.getProperty(options, 'msgType');
+      var keyProviderId = js_util.getProperty(options, 'keyProviderId');
+
+      var keyProvider = keyProviders[keyProviderId];
+
+      if (keyProvider == null) {
+        logger.warning('KeyProvider not found for $keyProviderId');
+        return;
+      }
+
+      var cryptor = getTrackCryptor(participantId, trackId, keyProvider);
 
       cryptor.setupTransform(
           operation: msgType,
@@ -174,42 +141,59 @@ void main() async {
     var msgId = msg['msgId'] as String?;
     logger.info('Got message $msgType, msgId $msgId');
     switch (msgType) {
-      case 'init':
-        var options = msg['keyOptions'];
-        keyProviderOptions = KeyOptions(
-            sharedKey: options['sharedKey'],
-            ratchetSalt: Uint8List.fromList(
-                base64Decode(options['ratchetSalt'] as String)),
-            ratchetWindowSize: options['ratchetWindowSize'],
-            failureTolerance: options['failureTolerance'] ?? -1,
-            uncryptedMagicBytes: options['uncryptedMagicBytes'] != null
-                ? Uint8List.fromList(
-                    base64Decode(options['uncryptedMagicBytes'] as String))
-                : null);
-        logger.config(
-            'Init with keyProviderOptions:\n ${keyProviderOptions.toString()}');
-        self.postMessage({
-          'type': 'init',
-          'msgId': msgId,
-          'msgType': 'response',
-        });
+      case 'keyProviderInit':
+        {
+          var options = msg['keyOptions'];
+          var keyProviderId = msg['keyProviderId'] as String;
+          var keyProviderOptions = KeyOptions(
+              sharedKey: options['sharedKey'],
+              ratchetSalt: Uint8List.fromList(
+                  base64Decode(options['ratchetSalt'] as String)),
+              ratchetWindowSize: options['ratchetWindowSize'],
+              failureTolerance: options['failureTolerance'] ?? -1,
+              uncryptedMagicBytes: options['uncryptedMagicBytes'] != null
+                  ? Uint8List.fromList(
+                      base64Decode(options['uncryptedMagicBytes'] as String))
+                  : null);
+          logger.config(
+              'Init with keyProviderOptions:\n ${keyProviderOptions.toString()}');
+
+          var keyProvider =
+              KeyProvider(self, keyProviderId, keyProviderOptions);
+          keyProviders[keyProviderId] = keyProvider;
+
+          self.postMessage({
+            'type': 'init',
+            'msgId': msgId,
+            'msgType': 'response',
+          });
+          break;
+        }
+      case 'keyProviderDispose':
+        {
+          var keyProviderId = msg['keyProviderId'] as String;
+          logger.config('Dispose keyProvider $keyProviderId');
+          keyProviders.remove(keyProviderId);
+          self.postMessage({
+            'type': 'dispose',
+            'msgId': msgId,
+            'msgType': 'response',
+          });
+        }
         break;
       case 'enable':
         {
           var enabled = msg['enabled'] as bool;
-          var participantId = msg['participantId'] as String;
+          var trackId = msg['trackId'] as String;
 
-          var cryptors = participantCryptors
-              .where((c) => c.participantIdentity == participantId)
-              .toList();
+          var cryptors =
+              participantCryptors.where((c) => c.trackId == trackId).toList();
           for (var cryptor in cryptors) {
-            logger.config(
-                'Set enable $enabled for participantId $participantId, trackId ${cryptor.trackId}');
+            logger.config('Set enable $enabled for trackId ${cryptor.trackId}');
             cryptor.setEnabled(enabled);
           }
           self.postMessage({
             'type': 'cryptorEnabled',
-            'participantId': participantId,
             'enable': enabled,
             'msgId': msgId,
             'msgType': 'response',
@@ -225,18 +209,36 @@ void main() async {
           var trackId = msg['trackId'];
           var readable = msg['readableStream'] as ReadableStream;
           var writable = msg['writableStream'] as WritableStream;
+          var keyProviderId = msg['keyProviderId'] as String;
 
           logger.config(
               'SetupTransform for kind $kind, trackId $trackId, participantId $participantId, ${readable.runtimeType} ${writable.runtimeType}}');
 
-          var cryptor = getTrackCryptor(participantId, trackId);
+          var keyProvider = keyProviders[keyProviderId];
+          if (keyProvider == null) {
+            logger.warning('KeyProvider not found for $keyProviderId');
+            self.postMessage({
+              'type': 'cryptorSetup',
+              'participantId': participantId,
+              'trackId': trackId,
+              'exist': exist,
+              'operation': msgType,
+              'error': 'KeyProvider not found',
+              'msgId': msgId,
+              'msgType': 'response',
+            });
+            return;
+          }
+
+          var cryptor = getTrackCryptor(participantId, trackId, keyProvider);
 
           await cryptor.setupTransform(
-              operation: msgType,
-              readable: readable,
-              writable: writable,
-              trackId: trackId,
-              kind: kind);
+            operation: msgType,
+            readable: readable,
+            writable: writable,
+            trackId: trackId,
+            kind: kind,
+          );
 
           self.postMessage({
             'type': 'cryptorSetup',
@@ -268,14 +270,28 @@ void main() async {
         {
           var key = Uint8List.fromList(base64Decode(msg['key'] as String));
           var keyIndex = msg['keyIndex'] as int;
+          var keyProviderId = msg['keyProviderId'] as String;
+          var keyProvider = keyProviders[keyProviderId];
+          if (keyProvider == null) {
+            logger.warning('KeyProvider not found for $keyProviderId');
+            self.postMessage({
+              'type': 'setKey',
+              'error': 'KeyProvider not found',
+              'msgId': msgId,
+              'msgType': 'response',
+            });
+            return;
+          }
+          var keyProviderOptions = keyProvider.keyProviderOptions;
           if (keyProviderOptions.sharedKey) {
             logger.config('Set SharedKey keyIndex $keyIndex');
-            setSharedKey(key, keyIndex: keyIndex);
+            keyProvider.setSharedKey(key, keyIndex: keyIndex);
           } else {
             var participantId = msg['participantId'] as String;
             logger.config(
                 'Set key for participant $participantId, keyIndex $keyIndex');
-            await getParticipantKeyHandler(participantId)
+            await keyProvider
+                .getParticipantKeyHandler(participantId)
                 .setKey(key, keyIndex: keyIndex);
           }
 
@@ -294,14 +310,29 @@ void main() async {
         {
           var keyIndex = msg['keyIndex'];
           var participantId = msg['participantId'] as String;
+          var keyProviderId = msg['keyProviderId'] as String;
+          var keyProvider = keyProviders[keyProviderId];
+          if (keyProvider == null) {
+            logger.warning('KeyProvider not found for $keyProviderId');
+            self.postMessage({
+              'type': 'setKey',
+              'error': 'KeyProvider not found',
+              'msgId': msgId,
+              'msgType': 'response',
+            });
+            return;
+          }
+          var keyProviderOptions = keyProvider.keyProviderOptions;
           Uint8List? newKey;
           if (keyProviderOptions.sharedKey) {
             logger.config('RatchetKey for SharedKey, keyIndex $keyIndex');
-            newKey = await getSharedKeyHandler().ratchetKey(keyIndex);
+            newKey =
+                await keyProvider.getSharedKeyHandler().ratchetKey(keyIndex);
           } else {
             logger.config(
                 'RatchetKey for participant $participantId, keyIndex $keyIndex');
-            newKey = await getParticipantKeyHandler(participantId)
+            newKey = await keyProvider
+                .getParticipantKeyHandler(participantId)
                 .ratchetKey(keyIndex);
           }
 
@@ -319,20 +350,17 @@ void main() async {
       case 'setKeyIndex':
         {
           var keyIndex = msg['index'];
-          var participantId = msg['participantId'] as String;
-          logger.config('Setup key index for participant $participantId');
-          var cryptors = participantCryptors
-              .where((c) => c.participantIdentity == participantId)
-              .toList();
+          var trackId = msg['trackId'] as String;
+          logger.config('Setup key index for track $trackId');
+          var cryptors =
+              participantCryptors.where((c) => c.trackId == trackId).toList();
           for (var c in cryptors) {
-            logger.config(
-                'Set keyIndex for participantId $participantId, trackId ${c.trackId}');
+            logger.config('Set keyIndex for trackId ${c.trackId}');
             c.setKeyIndex(keyIndex);
           }
 
           self.postMessage({
             'type': 'setKeyIndex',
-            'participantId': participantId,
             'keyIndex': keyIndex,
             'msgId': msgId,
             'msgType': 'response',
@@ -344,14 +372,28 @@ void main() async {
         {
           var keyIndex = msg['keyIndex'] as int;
           var participantId = msg['participantId'] as String;
+          var keyProviderId = msg['keyProviderId'] as String;
+          var keyProvider = keyProviders[keyProviderId];
+          if (keyProvider == null) {
+            logger.warning('KeyProvider not found for $keyProviderId');
+            self.postMessage({
+              'type': 'setKey',
+              'error': 'KeyProvider not found',
+              'msgId': msgId,
+              'msgType': 'response',
+            });
+            return;
+          }
+          var keyProviderOptions = keyProvider.keyProviderOptions;
           Uint8List? key;
           if (keyProviderOptions.sharedKey) {
             logger.config('Export SharedKey keyIndex $keyIndex');
-            key = await getSharedKeyHandler().exportKey(keyIndex);
+            key = await keyProvider.getSharedKeyHandler().exportKey(keyIndex);
           } else {
             logger.config(
                 'Export key for participant $participantId, keyIndex $keyIndex');
-            key = await getParticipantKeyHandler(participantId)
+            key = await keyProvider
+                .getParticipantKeyHandler(participantId)
                 .exportKey(keyIndex);
           }
           self.postMessage({
@@ -368,7 +410,19 @@ void main() async {
         {
           var sifTrailer =
               Uint8List.fromList(base64Decode(msg['sifTrailer'] as String));
-          keyProviderOptions.uncryptedMagicBytes = sifTrailer;
+          var keyProviderId = msg['keyProviderId'] as String;
+          var keyProvider = keyProviders[keyProviderId];
+          if (keyProvider == null) {
+            logger.warning('KeyProvider not found for $keyProviderId');
+            self.postMessage({
+              'type': 'setKey',
+              'error': 'KeyProvider not found',
+              'msgId': msgId,
+              'msgType': 'response',
+            });
+            return;
+          }
+          keyProvider.setSifTrailer(sifTrailer);
           logger.config('SetSifTrailer = $sifTrailer');
           for (var c in participantCryptors) {
             c.setSifTrailer(sifTrailer);

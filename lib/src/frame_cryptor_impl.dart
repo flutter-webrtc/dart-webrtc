@@ -130,7 +130,7 @@ class FrameCryptorImpl extends FrameCryptor {
       jsutil.jsify({
         'msgType': 'enable',
         'msgId': msgId,
-        'participantId': participantId,
+        'trackId': _trackId,
         'enabled': enabled
       })
     ]);
@@ -145,7 +145,7 @@ class FrameCryptorImpl extends FrameCryptor {
       jsutil.jsify({
         'msgType': 'setKeyIndex',
         'msgId': msgId,
-        'participantId': participantId,
+        'trackId': _trackId,
         'index': index,
       })
     ]);
@@ -182,9 +182,9 @@ class KeyProviderImpl implements KeyProvider {
     var msgId = randomString(12);
     jsutil.callMethod(worker, 'postMessage', [
       jsutil.jsify({
-        'msgType': 'init',
+        'msgType': 'keyProviderInit',
         'msgId': msgId,
-        'id': id,
+        'keyProviderId': id,
         'keyOptions': {
           'sharedKey': options.sharedKey,
           'ratchetSalt': base64Encode(options.ratchetSalt),
@@ -201,8 +201,21 @@ class KeyProviderImpl implements KeyProvider {
   }
 
   @override
-  Future<void> dispose() {
-    return Future.value();
+  Future<void> dispose() async {
+    var msgId = randomString(12);
+    jsutil.callMethod(worker, 'postMessage', [
+      jsutil.jsify({
+        'msgType': 'keyProviderDispose',
+        'msgId': msgId,
+        'keyProviderId': id,
+      })
+    ]);
+
+    await events.waitFor<WorkerResponse>(
+        filter: (event) => event.msgId == msgId,
+        duration: Duration(seconds: 5));
+
+    _keys.clear();
   }
 
   @override
@@ -215,6 +228,7 @@ class KeyProviderImpl implements KeyProvider {
       jsutil.jsify({
         'msgType': 'setKey',
         'msgId': msgId,
+        'keyProviderId': id,
         'participantId': participantId,
         'keyIndex': index,
         'key': base64Encode(key),
@@ -242,6 +256,7 @@ class KeyProviderImpl implements KeyProvider {
       jsutil.jsify({
         'msgType': 'ratchetKey',
         'msgId': msgId,
+        'keyProviderId': id,
         'participantId': participantId,
         'keyIndex': index,
       })
@@ -262,6 +277,7 @@ class KeyProviderImpl implements KeyProvider {
       jsutil.jsify({
         'msgType': 'exportKey',
         'msgId': msgId,
+        'keyProviderId': id,
         'participantId': participantId,
         'keyIndex': index,
       })
@@ -281,6 +297,7 @@ class KeyProviderImpl implements KeyProvider {
       jsutil.jsify({
         'msgType': 'exportSharedKey',
         'msgId': msgId,
+        'keyProviderId': id,
         'keyIndex': index,
       })
     ]);
@@ -299,6 +316,7 @@ class KeyProviderImpl implements KeyProvider {
       jsutil.jsify({
         'msgType': 'ratchetSharedKey',
         'msgId': msgId,
+        'keyProviderId': id,
         'keyIndex': index,
       })
     ]);
@@ -316,6 +334,7 @@ class KeyProviderImpl implements KeyProvider {
       jsutil.jsify({
         'msgType': 'setSharedKey',
         'msgId': msgId,
+        'keyProviderId': id,
         'keyIndex': index,
         'key': base64Encode(key),
       })
@@ -333,6 +352,7 @@ class KeyProviderImpl implements KeyProvider {
       jsutil.jsify({
         'msgType': 'setSifTrailer',
         'msgId': msgId,
+        'keyProviderId': id,
         'sifTrailer': base64Encode(trailer),
       })
     ]);
@@ -347,7 +367,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   FrameCryptorFactoryImpl._internal() {
     worker = html.Worker('e2ee.worker.dart.js');
     worker.onMessage.listen((msg) {
-      //print('master got ${msg.data}');
+      print('master got ${msg.data}');
       var type = msg.data['type'];
       var msgId = msg.data['msgId'];
       var msgType = msg.data['msgType'];
@@ -406,7 +426,8 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   @override
   Future<KeyProvider> createDefaultKeyProvider(
       KeyProviderOptions options) async {
-    var keyProvider = KeyProviderImpl('default', worker, options, events);
+    var keyProvider =
+        KeyProviderImpl(randomString(12), worker, options, events);
     await keyProvider.init();
     return keyProvider;
   }
@@ -428,6 +449,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       var options = {
         'msgType': 'decode',
         'msgId': msgId,
+        'keyProviderId': (keyProvider as KeyProviderImpl).id,
         'kind': kind,
         'participantId': participantId,
         'trackId': trackId,
@@ -452,6 +474,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
         jsutil.jsify({
           'msgType': 'decode',
           'msgId': msgId,
+          'keyProviderId': (keyProvider as KeyProviderImpl).id,
           'kind': kind,
           'exist': exist,
           'participantId': participantId,
@@ -464,7 +487,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
     }
     FrameCryptor cryptor = FrameCryptorImpl(
         this, worker, participantId, trackId,
-        jsReceiver: jsReceiver, keyProvider: keyProvider as KeyProviderImpl);
+        jsReceiver: jsReceiver, keyProvider: keyProvider);
     _frameCryptors[trackId] = cryptor;
     return Future.value(cryptor);
   }
@@ -485,11 +508,13 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       var options = {
         'msgType': 'encode',
         'msgId': msgId,
+        'keyProviderId': (keyProvider as KeyProviderImpl).id,
         'kind': kind,
         'participantId': participantId,
         'trackId': trackId,
-        'options': (keyProvider as KeyProviderImpl).options.toJson(),
+        'options': keyProvider.options.toJson(),
       };
+      print('object: ${options['keyProviderId']}');
       jsutil.setProperty(jsSender, 'transform',
           RTCRtpScriptTransform(worker, jsutil.jsify(options)));
     } else {
@@ -510,11 +535,12 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
         jsutil.jsify({
           'msgType': 'encode',
           'msgId': msgId,
+          'keyProviderId': (keyProvider as KeyProviderImpl).id,
           'kind': kind,
           'exist': exist,
           'participantId': participantId,
           'trackId': trackId,
-          'options': (keyProvider as KeyProviderImpl).options.toJson(),
+          'options': keyProvider.options.toJson(),
           'readableStream': readable,
           'writableStream': writable
         }),

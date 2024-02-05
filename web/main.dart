@@ -132,7 +132,7 @@ void loopBackTest() async {
     await fc.updateCodec('vp8');
     pc1FrameCryptors.add(fc);
   });
-
+/*
   var transceivers = await pc1.getTransceivers();
   transceivers.forEach((transceiver) {
     print('transceiver: ${transceiver.sender.track!.kind!}');
@@ -153,7 +153,7 @@ void loopBackTest() async {
       ]);
     }
   });
-
+*/
   var offer = await pc1.createOffer();
 
   await pc2.addTransceiver(
@@ -208,7 +208,7 @@ void loopBackTest() async {
   print('ratchetKey key: ${key.toList()}');
 
   var key1 = await keyProvider.ratchetKey(index: 0, participantId: 'sender');
-  print('ratchetKey key1: ${key.toList()}');
+  print('ratchetKey key1: ${key1.toList()}');
 
   [...pc1FrameCryptors, ...pc2FrameCryptors].forEach((element) async {
     await element.setKeyIndex(0);

@@ -27,6 +27,55 @@ class KeyOptions {
   }
 }
 
+class KeyProvider {
+  KeyProvider(this.worker, this.id, this.keyProviderOptions);
+  final DedicatedWorkerGlobalScope worker;
+  final String id;
+  final KeyOptions keyProviderOptions;
+  var participantKeys = <String, ParticipantKeyHandler>{};
+  ParticipantKeyHandler? sharedKeyHandler;
+  var sharedKey = Uint8List(0);
+
+  ParticipantKeyHandler getParticipantKeyHandler(String participantIdentity) {
+    if (keyProviderOptions.sharedKey) {
+      return getSharedKeyHandler();
+    }
+    var keys = participantKeys[participantIdentity];
+    if (keys == null) {
+      keys = ParticipantKeyHandler(
+        worker: worker,
+        participantIdentity: participantIdentity,
+        keyOptions: keyProviderOptions,
+      );
+      if (sharedKey.isNotEmpty) {
+        keys.setKey(sharedKey);
+      }
+      //keys.on(KeyHandlerEvent.KeyRatcheted, emitRatchetedKeys);
+      participantKeys[participantIdentity] = keys;
+    }
+    return keys;
+  }
+
+  ParticipantKeyHandler getSharedKeyHandler() {
+    sharedKeyHandler ??= ParticipantKeyHandler(
+      worker: worker,
+      participantIdentity: 'shared-key',
+      keyOptions: keyProviderOptions,
+    );
+    return sharedKeyHandler!;
+  }
+
+  void setSharedKey(Uint8List key, {int keyIndex = 0}) {
+    logger.info('setting shared key');
+    sharedKey = key;
+    getSharedKeyHandler().setKey(key, keyIndex: keyIndex);
+  }
+
+  void setSifTrailer(Uint8List sifTrailer) {
+    keyProviderOptions.uncryptedMagicBytes = sifTrailer;
+  }
+}
+
 const KEYRING_SIZE = 16;
 
 class KeySet {
