@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+[1.2.0] - 2024-02-05
+
+* Make E2EE events to be consistent with native.
+* E2EE imporve, and fix issue on Firefox.
+
 [1.1.2] - 2023-09-14
 
 * Add more frame cryptor api.
