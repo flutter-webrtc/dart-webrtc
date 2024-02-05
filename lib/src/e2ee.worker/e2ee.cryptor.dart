@@ -525,7 +525,7 @@ class FrameCryptor {
       }
 
       logger.finer(
-          'buffer: ${buffer.length}, decrypted: ${decrypted?.asUint8List()?.length ?? 0}');
+          'buffer: ${buffer.length}, decrypted: ${decrypted?.asUint8List().length ?? 0}');
       var finalBuffer = BytesBuilder();
 
       finalBuffer.add(Uint8List.fromList(buffer.sublist(0, headerLength)));
