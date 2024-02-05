@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.2.1] - 2024-02-05
+
+* Downgrade some dependencies make more compatible.
+
 [1.2.0] - 2024-02-05
 
 * Make E2EE events to be consistent with native.
