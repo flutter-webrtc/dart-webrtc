@@ -9,6 +9,7 @@ environment:
 dependencies:
   collection: ^1.17.1
   js: ^0.6.4  
+  logging: ^1.2.0
   platform_detect: ^2.0.7
   synchronized: ^3.0.0+3
   webrtc_interface: 1.1.2
