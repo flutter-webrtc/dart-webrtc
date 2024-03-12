@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:html';
 import 'dart:js_util' as jsutil;
 
 import 'package:dart_webrtc/src/media_stream_impl.dart';
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_track_impl.dart';
@@ -12,11 +12,11 @@ import 'rtc_rtp_parameters_impl.dart';
 class RTCRtpSenderWeb extends RTCRtpSender {
   RTCRtpSenderWeb(this._jsRtpSender, this._ownsTrack);
 
-  factory RTCRtpSenderWeb.fromJsSender(RtcRtpSender jsRtpSender) {
+  factory RTCRtpSenderWeb.fromJsSender(web.RTCRtpSender jsRtpSender) {
     return RTCRtpSenderWeb(jsRtpSender, jsRtpSender.track != null);
   }
 
-  final RtcRtpSender _jsRtpSender;
+  final web.RTCRtpSender _jsRtpSender;
   bool _ownsTrack = false;
 
   @override
@@ -115,5 +115,5 @@ class RTCRtpSenderWeb extends RTCRtpSender {
   @override
   Future<void> dispose() async {}
 
-  RtcRtpSender get jsRtpSender => _jsRtpSender;
+  web.RTCRtpSender get jsRtpSender => _jsRtpSender;
 }

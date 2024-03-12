@@ -8,21 +8,16 @@ void closeMediaStream(MediaStream stream) {
 }
 
 List<void Function()> testFunctions = <void Function()>[
-  () => test('MediaDevices.constructor()', () {
-        expect(navigator.mediaDevices != null, true);
-      }),
   () => test('MediaDevices.enumerateDevices()', () async {
         var list = await navigator.mediaDevices.enumerateDevices();
         list.forEach((e) {
           print('${e.runtimeType}: ${e.label}, type => ${e.kind}');
         });
-        expect(list != null, true);
       }),
   () => test('MediaDevices.getUserMedia()', () async {
         var stream = await navigator.mediaDevices
             .getUserMedia({'audio': true, 'video': true});
         print('getUserMedia: stream.id => ${stream.id}');
-        expect(stream != null, true);
 
         print(
             'getUserMedia: audio track.id => ${stream.getAudioTracks()[0].id}');

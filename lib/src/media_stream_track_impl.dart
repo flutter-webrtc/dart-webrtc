@@ -1,17 +1,19 @@
 import 'dart:async';
-import 'dart:html' as html;
+import 'dart:js_interop';
 import 'dart:js_util' as js;
 import 'dart:typed_data';
+
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 class MediaStreamTrackWeb extends MediaStreamTrack {
   MediaStreamTrackWeb(this.jsTrack) {
-    jsTrack.onEnded.listen((event) => onEnded?.call());
-    jsTrack.onMute.listen((event) => onMute?.call());
-    jsTrack.onUnmute.listen((event) => onUnMute?.call());
+    jsTrack.addEventListener('ended', ((event) => onEnded?.call()).toJS);
+    jsTrack.addEventListener('mute', ((event) => onMute?.call()).toJS);
+    jsTrack.addEventListener('unmute', ((event) => onUnMute?.call()).toJS);
   }
 
-  final html.MediaStreamTrack jsTrack;
+  final web.MediaStreamTrack jsTrack;
 
   @override
   String? get id => jsTrack.id;
@@ -23,14 +25,14 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
   String? get label => jsTrack.label;
 
   @override
-  bool get enabled => jsTrack.enabled ?? false;
+  bool get enabled => jsTrack.enabled;
 
   @override
   bool? get muted => jsTrack.muted;
 
   @override
   set enabled(bool? b) {
-    jsTrack.enabled = b;
+    jsTrack.enabled = b ?? false;
   }
 
   @override
@@ -64,19 +66,25 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
 
   @override
   Future<ByteBuffer> captureFrame() async {
-    final imageCapture = html.ImageCapture(jsTrack);
-    final bitmap = await imageCapture.grabFrame();
-    final canvas = html.CanvasElement();
+    final imageCapture = ImageCapture(jsTrack);
+    final bitmap = await imageCapture.grabFrame().toDart as web.ImageBitmap;
+    final canvas = web.HTMLCanvasElement();
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
     final renderer =
-        canvas.getContext('bitmaprenderer') as html.ImageBitmapRenderingContext;
+        canvas.getContext('bitmaprenderer') as web.ImageBitmapRenderingContext;
     js.callMethod(renderer, 'transferFromImageBitmap', [bitmap]);
-    final blod = await canvas.toBlob();
-    var array =
-        await js.promiseToFuture(js.callMethod(blod, 'arrayBuffer', []));
+
+    final blobCompleter = Completer<web.Blob>();
+    canvas.toBlob((web.Blob blob) {
+      blobCompleter.complete(blob);
+    }.toJS);
+
+    final blod = await blobCompleter.future;
+
+    var array = await blod.arrayBuffer().toDart;
     bitmap.close();
-    return array;
+    return array.toDart;
   }
 
   @override
@@ -101,4 +109,10 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
   Future<MediaStreamTrack> clone() async {
     return MediaStreamTrackWeb(jsTrack.clone());
   }
+}
+
+extension type ImageCapture._(JSObject _) implements JSObject {
+  external factory ImageCapture(web.MediaStreamTrack track);
+
+  external JSPromise grabFrame();
 }

@@ -1,10 +1,10 @@
-import 'dart:html' as html;
-
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 import '../dart_webrtc.dart';
 
 class RTCVideoElement {
   RTCVideoElement() {
-    _html = html.VideoElement()
+    _html = web.HTMLVideoElement()
       ..autoplay = true
       ..muted = false
       ..controls = false
@@ -17,8 +17,8 @@ class RTCVideoElement {
 
   MediaStream? _stream;
 
-  late html.VideoElement _html;
-  html.VideoElement get htmlElement => _html;
+  late web.HTMLVideoElement _html;
+  web.HTMLVideoElement get htmlElement => _html;
 
   /// contain or cover
   set objectFit(String fit) => _html.style.objectFit = fit;
@@ -36,13 +36,13 @@ class RTCVideoElement {
 
   int get videoHeight => _html.videoHeight;
 
-  Stream<html.Event> get onEnded => _html.onEnded;
+  Stream<web.Event> get onEnded => _html.onEnded;
 
-  Stream<html.Event> get onError => _html.onError;
+  Stream<web.Event> get onError => _html.onError;
 
-  Stream<html.Event> get onCanPlay => _html.onCanPlay;
+  Stream<web.Event> get onCanPlay => _html.onCanPlay;
 
-  Stream<html.Event> get onResize => _html.onResize;
+  Stream<web.Event> get onResize => _html.onResize;
 
   dynamic get error => _html.error;
 
@@ -61,5 +61,9 @@ class RTCVideoElement {
 
   void removeAttribute(String name) => _html.removeAttribute(name);
 
-  Future<void> setSinkId(String sinkId) => _html.setSinkId(sinkId);
+  Future<void> setSinkId(String sinkId) => _html.setSinkId(sinkId).toDart;
+}
+
+extension _SetSinkId on web.HTMLMediaElement {
+  external JSPromise setSinkId(String sinkId);
 }

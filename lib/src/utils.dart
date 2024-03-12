@@ -1,5 +1,5 @@
-import 'dart:html' as html;
 import 'dart:math';
+import 'package:web/web.dart' as web;
 
 bool get isMobile {
   final toMatch = [
@@ -11,7 +11,7 @@ bool get isMobile {
     'BlackBerry',
     'Windows Phone'
   ];
-  return toMatch.indexWhere((device) => html.window.navigator.userAgent
+  return toMatch.indexWhere((device) => web.window.navigator.userAgent
           .contains(RegExp(device, caseSensitive: false))) !=
       -1;
 }

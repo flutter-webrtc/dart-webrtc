@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'dart:html';
-
 import 'package:http/http.dart' as http;
+import 'package:web/web.dart' as web;
 
 typedef OnMessageCallback = void Function(dynamic msg);
 typedef OnCloseCallback = void Function(int code, String reason);
@@ -20,7 +19,7 @@ class SimpleWebSocket {
 
   Future<void> connect() async {
     try {
-      _socket = WebSocket(_url);
+      _socket = web.WebSocket(_url);
       _socket.onOpen.listen((e) {
         onOpen?.call();
       });
@@ -38,7 +37,7 @@ class SimpleWebSocket {
   }
 
   void send(data) {
-    if (_socket != null && _socket.readyState == WebSocket.OPEN) {
+    if (_socket != null && _socket.readyState == web.WebSocket.OPEN) {
       _socket.send(data);
       print('send: $data');
     } else {
