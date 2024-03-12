@@ -1,7 +1,7 @@
-import 'dart:html' as html;
 import 'dart:typed_data';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
+import 'package:web/web.dart' as web;
 
 /*
 import 'test_media_devices.dart' as media_devices_tests;
@@ -25,11 +25,11 @@ List<FrameCryptor> pc1FrameCryptors = [];
 List<FrameCryptor> pc2FrameCryptors = [];
 
 void loopBackTest() async {
-  var local = html.document.querySelector('#local');
+  var local = web.document.querySelector('#local');
   var localVideo = RTCVideoElement();
   local!.append(localVideo.htmlElement);
 
-  var remote = html.document.querySelector('#remote');
+  var remote = web.document.querySelector('#remote');
   var remotelVideo = RTCVideoElement();
   remote!.append(remotelVideo.htmlElement);
 
