@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'dart:html';
+import 'dart:js_interop';
 import 'dart:js_util' as jsutil;
 import 'dart:typed_data';
 
-import 'crypto.dart' as crypto;
+import 'package:web/web.dart' as web;
+
 import 'e2ee.logger.dart';
 import 'e2ee.utils.dart';
+
+final crypto = web.window.crypto.subtle;
 
 class KeyOptions {
   KeyOptions({
@@ -29,7 +32,7 @@ class KeyOptions {
 
 class KeyProvider {
   KeyProvider(this.worker, this.id, this.keyProviderOptions);
-  final DedicatedWorkerGlobalScope worker;
+  final web.DedicatedWorkerGlobalScope worker;
   final String id;
   final KeyOptions keyProviderOptions;
   var participantKeys = <String, ParticipantKeyHandler>{};
@@ -80,8 +83,8 @@ const KEYRING_SIZE = 16;
 
 class KeySet {
   KeySet(this.material, this.encryptionKey);
-  CryptoKey material;
-  CryptoKey encryptionKey;
+  web.CryptoKey material;
+  web.CryptoKey encryptionKey;
 }
 
 class ParticipantKeyHandler {
@@ -100,7 +103,7 @@ class ParticipantKeyHandler {
 
   final KeyOptions keyOptions;
 
-  final DedicatedWorkerGlobalScope worker;
+  final web.DedicatedWorkerGlobalScope worker;
 
   final String participantIdentity;
 
@@ -150,22 +153,23 @@ class ParticipantKeyHandler {
       return null;
     }
     var newKey = await ratchet(currentMaterial, keyOptions.ratchetSalt);
-    var newMaterial = await ratchetMaterial(
-        currentMaterial, crypto.jsArrayBufferFrom(newKey));
+    var newMaterial = await ratchetMaterial(currentMaterial, newKey.buffer);
     var newKeySet = await deriveKeys(newMaterial, keyOptions.ratchetSalt);
     await setKeySetFromMaterial(newKeySet, keyIndex ?? currentKeyIndex);
     return newKey;
   }
 
-  Future<CryptoKey> ratchetMaterial(
-      CryptoKey currentMaterial, ByteBuffer newKeyBuffer) async {
-    var newMaterial = await jsutil.promiseToFuture(crypto.importKey(
-      'raw',
-      newKeyBuffer,
-      (currentMaterial.algorithm as crypto.Algorithm).name,
-      false,
-      ['deriveBits', 'deriveKey'],
-    ));
+  Future<web.CryptoKey> ratchetMaterial(
+      web.CryptoKey currentMaterial, ByteBuffer newKeyBuffer) async {
+    var newMaterial = await crypto
+        .importKey(
+          'raw',
+          newKeyBuffer.toJS,
+          (currentMaterial.algorithm as web.Algorithm).name.toJS,
+          false,
+          <JSString>['deriveBits'.toJS, 'deriveKey'.toJS].toJS,
+        )
+        .toDart;
     return newMaterial;
   }
 
@@ -174,8 +178,11 @@ class ParticipantKeyHandler {
   }
 
   Future<void> setKey(Uint8List key, {int keyIndex = 0}) async {
-    var keyMaterial = await crypto.impportKeyFromRawData(key,
-        webCryptoAlgorithm: 'PBKDF2', keyUsages: ['deriveBits', 'deriveKey']);
+    var keyMaterial = await crypto
+        .importKey('raw', key.toJS, 'PBKDF2'.toJS, false,
+            <JSString>['deriveBits'.toJS, 'deriveKey'.toJS].toJS)
+        .toDart;
+
     var keySet = await deriveKeys(
       keyMaterial,
       keyOptions.ratchetSalt,
@@ -194,19 +201,19 @@ class ParticipantKeyHandler {
 
   /// Derives a set of keys from the master key.
   /// See https://tools.ietf.org/html/draft-omara-sframe-00#section-4.3.1
-  Future<KeySet> deriveKeys(CryptoKey material, Uint8List salt) async {
+  Future<KeySet> deriveKeys(web.CryptoKey material, Uint8List salt) async {
     var algorithmOptions =
-        getAlgoOptions((material.algorithm as crypto.Algorithm).name, salt);
+        getAlgoOptions((material.algorithm as web.Algorithm).name, salt);
 
     // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#HKDF
     // https://developer.mozilla.org/en-US/docs/Web/API/HkdfParams
     var encryptionKey =
-        await jsutil.promiseToFuture<CryptoKey>(crypto.deriveKey(
+        await jsutil.promiseToFuture<web.CryptoKey>(crypto.deriveKey(
       jsutil.jsify(algorithmOptions),
       material,
       jsutil.jsify({'name': 'AES-GCM', 'length': 128}),
       false,
-      ['encrypt', 'decrypt'],
+      <JSString>['encrypt'.toJS, 'decrypt'.toJS].toJS,
     ));
 
     return KeySet(material, encryptionKey);
@@ -215,7 +222,7 @@ class ParticipantKeyHandler {
   /// Ratchets a key. See
   /// https://tools.ietf.org/html/draft-omara-sframe-00#section-4.3.5.1
 
-  Future<Uint8List> ratchet(CryptoKey material, Uint8List salt) async {
+  Future<Uint8List> ratchet(web.CryptoKey material, Uint8List salt) async {
     var algorithmOptions = getAlgoOptions('PBKDF2', salt);
 
     // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveBits
