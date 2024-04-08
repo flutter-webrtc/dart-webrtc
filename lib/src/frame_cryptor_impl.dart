@@ -372,13 +372,13 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
         'message',
         (web.MessageEvent msg) {
           final data = dartify(msg.data) as Map;
-          print('master got ${msg.data}');
+          //print('master got $data');
           var type = data['type'];
           var msgId = data['msgId'];
           var msgType = data['msgType'];
 
           if (msgType == 'response') {
-            events.emit(WorkerResponse(msgId, msg.data));
+            events.emit(WorkerResponse(msgId, data));
           } else if (msgType == 'event') {
             if (type == 'cryptorState') {
               var trackId = data['trackId'];

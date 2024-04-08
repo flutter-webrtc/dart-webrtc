@@ -1,11 +1,9 @@
-/*
 import 'dart:async';
 import 'dart:js_util' as jsutil;
 import 'dart:typed_data';
 
 import 'package:js/js.dart';
 import 'package:web/web.dart' as web;
-
 
 @JS('Promise')
 class Promise<T> {
@@ -94,5 +92,3 @@ Future<web.CryptoKey> impportKeyFromRawData(List<int> secretKeyData,
     keyUsages,
   ));
 }
-
-*/
