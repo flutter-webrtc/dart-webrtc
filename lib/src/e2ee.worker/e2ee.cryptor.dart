@@ -1,11 +1,13 @@
 import 'dart:async';
-import 'dart:html';
 import 'dart:js';
+import 'dart:js_interop';
 import 'dart:js_util' as jsutil;
 import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dart_webrtc/src/rtc_transform_stream.dart';
+import 'package:web/web.dart' as web;
+
 import 'crypto.dart' as crypto;
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
@@ -136,7 +138,7 @@ class FrameCryptor {
   bool _enabled = false;
   CryptorError lastError = CryptorError.kNew;
   int currentKeyIndex = 0;
-  final DedicatedWorkerGlobalScope worker;
+  final web.DedicatedWorkerGlobalScope worker;
   SifGuard sifGuard = SifGuard();
 
   void setParticipant(String identity, ParticipantKeyHandler keys) {
@@ -219,7 +221,7 @@ class FrameCryptor {
   }
 
   void postMessage(Object message) {
-    worker.postMessage(message);
+    worker.postMessage(message.jsify());
   }
 
   Future<void> setupTransform({
@@ -480,7 +482,7 @@ class FrameCryptor {
           ));
 
           if (currentkeySet != initialKeySet) {
-            logger.warning(
+            logger.fine(
                 'ratchetKey: decryption ok, reset state to kKeyRatcheted');
             await keyHandler.setKeySetFromMaterial(
                 currentkeySet, initialKeyIndex);

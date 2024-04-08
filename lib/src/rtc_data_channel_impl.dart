@@ -1,33 +1,46 @@
 import 'dart:async';
-import 'dart:html' as html;
+import 'dart:js_interop';
 import 'dart:js_util' as jsutil;
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 class RTCDataChannelWeb extends RTCDataChannel {
   RTCDataChannelWeb(this._jsDc) {
     stateChangeStream = _stateChangeController.stream;
     messageStream = _messageController.stream;
-    _jsDc.onClose.listen((_) {
-      _state = RTCDataChannelState.RTCDataChannelClosed;
-      _stateChangeController.add(_state);
-      onDataChannelState?.call(_state);
-    });
-    _jsDc.onOpen.listen((_) {
-      _state = RTCDataChannelState.RTCDataChannelOpen;
-      _stateChangeController.add(_state);
-      onDataChannelState?.call(_state);
-    });
-    _jsDc.onMessage.listen((event) async {
-      var msg = await _parse(event.data);
-      _messageController.add(msg);
-      onMessage?.call(msg);
-    });
-    _jsDc.addEventListener('bufferedamountlow', (_) {
-      onBufferedAmountLow?.call(bufferedAmount ?? 0);
-    });
+    _jsDc.addEventListener(
+        'close',
+        (_) {
+          _state = RTCDataChannelState.RTCDataChannelClosed;
+          _stateChangeController.add(_state);
+          onDataChannelState?.call(_state);
+        }.toJS,
+        false.toJS);
+    _jsDc.addEventListener(
+        'open',
+        (_) {
+          _state = RTCDataChannelState.RTCDataChannelOpen;
+          _stateChangeController.add(_state);
+          onDataChannelState?.call(_state);
+        }.toJS,
+        false.toJS);
+    _jsDc.addEventListener(
+        'message',
+        (web.MessageEvent event) async {
+          var msg = await _parse(event.data);
+          _messageController.add(msg);
+          onMessage?.call(msg);
+        }.toJS,
+        false.toJS);
+    _jsDc.addEventListener(
+        'bufferedamountlow',
+        (_) {
+          onBufferedAmountLow?.call(bufferedAmount ?? 0);
+        }.toJS,
+        false.toJS);
   }
 
-  final html.RtcDataChannel _jsDc;
+  final web.RTCDataChannel _jsDc;
   RTCDataChannelState _state = RTCDataChannelState.RTCDataChannelConnecting;
 
   @override
@@ -44,7 +57,7 @@ class RTCDataChannelWeb extends RTCDataChannel {
 
   @override
   set bufferedAmountLowThreshold(int? bufferedAmountLowThreshold) {
-    _jsDc.bufferedAmountLowThreshold = bufferedAmountLowThreshold;
+    _jsDc.bufferedAmountLowThreshold = bufferedAmountLowThreshold ?? 0;
   }
 
   final _stateChangeController =
@@ -53,9 +66,11 @@ class RTCDataChannelWeb extends RTCDataChannel {
       StreamController<RTCDataChannelMessage>.broadcast(sync: true);
 
   Future<RTCDataChannelMessage> _parse(dynamic data) async {
-    if (data is String) return RTCDataChannelMessage(data);
+    if (data is String) {
+      return RTCDataChannelMessage(data);
+    }
     dynamic arrayBuffer;
-    if (data is html.Blob) {
+    if (data is web.Blob) {
       // This should never happen actually
       arrayBuffer = await jsutil
           .promiseToFuture(jsutil.callMethod(data, 'arrayBuffer', []));
@@ -68,9 +83,9 @@ class RTCDataChannelWeb extends RTCDataChannel {
   @override
   Future<void> send(RTCDataChannelMessage message) {
     if (!message.isBinary) {
-      _jsDc.send(message.text);
+      _jsDc.send(message.text.toJS);
     } else {
-      _jsDc.sendTypedData(message.binary);
+      _jsDc.send(message.binary.toJS);
     }
     return Future.value();
   }
