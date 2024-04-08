@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.3.1] - 2024-04-08
+
+* Add keyRingSize/discardFrameWhenCryptorNotReady to KeyProviderOptions.
+
 [1.3.0] - 2024-04-08
 
 * update to package:web by @jezell in #29.
