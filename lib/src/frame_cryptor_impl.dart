@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:html' as html;
 import 'dart:js' as js;
+import 'dart:js_interop';
 import 'dart:js_util' as jsutil;
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:dart_webrtc/src/event.dart';
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'rtc_rtp_receiver_impl.dart';
@@ -20,7 +21,7 @@ class WorkerResponse {
   dynamic data;
 }
 
-extension RtcRtpReceiverExt on html.RtcRtpReceiver {
+extension RtcRtpReceiverExt on web.RTCRtpReceiver {
   static Map<int, ReadableStream> readableStreams_ = {};
   static Map<int, WritableStream> writableStreams_ = {};
 
@@ -52,7 +53,7 @@ extension RtcRtpReceiverExt on html.RtcRtpReceiver {
   }
 }
 
-extension RtcRtpSenderExt on html.RtcRtpSender {
+extension RtcRtpSenderExt on web.RTCRtpSender {
   static Map<int, ReadableStream> readableStreams_ = {};
   static Map<int, WritableStream> writableStreams_ = {};
 
@@ -88,13 +89,13 @@ class FrameCryptorImpl extends FrameCryptor {
   FrameCryptorImpl(
       this._factory, this.worker, this._participantId, this._trackId,
       {this.jsSender, this.jsReceiver, required this.keyProvider});
-  html.Worker worker;
+  web.Worker worker;
   bool _enabled = false;
   int _keyIndex = 0;
   final String _participantId;
   final String _trackId;
-  final html.RtcRtpSender? jsSender;
-  final html.RtcRtpReceiver? jsReceiver;
+  final web.RTCRtpSender? jsSender;
+  final web.RTCRtpReceiver? jsReceiver;
   final FrameCryptorFactoryImpl _factory;
   final KeyProviderImpl keyProvider;
 
@@ -170,7 +171,7 @@ class FrameCryptorImpl extends FrameCryptor {
 class KeyProviderImpl implements KeyProvider {
   KeyProviderImpl(this._id, this.worker, this.options, this.events);
   final String _id;
-  final html.Worker worker;
+  final web.Worker worker;
   final KeyProviderOptions options;
   final Map<String, List<Uint8List>> _keys = {};
   final EventsEmitter<WorkerResponse> events;
@@ -189,6 +190,7 @@ class KeyProviderImpl implements KeyProvider {
           'sharedKey': options.sharedKey,
           'ratchetSalt': base64Encode(options.ratchetSalt),
           'ratchetWindowSize': options.ratchetWindowSize,
+          'failureTolerance': options.failureTolerance,
           if (options.uncryptedMagicBytes != null)
             'uncryptedMagicBytes': base64Encode(options.uncryptedMagicBytes!),
         },
@@ -365,9 +367,9 @@ class KeyProviderImpl implements KeyProvider {
 
 class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   FrameCryptorFactoryImpl._internal() {
-    worker = html.Worker('e2ee.worker.dart.js');
-    worker.onMessage.listen((msg) {
-      print('master got ${msg.data}');
+    worker = web.Worker('e2ee.worker.dart.js');
+    worker.onmessage = (msg) {
+      //print('master got ${msg.data}');
       var type = msg.data['type'];
       var msgId = msg.data['msgId'];
       var msgType = msg.data['msgType'];
@@ -410,16 +412,16 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
               ?.call(participantId, frameCryptorState);
         }
       }
-    });
-    worker.onError.listen((err) {
+    }.toJS;
+    worker.onerror = (err) {
       print('worker error: $err');
-    });
+    }.toJS;
   }
 
   static final FrameCryptorFactoryImpl instance =
       FrameCryptorFactoryImpl._internal();
 
-  late html.Worker worker;
+  late web.Worker worker;
   final Map<String, FrameCryptor> _frameCryptors = {};
   final EventsEmitter<WorkerResponse> events = EventsEmitter<WorkerResponse>();
 
@@ -441,7 +443,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
     var jsReceiver = (receiver as RTCRtpReceiverWeb).jsRtpReceiver;
 
     var trackId = jsReceiver.hashCode.toString();
-    var kind = jsReceiver.track!.kind!;
+    var kind = jsReceiver.track.kind;
 
     if (js.context['RTCRtpScriptTransform'] != null) {
       print('support RTCRtpScriptTransform');
@@ -500,7 +502,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       required KeyProvider keyProvider}) {
     var jsSender = (sender as RTCRtpSenderWeb).jsRtpSender;
     var trackId = jsSender.hashCode.toString();
-    var kind = jsSender.track!.kind!;
+    var kind = jsSender.track?.kind;
 
     if (js.context['RTCRtpScriptTransform'] != null) {
       print('support RTCRtpScriptTransform');

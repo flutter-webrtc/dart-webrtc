@@ -1,17 +1,25 @@
 import 'dart:async';
-import 'dart:html' as html;
+import 'dart:js_interop';
 import 'dart:js_util' as js;
 import 'dart:typed_data';
+
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 class MediaStreamTrackWeb extends MediaStreamTrack {
   MediaStreamTrackWeb(this.jsTrack) {
-    jsTrack.onEnded.listen((event) => onEnded?.call());
-    jsTrack.onMute.listen((event) => onMute?.call());
-    jsTrack.onUnmute.listen((event) => onUnMute?.call());
+    jsTrack.onended = (event) {
+      onEnded?.call();
+    }.toJS;
+    jsTrack.onmute = (event) {
+      onMute?.call();
+    }.toJS;
+    jsTrack.onunmute = (event) {
+      onUnMute?.call();
+    }.toJS;
   }
 
-  final html.MediaStreamTrack jsTrack;
+  final web.MediaStreamTrack jsTrack;
 
   @override
   String? get id => jsTrack.id;
@@ -23,13 +31,14 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
   String? get label => jsTrack.label;
 
   @override
-  bool get enabled => jsTrack.enabled ?? false;
+  bool get enabled => jsTrack.enabled;
 
   @override
   bool? get muted => jsTrack.muted;
 
   @override
   set enabled(bool? b) {
+    if (b == null) return;
     jsTrack.enabled = b;
   }
 
@@ -64,19 +73,21 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
 
   @override
   Future<ByteBuffer> captureFrame() async {
-    final imageCapture = html.ImageCapture(jsTrack);
+    /*final imageCapture = web.ImageCapture(jsTrack);
     final bitmap = await imageCapture.grabFrame();
-    final canvas = html.CanvasElement();
+    final canvas = web.HTMLCanvasElement();
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
     final renderer =
-        canvas.getContext('bitmaprenderer') as html.ImageBitmapRenderingContext;
+        canvas.getContext('bitmaprenderer') as web.ImageBitmapRenderingContext;
     js.callMethod(renderer, 'transferFromImageBitmap', [bitmap]);
-    final blod = await canvas.toBlob();
+    final blod = canvas.toBlob();
     var array =
         await js.promiseToFuture(js.callMethod(blod, 'arrayBuffer', []));
     bitmap.close();
     return array;
+    */
+    return Null as ByteBuffer;
   }
 
   @override

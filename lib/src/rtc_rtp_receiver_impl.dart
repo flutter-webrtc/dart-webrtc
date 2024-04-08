@@ -1,5 +1,6 @@
-import 'dart:html';
 import 'dart:js_util' as jsutil;
+
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_track_impl.dart';
@@ -9,7 +10,7 @@ class RTCRtpReceiverWeb extends RTCRtpReceiver {
   RTCRtpReceiverWeb(this._jsRtpReceiver);
 
   /// private:
-  final RtcRtpReceiver _jsRtpReceiver;
+  final web.RTCRtpReceiver _jsRtpReceiver;
 
   @override
   Future<List<StatsReport>> getStats() async {
@@ -33,10 +34,10 @@ class RTCRtpReceiverWeb extends RTCRtpReceiver {
   }
 
   @override
-  MediaStreamTrack get track => MediaStreamTrackWeb(_jsRtpReceiver.track!);
+  MediaStreamTrack? get track => MediaStreamTrackWeb(_jsRtpReceiver.track);
 
   @override
   String get receiverId => '${_jsRtpReceiver.hashCode}';
 
-  RtcRtpReceiver get jsRtpReceiver => _jsRtpReceiver;
+  web.RTCRtpReceiver get jsRtpReceiver => _jsRtpReceiver;
 }
