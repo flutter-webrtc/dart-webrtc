@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.3.0] - 2024-04-08
+
+* update to package:web by @jezell in #29.
+
 [1.2.1] - 2024-02-05
 
 * Downgrade some dependencies make more compatible.
