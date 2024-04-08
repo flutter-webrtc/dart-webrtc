@@ -10,11 +10,9 @@ import 'package:webrtc_interface/webrtc_interface.dart';
 import 'media_stream_impl.dart';
 import 'media_stream_track_impl.dart';
 import 'rtc_data_channel_impl.dart';
-import 'rtc_dtmf_sender_impl.dart';
 import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'rtc_rtp_transceiver_impl.dart';
-import 'rtc_configuration_impl.dart';
 
 /*
  *  PeerConnection
@@ -197,8 +195,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   @override
   Future<void> setConfiguration(Map<String, dynamic> configuration) {
     _configuration.addAll(configuration);
-    var webConfig = RTCConfiguration.fromMap(configuration).toWebConfig();
-    _jsPc.setConfiguration(webConfig);
+    _jsPc.setConfiguration(configuration.jsify() as web.RTCConfiguration);
     return Future.value();
   }
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop';
 
-import 'package:dart_webrtc/src/rtc_configuration_impl.dart';
 import 'package:js/js.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -41,9 +41,8 @@ class RTCFactoryWeb extends RTCFactory {
               {'DtlsSrtpKeyAgreement': true},
             ],
           };
-    final config =
-        RTCConfiguration.fromMap({...constr, ...configuration}).toWebConfig();
-    final jsRtcPc = web.RTCPeerConnection(config);
+    final jsRtcPc = web.RTCPeerConnection(
+        {...constr, ...configuration}.jsify() as web.RTCConfiguration);
     final _peerConnectionId = base64Encode(jsRtcPc.toString().codeUnits);
     return RTCPeerConnectionWeb(_peerConnectionId, jsRtcPc);
   }

@@ -39,26 +39,13 @@ class MediaDevicesWeb extends MediaDevices {
         var args = jsutil.jsify(mediaConstraints);
         final jsStream = await jsutil.promiseToFuture<web.MediaStream>(
             jsutil.callMethod(mediaDevices, 'getUserMedia', [args]));
-
         return MediaStreamWeb(jsStream, 'local');
-      } else {
-        var completer = Completer<MediaStream>();
-        var mediaStreamConstraints =
-            MediaStreamConstraints.fromMap(mediaConstraints).toWeb();
-        web.window.navigator.getUserMedia(
-            mediaStreamConstraints,
-            (web.MediaStream jsStream) {
-              completer.complete(MediaStreamWeb(jsStream, 'local'));
-            }.toJS,
-            (web.ErrorEvent error) {
-              completer.completeError(error);
-            }.toJS);
-
-        return completer.future;
       }
     } catch (e) {
       throw 'Unable to getUserMedia: ${e.toString()}';
     }
+
+    throw 'getUserMedia is missing';
   }
 
   @override
