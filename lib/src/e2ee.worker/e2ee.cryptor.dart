@@ -301,6 +301,9 @@ class FrameCryptor {
     if (!enabled ||
         // skip for encryption for empty dtx frames
         buffer.isEmpty) {
+      if (keyOptions.discardFrameWhenCryptorNotReady) {
+        return;
+      }
       controller.enqueue(frame);
       return;
     }
@@ -405,6 +408,9 @@ class FrameCryptor {
         // skip for encryption for empty dtx frames
         buffer.isEmpty) {
       sifGuard.recordUserFrame();
+      if (keyOptions.discardFrameWhenCryptorNotReady) {
+        return;
+      }
       controller.enqueue(frame);
       return;
     }

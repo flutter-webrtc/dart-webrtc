@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
@@ -49,7 +50,8 @@ void loopBackTest() async {
       sharedKey: false,
       ratchetWindowSize: 16,
       failureTolerance: -1,
-      ratchetSalt: Uint8List.fromList('testSalt'.codeUnits));
+      ratchetSalt: Uint8List.fromList('testSalt'.codeUnits),
+      discardFrameWhenCryptorNotReady: true);
   var keyProvider =
       await frameCryptorFactory.createDefaultKeyProvider(keyProviderOptions);
 
@@ -73,7 +75,14 @@ void loopBackTest() async {
         receiver: event.receiver!,
         algorithm: Algorithm.kAesGcm,
         keyProvider: keyProvider);
-    await fc.setEnabled(true);
+    if (keyProviderOptions.discardFrameWhenCryptorNotReady) {
+      Timer(Duration(seconds: 2), () {
+        fc.setEnabled(true);
+      });
+    } else {
+      await fc.setEnabled(true);
+    }
+
     await fc.setKeyIndex(0);
     await fc.updateCodec('vp8');
     pc2FrameCryptors.add(fc);

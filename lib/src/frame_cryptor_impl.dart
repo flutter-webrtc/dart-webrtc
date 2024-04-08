@@ -193,6 +193,9 @@ class KeyProviderImpl implements KeyProvider {
           'ratchetWindowSize': options.ratchetWindowSize,
           if (options.uncryptedMagicBytes != null)
             'uncryptedMagicBytes': base64Encode(options.uncryptedMagicBytes!),
+          'keyRingSize': options.keyRingSize,
+          'discardFrameWhenCryptorNotReady':
+              options.discardFrameWhenCryptorNotReady,
         },
       })
     ]);
