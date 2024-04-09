@@ -70,12 +70,10 @@ class RTCDataChannelWeb extends RTCDataChannel {
       return RTCDataChannelMessage(data);
     }
     dynamic arrayBuffer;
-    if (data is web.Blob) {
-      // This should never happen actually
-      arrayBuffer = await jsutil
-          .promiseToFuture(jsutil.callMethod(data, 'arrayBuffer', []));
+    if (data is JSArrayBuffer) {
+      arrayBuffer = data.toDart;
     } else {
-      arrayBuffer = data;
+      arrayBuffer = data.toString();
     }
     return RTCDataChannelMessage.fromBinary(arrayBuffer.asUint8List());
   }
