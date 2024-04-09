@@ -11,6 +11,7 @@ import 'media_stream_impl.dart';
 import 'navigator_impl.dart';
 import 'rtc_peerconnection_impl.dart';
 import 'rtc_rtp_capailities_imp.dart';
+import 'utils.dart';
 
 @JS('RTCRtpSender')
 @anonymous
@@ -41,7 +42,7 @@ class RTCFactoryWeb extends RTCFactory {
             ],
           };
     final jsRtcPc = web.RTCPeerConnection(
-        jsify({...constr, ...configuration}) as web.RTCConfiguration);
+        convertRTCConfiguration({...constr, ...configuration}));
     final _peerConnectionId = base64Encode(jsRtcPc.toString().codeUnits);
     return RTCPeerConnectionWeb(_peerConnectionId, jsRtcPc);
   }

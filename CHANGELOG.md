@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.4.0] - 2024-04-09
+
+* Fixed bug for RTCConfiguration convert.
+
 [1.3.3] - 2024-04-09
 
 * Fix DC data parse.

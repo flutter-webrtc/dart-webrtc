@@ -15,6 +15,7 @@ import 'rtc_dtmf_sender_impl.dart';
 import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'rtc_rtp_transceiver_impl.dart';
+import 'utils.dart';
 
 extension on web.RTCDataChannelInit {
   external set binaryType(String value);
@@ -263,13 +264,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   @override
   Future<void> setConfiguration(Map<String, dynamic> configuration) {
     _configuration.addAll(configuration);
-
-    final object = jsutil.newObject();
-    for (var key in configuration.keys) {
-      jsutil.setProperty(object, key, configuration[key]);
-    }
-
-    _jsPc.setConfiguration(object as web.RTCConfiguration);
+    _jsPc.setConfiguration(convertRTCConfiguration(configuration));
     return Future.value();
   }
 
