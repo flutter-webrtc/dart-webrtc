@@ -8,15 +8,17 @@ import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js_util.dart';
 import 'package:platform_detect/platform_detect.dart';
 import 'package:web/web.dart' as web;
-import 'package:webrtc_interface/webrtc_interface.dart';
 
-import 'media_stream_impl.dart';
 import 'media_stream_track_impl.dart';
 import 'rtc_data_channel_impl.dart';
 import 'rtc_dtmf_sender_impl.dart';
 import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'rtc_rtp_transceiver_impl.dart';
+
+extension on web.RTCDataChannelInit {
+  external set binaryType(String value);
+}
 
 /*
  *  PeerConnection
@@ -395,21 +397,29 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   @override
   Future<RTCDataChannel> createDataChannel(
       String label, RTCDataChannelInit dataChannelDict) {
-    final map = dataChannelDict.toMap();
+    var dcInit = web.RTCDataChannelInit(
+      id: dataChannelDict.id,
+      ordered: dataChannelDict.ordered,
+      protocol: dataChannelDict.protocol,
+      negotiated: dataChannelDict.negotiated,
+    );
+
     if (dataChannelDict.binaryType == 'binary') {
-      map['binaryType'] = 'arraybuffer'; // Avoid Blob in data channel
+      dcInit.binaryType = 'arraybuffer'; // Avoid Blob in data channel
+    }
+
+    if (dataChannelDict.maxRetransmits > 0) {
+      dcInit.maxRetransmits = dataChannelDict.maxRetransmits;
+    }
+
+    if (dataChannelDict.maxRetransmitTime > 0) {
+      dcInit.maxPacketLifeTime = dataChannelDict.maxRetransmitTime;
     }
 
     final jsDc = _jsPc.createDataChannel(
-        label,
-        web.RTCDataChannelInit(
-          id: map['id'],
-          ordered: map['ordered'],
-          maxPacketLifeTime: map['maxPacketLifeTime'],
-          maxRetransmits: map['maxRetransmits'],
-          protocol: map['protocol'],
-          negotiated: map['negotiated'],
-        ));
+      label,
+      dcInit,
+    );
 
     return Future.value(RTCDataChannelWeb(jsDc));
   }

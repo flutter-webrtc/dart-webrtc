@@ -76,7 +76,7 @@ void loopBackTest() async {
         algorithm: Algorithm.kAesGcm,
         keyProvider: keyProvider);
     if (keyProviderOptions.discardFrameWhenCryptorNotReady) {
-      Timer(Duration(seconds: 2), () {
+      Timer(Duration(seconds: 1), () {
         fc.setEnabled(true);
       });
     } else {
@@ -84,7 +84,9 @@ void loopBackTest() async {
     }
 
     await fc.setKeyIndex(0);
-    await fc.updateCodec('vp8');
+    if (event.track.kind == 'video') {
+      await fc.updateCodec('vp8');
+    }
     pc2FrameCryptors.add(fc);
   };
   pc2.onConnectionState = (state) {
@@ -138,7 +140,9 @@ void loopBackTest() async {
         keyProvider: keyProvider);
     await fc.setEnabled(true);
     await fc.setKeyIndex(0);
-    await fc.updateCodec('vp8');
+    if (track.kind == 'video') {
+      await fc.updateCodec('vp8');
+    }
     pc1FrameCryptors.add(fc);
   });
 /*
@@ -163,6 +167,8 @@ void loopBackTest() async {
     }
   });
 */
+  var dc = await pc1.createDataChannel(
+      'label', RTCDataChannelInit()..binaryType = 'binary');
   var offer = await pc1.createOffer();
 
   await pc2.addTransceiver(
