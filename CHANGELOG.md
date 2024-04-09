@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.3.2] - 2024-04-09
+
+* Fix error when constructing RTCDataChannelInit.
+
 [1.3.1] - 2024-04-08
 
 * Add keyRingSize/discardFrameWhenCryptorNotReady to KeyProviderOptions.
