@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.4.1] - 2024-04-12
+
+* remove RTCConfiguration convert.
+
 [1.4.0] - 2024-04-09
 
 * Fixed bug for RTCConfiguration convert.

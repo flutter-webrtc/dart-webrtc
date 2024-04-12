@@ -42,7 +42,7 @@ class RTCFactoryWeb extends RTCFactory {
             ],
           };
     final jsRtcPc = web.RTCPeerConnection(
-        convertRTCConfiguration({...constr, ...configuration}));
+        {...constr, ...configuration} as web.RTCConfiguration);
     final _peerConnectionId = base64Encode(jsRtcPc.toString().codeUnits);
     return RTCPeerConnectionWeb(_peerConnectionId, jsRtcPc);
   }
