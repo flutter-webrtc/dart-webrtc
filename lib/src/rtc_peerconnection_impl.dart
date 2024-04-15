@@ -263,7 +263,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   @override
   Future<void> setConfiguration(Map<String, dynamic> configuration) {
     _configuration.addAll(configuration);
-    _jsPc.setConfiguration(configuration as web.RTCConfiguration);
+    _jsPc.setConfiguration(jsify(configuration) as web.RTCConfiguration);
     return Future.value();
   }
 
