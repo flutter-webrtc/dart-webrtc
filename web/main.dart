@@ -1,7 +1,8 @@
-import 'dart:html' as html;
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
+import 'package:web/web.dart' as web;
 
 /*
 import 'test_media_devices.dart' as media_devices_tests;
@@ -25,11 +26,11 @@ List<FrameCryptor> pc1FrameCryptors = [];
 List<FrameCryptor> pc2FrameCryptors = [];
 
 void loopBackTest() async {
-  var local = html.document.querySelector('#local');
+  var local = web.document.querySelector('#local');
   var localVideo = RTCVideoElement();
   local!.append(localVideo.htmlElement);
 
-  var remote = html.document.querySelector('#remote');
+  var remote = web.document.querySelector('#remote');
   var remotelVideo = RTCVideoElement();
   remote!.append(remotelVideo.htmlElement);
 
@@ -49,7 +50,8 @@ void loopBackTest() async {
       sharedKey: false,
       ratchetWindowSize: 16,
       failureTolerance: -1,
-      ratchetSalt: Uint8List.fromList('testSalt'.codeUnits));
+      ratchetSalt: Uint8List.fromList('testSalt'.codeUnits),
+      discardFrameWhenCryptorNotReady: true);
   var keyProvider =
       await frameCryptorFactory.createDefaultKeyProvider(keyProviderOptions);
 
@@ -73,9 +75,18 @@ void loopBackTest() async {
         receiver: event.receiver!,
         algorithm: Algorithm.kAesGcm,
         keyProvider: keyProvider);
-    await fc.setEnabled(true);
+    if (keyProviderOptions.discardFrameWhenCryptorNotReady) {
+      Timer(Duration(seconds: 1), () {
+        fc.setEnabled(true);
+      });
+    } else {
+      await fc.setEnabled(true);
+    }
+
     await fc.setKeyIndex(0);
-    await fc.updateCodec('vp8');
+    if (event.track.kind == 'video') {
+      await fc.updateCodec('vp8');
+    }
     pc2FrameCryptors.add(fc);
   };
   pc2.onConnectionState = (state) {
@@ -129,7 +140,9 @@ void loopBackTest() async {
         keyProvider: keyProvider);
     await fc.setEnabled(true);
     await fc.setKeyIndex(0);
-    await fc.updateCodec('vp8');
+    if (track.kind == 'video') {
+      await fc.updateCodec('vp8');
+    }
     pc1FrameCryptors.add(fc);
   });
 /*
@@ -154,6 +167,8 @@ void loopBackTest() async {
     }
   });
 */
+  var dc = await pc1.createDataChannel(
+      'label', RTCDataChannelInit()..binaryType = 'binary');
   var offer = await pc1.createOffer();
 
   await pc2.addTransceiver(

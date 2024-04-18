@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:html' as html;
 import 'package:js/js.dart';
+import 'package:js/js_util.dart';
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'frame_cryptor_impl.dart';
@@ -10,6 +11,7 @@ import 'media_stream_impl.dart';
 import 'navigator_impl.dart';
 import 'rtc_peerconnection_impl.dart';
 import 'rtc_rtp_capailities_imp.dart';
+import 'utils.dart';
 
 @JS('RTCRtpSender')
 @anonymous
@@ -39,14 +41,15 @@ class RTCFactoryWeb extends RTCFactory {
               {'DtlsSrtpKeyAgreement': true},
             ],
           };
-    final jsRtcPc = html.RtcPeerConnection({...constr, ...configuration});
+    final jsRtcPc = web.RTCPeerConnection(
+        jsify({...constr, ...configuration}) as web.RTCConfiguration);
     final _peerConnectionId = base64Encode(jsRtcPc.toString().codeUnits);
     return RTCPeerConnectionWeb(_peerConnectionId, jsRtcPc);
   }
 
   @override
   Future<MediaStream> createLocalMediaStream(String label) async {
-    final jsMs = html.MediaStream();
+    final jsMs = web.MediaStream();
     return MediaStreamWeb(jsMs, 'local');
   }
 

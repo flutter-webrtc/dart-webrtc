@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:html' as html;
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 import 'media_stream_track_impl.dart';
 
 class MediaStreamWeb extends MediaStream {
-  MediaStreamWeb(this.jsStream, String ownerTag)
-      : assert(jsStream.id != null),
-        super(jsStream.id!, ownerTag);
-  final html.MediaStream jsStream;
+  MediaStreamWeb(this.jsStream, String ownerTag) : super(jsStream.id, ownerTag);
+  final web.MediaStream jsStream;
 
   @override
   Future<void> getMediaTracks() {
@@ -36,7 +35,7 @@ class MediaStreamWeb extends MediaStream {
   @override
   List<MediaStreamTrack> getAudioTracks() {
     var audioTracks = <MediaStreamTrack>[];
-    jsStream.getAudioTracks().forEach(
+    jsStream.getAudioTracks().toDart.forEach(
         (dynamic jsTrack) => audioTracks.add(MediaStreamTrackWeb(jsTrack)));
     return audioTracks;
   }
@@ -44,7 +43,7 @@ class MediaStreamWeb extends MediaStream {
   @override
   List<MediaStreamTrack> getVideoTracks() {
     var audioTracks = <MediaStreamTrack>[];
-    jsStream.getVideoTracks().forEach(
+    jsStream.getVideoTracks().toDart.forEach(
         (dynamic jsTrack) => audioTracks.add(MediaStreamTrackWeb(jsTrack)));
     return audioTracks;
   }
