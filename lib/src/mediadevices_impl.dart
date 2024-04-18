@@ -20,8 +20,6 @@ class MediaDevicesWeb extends MediaDevices {
             mediaConstraints['video'].remove('facingMode');
           }
         }
-        mediaConstraints.putIfAbsent('video', () => false);
-        mediaConstraints.putIfAbsent('audio', () => false);
       } catch (e) {
         print(
             '[getUserMedia] failed to remove facingMode from mediaConstraints');
