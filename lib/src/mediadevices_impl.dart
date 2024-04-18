@@ -12,15 +12,19 @@ class MediaDevicesWeb extends MediaDevices {
   Future<MediaStream> getUserMedia(
       Map<String, dynamic> mediaConstraints) async {
     try {
-      if (!isMobile) {
-        if (mediaConstraints['video'] is Map &&
-            mediaConstraints['video']['facingMode'] != null) {
-          mediaConstraints['video'].remove('facingMode');
+      try {
+        if (!isMobile) {
+          if (mediaConstraints['video'] is Map &&
+              mediaConstraints['video']['facingMode'] != null) {
+            mediaConstraints['video'].remove('facingMode');
+          }
         }
+        mediaConstraints.putIfAbsent('video', () => false);
+        mediaConstraints.putIfAbsent('audio', () => false);
+      } catch (e) {
+        print(
+            '[getUserMedia] failed to remove facingMode from mediaConstraints');
       }
-
-      mediaConstraints.putIfAbsent('video', () => false);
-      mediaConstraints.putIfAbsent('audio', () => false);
 
       final mediaDevices = html.window.navigator.mediaDevices;
       if (mediaDevices == null) throw Exception('MediaDevices is null');
