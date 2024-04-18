@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.4.3] - 2024-04-18
+
+* fix: do not fail if removing constraint fails
+
 [1.4.2] - 2024-04-15
 
 * fix.
