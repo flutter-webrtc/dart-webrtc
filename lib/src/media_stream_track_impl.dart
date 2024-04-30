@@ -37,7 +37,9 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
 
   @override
   Map<String, dynamic> getConstraints() {
-    return jsTrack.getConstraints() as Map<String, dynamic>;
+    final c = jsTrack.getConstraints();
+    final jso = (c as JSObject).dartify();
+    return (jso as Map).cast<String, dynamic>();
   }
 
   @override
@@ -47,7 +49,8 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
     final arg = js.jsify(constraints ?? {});
 
     final _val = await js.promiseToFuture<void>(
-        js.callMethod(jsTrack, 'applyConstraints', [arg]));
+      js.callMethod(jsTrack, 'applyConstraints', [arg]),
+    );
     return _val;
   }
 
