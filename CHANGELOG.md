@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.4.5] - 2024-05-13
+
+* fix: negotiationNeeded listener.
+
 [1.4.4] - 2024-04-24
 
 * fix: datachannel message parse for Firefox.
