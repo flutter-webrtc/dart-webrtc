@@ -149,7 +149,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }
 
     _jsPc.addEventListener(
-        'onnegotiationneeded',
+        'negotiationneeded',
         (_) {
           onRenegotiationNeeded?.call();
         }.toJS);
