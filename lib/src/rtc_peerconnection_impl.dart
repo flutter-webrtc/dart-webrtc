@@ -26,41 +26,6 @@ extension on web.RTCDataChannelInit {
 class RTCPeerConnectionWeb extends RTCPeerConnection {
   RTCPeerConnectionWeb(this._peerConnectionId, this._jsPc) {
     _jsPc.addEventListener(
-        'addstream',
-        (_RTCMediaStreamEvent mediaStreamEvent) {
-          final jsStream = mediaStreamEvent.stream;
-
-          final _remoteStream = _remoteStreams.putIfAbsent(
-              jsStream.id, () => MediaStreamWeb(jsStream, _peerConnectionId));
-
-          onAddStream?.call(_remoteStream);
-
-          jsStream.addEventListener(
-              'addtrack',
-              (web.RTCTrackEvent mediaStreamTrackEvent) {
-                final jsTrack =
-                    (mediaStreamTrackEvent as web.MediaStreamTrackEvent).track;
-                final track = MediaStreamTrackWeb(jsTrack);
-                _remoteStream.addTrack(track, addToNative: false).then((_) {
-                  onAddTrack?.call(_remoteStream, track);
-                });
-              }.toJS);
-
-          jsStream.addEventListener(
-              'removetrack',
-              (web.RTCTrackEvent mediaStreamTrackEvent) {
-                final jsTrack =
-                    (mediaStreamTrackEvent as web.MediaStreamTrackEvent).track;
-                final track = MediaStreamTrackWeb(jsTrack);
-                _remoteStream
-                    .removeTrack(track, removeFromNative: false)
-                    .then((_) {
-                  onRemoveTrack?.call(_remoteStream, track);
-                });
-              }.toJS);
-        }.toJS);
-
-    _jsPc.addEventListener(
         'datachannel',
         (dataChannelEvent) {
           if (dataChannelEvent.channel != null) {
@@ -122,16 +87,6 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }));
 
     _jsPc.addEventListener(
-        'removestream',
-        (_RTCMediaStreamEvent mediaStreamEvent) {
-          final _remoteStream =
-              _remoteStreams.remove(mediaStreamEvent.stream.id);
-          if (_remoteStream != null) {
-            onRemoveStream?.call(_remoteStream);
-          }
-        }.toJS);
-
-    _jsPc.addEventListener(
         'signalingstatechange',
         (_) {
           _signalingState = signalingStateForString(_jsPc.signalingState);
@@ -149,7 +104,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }
 
     _jsPc.addEventListener(
-        'onnegotiationneeded',
+        'negotiationneeded',
         (_) {
           onRenegotiationNeeded?.call();
         }.toJS);
