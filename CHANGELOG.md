@@ -4,6 +4,7 @@
 [1.4.5] - 2024-05-13
 
 * fix: negotiationNeeded listener.
+* fix: fix type cast exception in getConstraints().
 
 [1.4.4] - 2024-04-24
 
