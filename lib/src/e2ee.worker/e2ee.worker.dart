@@ -4,10 +4,10 @@ import 'dart:js_util' as js_util;
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
-import 'package:dart_webrtc/src/rtc_transform_stream.dart';
 import 'package:logging/logging.dart';
 import 'package:web/web.dart' as web;
 
+import 'package:dart_webrtc/src/rtc_transform_stream.dart';
 import 'e2ee.cryptor.dart';
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
