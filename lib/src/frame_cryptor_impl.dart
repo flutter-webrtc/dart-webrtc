@@ -6,11 +6,12 @@ import 'dart:js_util' as jsutil;
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
-import 'package:dart_webrtc/src/event.dart';
 import 'package:js/js_util.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
+import 'package:dart_webrtc/src/e2ee.worker/e2ee.logger.dart';
+import 'package:dart_webrtc/src/event.dart';
 import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'rtc_transform_stream.dart';
@@ -191,6 +192,7 @@ class KeyProviderImpl implements KeyProvider {
           'sharedKey': options.sharedKey,
           'ratchetSalt': base64Encode(options.ratchetSalt),
           'ratchetWindowSize': options.ratchetWindowSize,
+          'failureTolerance': options.failureTolerance,
           if (options.uncryptedMagicBytes != null)
             'uncryptedMagicBytes': base64Encode(options.uncryptedMagicBytes!),
           'keyRingSize': options.keyRingSize,
@@ -201,8 +203,11 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for init on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
   }
 
   @override
@@ -217,8 +222,11 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for dispose on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
 
     _keys.clear();
   }
@@ -241,8 +249,12 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+      filter: (event) {
+        logger.fine('waiting for setKey on msg: $msgId');
+        return event.msgId == msgId;
+      },
+      duration: Duration(minutes: 15),
+    );
 
     _keys[participantId] ??= [];
     if (_keys[participantId]!.length <= index) {
@@ -268,8 +280,11 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     var res = await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for ratchetKey on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
 
     return base64Decode(res.data['newKey']);
   }
@@ -289,8 +304,11 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     var res = await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for exportKey on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
 
     return base64Decode(res.data['exportedKey']);
   }
@@ -308,8 +326,11 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     var res = await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for exportSharedKey on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
 
     return base64Decode(res.data['exportedKey']);
   }
@@ -326,8 +347,11 @@ class KeyProviderImpl implements KeyProvider {
       })
     ]);
     var res = await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for ratchetSharedKey on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
 
     return base64Decode(res.data['newKey']);
   }
@@ -346,8 +370,11 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for setSharedKey on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
   }
 
   @override
@@ -363,8 +390,11 @@ class KeyProviderImpl implements KeyProvider {
     ]);
 
     await events.waitFor<WorkerResponse>(
-        filter: (event) => event.msgId == msgId,
-        duration: Duration(seconds: 5));
+        filter: (event) {
+          logger.fine('waiting for setSifTrailer on msg: $msgId');
+          return event.msgId == msgId;
+        },
+        duration: Duration(seconds: 15));
   }
 }
 

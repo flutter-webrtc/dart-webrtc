@@ -4,11 +4,11 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:js_util' as jsutil;
 
-import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js_util.dart';
 import 'package:platform_detect/platform_detect.dart';
 import 'package:web/web.dart' as web;
 
+import 'package:dart_webrtc/dart_webrtc.dart';
 import 'media_stream_track_impl.dart';
 import 'rtc_data_channel_impl.dart';
 import 'rtc_dtmf_sender_impl.dart';
