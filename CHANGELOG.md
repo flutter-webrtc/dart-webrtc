@@ -1,6 +1,14 @@
 # Changelog
 
 --------------------------------------------
+[1.4.6] - 2024-06-05
+
+* chore: bump version for js and http.
+* fix: decrypting audio when e2ee.
+* fix: translate audio constraints for web.
+* fix: missing fault tolerance, better worker reports and a increased timeout for worker tasks.
+* fix type cast exception in getConstraints()
+
 [1.4.5] - 2024-05-13
 
 * fix: negotiationNeeded listener.

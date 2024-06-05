@@ -15,6 +15,6 @@ dart compile js ./lib/src/e2ee.worker/e2ee.worker.dart -o web/e2ee.worker.dart.j
 ## How to develop
 
 * `git clone https://github.com/flutter-webrtc/dart-webrtc && cd dart-webrtc`
-* `pub get`
-* `pub global activate webdev`
+* `dart pub get`
+* `dart pub global activate webdev`
 * `webdev serve --auto=refresh`
