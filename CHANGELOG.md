@@ -1,6 +1,12 @@
 # Changelog
 
 --------------------------------------------
+[1.4.7] - 2024-07-12
+
+* fix: MediaStreamTrack.getSettings.
+
+[1.4.6+hotfix.2] - 2024-06-07
+
 [1.4.6+hotfix.1] - 2024-06-07
 
 * Wider version dependencies for js/http.
