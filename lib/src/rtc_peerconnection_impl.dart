@@ -129,7 +129,6 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   final String _peerConnectionId;
   late final web.RTCPeerConnection _jsPc;
   final _localStreams = <String, MediaStream>{};
-  final _remoteStreams = <String, MediaStream>{};
   final _configuration = <String, dynamic>{};
 
   RTCSignalingState? _signalingState;
@@ -340,7 +339,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   List<MediaStream> getRemoteStreams() => _jsPc
       .getRemoteStreams()
       .toDart
-      .map((jsStream) => _remoteStreams[jsStream.id]!)
+      .map((e) => MediaStreamWeb(e, _peerConnectionId))
       .toList();
 
   @override
