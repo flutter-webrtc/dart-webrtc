@@ -66,7 +66,9 @@ class MediaDevicesWeb extends MediaDevices {
               audio: mediaConstraints['audio'],
               video: mediaConstraints['video'],
             ),
-            (web.MediaStream stream) {}.toJS,
+            (web.MediaStream stream) {
+              streamCompleter.complete(stream);
+            }.toJS,
             (JSAny err) {
               streamCompleter.completeError(err);
             }.toJS);
