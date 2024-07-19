@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+[1.4.8] - 2024-07-12
+
+* fix: missing streamCompleter complete for getUserMedia.
+* fix: RTCPeerConnectionWeb.getRemoteStreams.
+
 [1.4.7] - 2024-07-12
 
 * fix: MediaStreamTrack.getSettings.
