@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:js_interop';
-import 'dart:js_util' as jsutil;
+
+import 'package:js/js_util.dart' as jsutil;
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
@@ -70,12 +71,13 @@ class RTCDataChannelWeb extends RTCDataChannel {
       return RTCDataChannelMessage(data);
     }
     dynamic arrayBuffer;
-    if (data is web.Blob) {
-      // This should never happen actually
+    if (data is JSArrayBuffer) {
+      arrayBuffer = data.toDart;
+    } else if (data is web.Blob) {
       arrayBuffer = await jsutil
           .promiseToFuture(jsutil.callMethod(data, 'arrayBuffer', []));
     } else {
-      arrayBuffer = data;
+      arrayBuffer = data.toDart;
     }
     return RTCDataChannelMessage.fromBinary(arrayBuffer.asUint8List());
   }

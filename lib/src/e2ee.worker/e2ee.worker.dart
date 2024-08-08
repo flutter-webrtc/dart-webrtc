@@ -4,10 +4,10 @@ import 'dart:js_util' as js_util;
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
-import 'package:dart_webrtc/src/rtc_transform_stream.dart';
 import 'package:logging/logging.dart';
 import 'package:web/web.dart' as web;
 
+import 'package:dart_webrtc/src/rtc_transform_stream.dart';
 import 'e2ee.cryptor.dart';
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
@@ -118,7 +118,10 @@ void main() async {
                 uncryptedMagicBytes: options['uncryptedMagicBytes'] != null
                     ? Uint8List.fromList(
                         base64Decode(options['uncryptedMagicBytes'] as String))
-                    : null);
+                    : null,
+                keyRingSze: options['keyRingSize'] ?? KEYRING_SIZE,
+                discardFrameWhenCryptorNotReady:
+                    options['discardFrameWhenCryptorNotReady'] ?? false);
             logger.config(
                 'Init with keyProviderOptions:\n ${keyProviderOptions.toString()}');
 

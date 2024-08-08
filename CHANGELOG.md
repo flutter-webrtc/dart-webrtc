@@ -1,6 +1,71 @@
 # Changelog
 
 --------------------------------------------
+[1.4.8] - 2024-07-12
+
+* fix: missing streamCompleter complete for getUserMedia.
+* fix: RTCPeerConnectionWeb.getRemoteStreams.
+
+[1.4.7] - 2024-07-12
+
+* fix: MediaStreamTrack.getSettings.
+
+[1.4.6+hotfix.2] - 2024-06-07
+
+[1.4.6+hotfix.1] - 2024-06-07
+
+* Wider version dependencies for js/http.
+
+[1.4.6] - 2024-06-05
+
+* chore: bump version for js and http.
+* fix: decrypting audio when e2ee.
+* fix: translate audio constraints for web.
+* fix: missing fault tolerance, better worker reports and a increased timeout for worker tasks.
+* fix type cast exception in getConstraints()
+
+[1.4.5] - 2024-05-13
+
+* fix: negotiationNeeded listener.
+* fix: fix type cast exception in getConstraints().
+
+[1.4.4] - 2024-04-24
+
+* fix: datachannel message parse for Firefox.
+* fix: tryCatch editing mediaConstraints #34
+
+[1.4.3] - 2024-04-18
+
+* fix: do not fail if removing constraint fails
+
+[1.4.2] - 2024-04-15
+
+* fix.
+
+[1.4.1] - 2024-04-12
+
+* remove RTCConfiguration convert.
+
+[1.4.0] - 2024-04-09
+
+* Fixed bug for RTCConfiguration convert.
+
+[1.3.3] - 2024-04-09
+
+* Fix DC data parse.
+
+[1.3.2] - 2024-04-09
+
+* Fix error when constructing RTCDataChannelInit.
+
+[1.3.1] - 2024-04-08
+
+* Add keyRingSize/discardFrameWhenCryptorNotReady to KeyProviderOptions.
+
+[1.3.0] - 2024-04-08
+
+* update to package:web by @jezell in #29.
+
 [1.2.1] - 2024-02-05
 
 * Downgrade some dependencies make more compatible.

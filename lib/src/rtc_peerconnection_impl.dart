@@ -4,13 +4,11 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:js_util' as jsutil;
 
-import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:js/js_util.dart';
 import 'package:platform_detect/platform_detect.dart';
 import 'package:web/web.dart' as web;
-import 'package:webrtc_interface/webrtc_interface.dart';
 
-import 'media_stream_impl.dart';
+import 'package:dart_webrtc/dart_webrtc.dart';
 import 'media_stream_track_impl.dart';
 import 'rtc_data_channel_impl.dart';
 import 'rtc_dtmf_sender_impl.dart';
@@ -18,46 +16,15 @@ import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'rtc_rtp_transceiver_impl.dart';
 
+extension on web.RTCDataChannelInit {
+  external set binaryType(String value);
+}
+
 /*
  *  PeerConnection
  */
 class RTCPeerConnectionWeb extends RTCPeerConnection {
   RTCPeerConnectionWeb(this._peerConnectionId, this._jsPc) {
-    _jsPc.addEventListener(
-        'addstream',
-        (_RTCMediaStreamEvent mediaStreamEvent) {
-          final jsStream = mediaStreamEvent.stream;
-
-          final _remoteStream = _remoteStreams.putIfAbsent(
-              jsStream.id, () => MediaStreamWeb(jsStream, _peerConnectionId));
-
-          onAddStream?.call(_remoteStream);
-
-          jsStream.addEventListener(
-              'addtrack',
-              (web.RTCTrackEvent mediaStreamTrackEvent) {
-                final jsTrack =
-                    (mediaStreamTrackEvent as web.MediaStreamTrackEvent).track;
-                final track = MediaStreamTrackWeb(jsTrack);
-                _remoteStream.addTrack(track, addToNative: false).then((_) {
-                  onAddTrack?.call(_remoteStream, track);
-                });
-              }.toJS);
-
-          jsStream.addEventListener(
-              'removetrack',
-              (web.RTCTrackEvent mediaStreamTrackEvent) {
-                final jsTrack =
-                    (mediaStreamTrackEvent as web.MediaStreamTrackEvent).track;
-                final track = MediaStreamTrackWeb(jsTrack);
-                _remoteStream
-                    .removeTrack(track, removeFromNative: false)
-                    .then((_) {
-                  onRemoveTrack?.call(_remoteStream, track);
-                });
-              }.toJS);
-        }.toJS);
-
     _jsPc.addEventListener(
         'datachannel',
         (dataChannelEvent) {
@@ -120,16 +87,6 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }));
 
     _jsPc.addEventListener(
-        'removestream',
-        (_RTCMediaStreamEvent mediaStreamEvent) {
-          final _remoteStream =
-              _remoteStreams.remove(mediaStreamEvent.stream.id);
-          if (_remoteStream != null) {
-            onRemoveStream?.call(_remoteStream);
-          }
-        }.toJS);
-
-    _jsPc.addEventListener(
         'signalingstatechange',
         (_) {
           _signalingState = signalingStateForString(_jsPc.signalingState);
@@ -147,7 +104,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }
 
     _jsPc.addEventListener(
-        'onnegotiationneeded',
+        'negotiationneeded',
         (_) {
           onRenegotiationNeeded?.call();
         }.toJS);
@@ -172,7 +129,6 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   final String _peerConnectionId;
   late final web.RTCPeerConnection _jsPc;
   final _localStreams = <String, MediaStream>{};
-  final _remoteStreams = <String, MediaStream>{};
   final _configuration = <String, dynamic>{};
 
   RTCSignalingState? _signalingState;
@@ -261,13 +217,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   @override
   Future<void> setConfiguration(Map<String, dynamic> configuration) {
     _configuration.addAll(configuration);
-
-    final object = jsutil.newObject();
-    for (var key in configuration.keys) {
-      jsutil.setProperty(object, key, configuration[key]);
-    }
-
-    _jsPc.setConfiguration(object as web.RTCConfiguration);
+    _jsPc.setConfiguration(jsify(configuration) as web.RTCConfiguration);
     return Future.value();
   }
 
@@ -389,27 +339,35 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   List<MediaStream> getRemoteStreams() => _jsPc
       .getRemoteStreams()
       .toDart
-      .map((jsStream) => _remoteStreams[jsStream.id]!)
+      .map((e) => MediaStreamWeb(e, _peerConnectionId))
       .toList();
 
   @override
   Future<RTCDataChannel> createDataChannel(
       String label, RTCDataChannelInit dataChannelDict) {
-    final map = dataChannelDict.toMap();
+    var dcInit = web.RTCDataChannelInit(
+      id: dataChannelDict.id,
+      ordered: dataChannelDict.ordered,
+      protocol: dataChannelDict.protocol,
+      negotiated: dataChannelDict.negotiated,
+    );
+
     if (dataChannelDict.binaryType == 'binary') {
-      map['binaryType'] = 'arraybuffer'; // Avoid Blob in data channel
+      dcInit.binaryType = 'arraybuffer'; // Avoid Blob in data channel
+    }
+
+    if (dataChannelDict.maxRetransmits > 0) {
+      dcInit.maxRetransmits = dataChannelDict.maxRetransmits;
+    }
+
+    if (dataChannelDict.maxRetransmitTime > 0) {
+      dcInit.maxPacketLifeTime = dataChannelDict.maxRetransmitTime;
     }
 
     final jsDc = _jsPc.createDataChannel(
-        label,
-        web.RTCDataChannelInit(
-          id: map['id'],
-          ordered: map['ordered'],
-          maxPacketLifeTime: map['maxPacketLifeTime'],
-          maxRetransmits: map['maxRetransmits'],
-          protocol: map['protocol'],
-          negotiated: map['negotiated'],
-        ));
+      label,
+      dcInit,
+    );
 
     return Future.value(RTCDataChannelWeb(jsDc));
   }

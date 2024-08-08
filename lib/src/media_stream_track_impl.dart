@@ -6,6 +6,8 @@ import 'dart:typed_data';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
+import 'utils.dart';
+
 class MediaStreamTrackWeb extends MediaStreamTrack {
   MediaStreamTrackWeb(this.jsTrack) {
     jsTrack.addEventListener('ended', ((event) => onEnded?.call()).toJS);
@@ -37,7 +39,9 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
 
   @override
   Map<String, dynamic> getConstraints() {
-    return jsTrack.getConstraints() as Map<String, dynamic>;
+    final c = jsTrack.getConstraints();
+    final jso = (c as JSObject).dartify();
+    return (jso as Map).cast<String, dynamic>();
   }
 
   @override
@@ -47,7 +51,8 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
     final arg = js.jsify(constraints ?? {});
 
     final _val = await js.promiseToFuture<void>(
-        js.callMethod(jsTrack, 'applyConstraints', [arg]));
+      js.callMethod(jsTrack, 'applyConstraints', [arg]),
+    );
     return _val;
   }
 
@@ -61,7 +66,29 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
 
   @override
   Map<String, dynamic> getSettings() {
-    return jsTrack.getSettings() as Map<String, dynamic>;
+    var settings = jsTrack.getSettings();
+    var _converted = <String, dynamic>{};
+    if (kind == 'audio') {
+      _converted['sampleRate'] = settings.sampleRate;
+      _converted['sampleSize'] = settings.sampleSize;
+      _converted['echoCancellation'] = settings.echoCancellation;
+      _converted['autoGainControl'] = settings.autoGainControl;
+      _converted['noiseSuppression'] = settings.noiseSuppression;
+      _converted['latency'] = settings.latency;
+      _converted['channelCount'] = settings.channelCount;
+    } else {
+      _converted['width'] = settings.width;
+      _converted['height'] = settings.height;
+      _converted['aspectRatio'] = settings.aspectRatio;
+      _converted['frameRate'] = settings.frameRate;
+      if (isMobile) {
+        _converted['facingMode'] = settings.facingMode;
+      }
+      _converted['resizeMode'] = settings.resizeMode;
+    }
+    _converted['deviceId'] = settings.deviceId;
+    _converted['groupId'] = settings.groupId;
+    return _converted;
   }
 
   @override

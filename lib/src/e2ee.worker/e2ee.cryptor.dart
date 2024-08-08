@@ -5,9 +5,9 @@ import 'dart:js_util' as jsutil;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:dart_webrtc/src/rtc_transform_stream.dart';
 import 'package:web/web.dart' as web;
 
+import 'package:dart_webrtc/src/rtc_transform_stream.dart';
 import 'crypto.dart' as crypto;
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
@@ -301,6 +301,9 @@ class FrameCryptor {
     if (!enabled ||
         // skip for encryption for empty dtx frames
         buffer.isEmpty) {
+      if (keyOptions.discardFrameWhenCryptorNotReady) {
+        return;
+      }
       controller.enqueue(frame);
       return;
     }
@@ -405,6 +408,8 @@ class FrameCryptor {
         // skip for encryption for empty dtx frames
         buffer.isEmpty) {
       sifGuard.recordUserFrame();
+      if (keyOptions.discardFrameWhenCryptorNotReady) return;
+      logger.fine('enqueing empty frame');
       controller.enqueue(frame);
       return;
     }
@@ -415,7 +420,7 @@ class FrameCryptor {
         var magicBytesBuffer = buffer.sublist(
             buffer.length - magicBytes.length - 1, buffer.length - 1);
         logger.finer(
-            'magicBytesBuffer $magicBytesBuffer, magicBytes $magicBytes, ');
+            'magicBytesBuffer $magicBytesBuffer, magicBytes $magicBytes');
         if (magicBytesBuffer.toString() == magicBytes.toString()) {
           sifGuard.recordSif();
           if (sifGuard.isSifAllowed()) {
@@ -425,6 +430,7 @@ class FrameCryptor {
             finalBuffer.add(Uint8List.fromList(
                 buffer.sublist(0, buffer.length - (magicBytes.length + 1))));
             frame.data = crypto.jsArrayBufferFrom(finalBuffer.toBytes());
+            logger.fine('enqueing silent frame');
             controller.enqueue(frame);
           } else {
             logger.finer('SIF limit reached, dropping frame');
@@ -449,6 +455,12 @@ class FrameCryptor {
       initialKeySet = keyHandler.getKeySet(keyIndex);
       initialKeyIndex = keyIndex;
 
+      /// missingKey flow:
+      /// tries to decrypt once, fails, tries to ratchet once and decrypt again,
+      /// fails (does not save ratcheted key), bumps _decryptionFailureCount,
+      /// if higher than failuretolerance hasValidKey is set to false, on next
+      /// frame it fires a missingkey
+      /// to throw missingkeys faster lower your failureTolerance
       if (initialKeySet == null || !keyHandler.hasValidKey) {
         if (lastError != CryptorError.kMissingKey) {
           lastError = CryptorError.kMissingKey;
@@ -462,14 +474,14 @@ class FrameCryptor {
             'error': 'Missing key for track $trackId'
           });
         }
-        controller.enqueue(frame);
+        // controller.enqueue(frame);
         return;
       }
-      var endDecLoop = false;
       var currentkeySet = initialKeySet;
-      while (!endDecLoop) {
-        try {
-          decrypted = await jsutil.promiseToFuture<ByteBuffer>(crypto.decrypt(
+
+      Future<void> decryptFrameInternal() async {
+        decrypted = await jsutil.promiseToFuture<ByteBuffer>(
+          crypto.decrypt(
             crypto.AesGcmParams(
               name: 'AES-GCM',
               iv: crypto.jsArrayBufferFrom(iv),
@@ -478,56 +490,78 @@ class FrameCryptor {
             ),
             currentkeySet.encryptionKey,
             crypto.jsArrayBufferFrom(
-                buffer.sublist(headerLength, buffer.length - ivLength - 2)),
-          ));
+              buffer.sublist(headerLength, buffer.length - ivLength - 2),
+            ),
+          ),
+        );
+        if (decrypted == null) {
+          throw Exception('[decryptFrameInternal] could not decrypt');
+        }
 
-          if (currentkeySet != initialKeySet) {
-            logger.fine(
-                'ratchetKey: decryption ok, reset state to kKeyRatcheted');
-            await keyHandler.setKeySetFromMaterial(
-                currentkeySet, initialKeyIndex);
-          }
+        if (currentkeySet != initialKeySet) {
+          logger.fine('ratchetKey: decryption ok, newState: kKeyRatcheted');
+          await keyHandler.setKeySetFromMaterial(
+              currentkeySet, initialKeyIndex);
+        }
 
-          endDecLoop = true;
+        if (lastError != CryptorError.kOk &&
+            lastError != CryptorError.kKeyRatcheted &&
+            ratchetCount > 0) {
+          logger.finer(
+              'KeyRatcheted: ssrc ${metaData.synchronizationSource} timestamp ${frame.timestamp} ratchetCount $ratchetCount  participantId: $participantIdentity');
+          logger.finer(
+              'ratchetKey: lastError != CryptorError.kKeyRatcheted, reset state to kKeyRatcheted');
 
-          if (lastError != CryptorError.kOk &&
-              lastError != CryptorError.kKeyRatcheted &&
-              ratchetCount > 0) {
-            logger.finer(
-                'KeyRatcheted: ssrc ${metaData.synchronizationSource} timestamp ${frame.timestamp} ratchetCount $ratchetCount  participantId: $participantIdentity');
-            logger.finer(
-                'ratchetKey: lastError != CryptorError.kKeyRatcheted, reset state to kKeyRatcheted');
-
-            lastError = CryptorError.kKeyRatcheted;
-            postMessage({
-              'type': 'cryptorState',
-              'msgType': 'event',
-              'participantId': participantIdentity,
-              'trackId': trackId,
-              'kind': kind,
-              'state': 'keyRatcheted',
-              'error': 'Key ratcheted ok'
-            });
-          }
-        } catch (e) {
-          lastError = CryptorError.kInternalError;
-          endDecLoop = ratchetCount >= keyOptions.ratchetWindowSize ||
-              keyOptions.ratchetWindowSize <= 0;
-          if (endDecLoop) {
-            rethrow;
-          }
-          var newKeyBuffer = crypto.jsArrayBufferFrom(await keyHandler.ratchet(
-              currentkeySet.material, keyOptions.ratchetSalt));
-          var newMaterial = await keyHandler.ratchetMaterial(
-              currentkeySet.material, newKeyBuffer);
-          currentkeySet =
-              await keyHandler.deriveKeys(newMaterial, keyOptions.ratchetSalt);
-          ratchetCount++;
+          lastError = CryptorError.kKeyRatcheted;
+          postMessage({
+            'type': 'cryptorState',
+            'msgType': 'event',
+            'participantId': participantIdentity,
+            'trackId': trackId,
+            'kind': kind,
+            'state': 'keyRatcheted',
+            'error': 'Key ratcheted ok'
+          });
         }
       }
 
+      Future<void> ratchedKeyInternal() async {
+        if (ratchetCount >= keyOptions.ratchetWindowSize ||
+            keyOptions.ratchetWindowSize <= 0) {
+          throw Exception('[ratchedKeyInternal] cannot ratchet anymore');
+        }
+
+        var newKeyBuffer = crypto.jsArrayBufferFrom(await keyHandler.ratchet(
+            currentkeySet.material, keyOptions.ratchetSalt));
+        var newMaterial = await keyHandler.ratchetMaterial(
+            currentkeySet.material, newKeyBuffer);
+        currentkeySet =
+            await keyHandler.deriveKeys(newMaterial, keyOptions.ratchetSalt);
+        ratchetCount++;
+        await decryptFrameInternal();
+      }
+
+      try {
+        /// gets frame -> tries to decrypt -> tries to ratchet (does this failureTolerance
+        /// times, then says missing key)
+        /// we only save the new key after ratcheting if we were able to decrypt something
+        await decryptFrameInternal();
+      } catch (e) {
+        lastError = CryptorError.kInternalError;
+        await ratchedKeyInternal();
+      }
+
+      if (decrypted == null) {
+        throw Exception(
+            '[decodeFunction] decryption failed even after ratchting');
+      }
+
+      // we can now be sure that decryption was a success
+      keyHandler.decryptionSuccess();
+
       logger.finer(
-          'buffer: ${buffer.length}, decrypted: ${decrypted?.asUint8List().length ?? 0}');
+          'buffer: ${buffer.length}, decrypted: ${decrypted!.asUint8List().length}');
+
       var finalBuffer = BytesBuilder();
 
       finalBuffer.add(Uint8List.fromList(buffer.sublist(0, headerLength)));
@@ -564,15 +598,6 @@ class FrameCryptor {
         });
       }
 
-      /// Since the key it is first send and only afterwards actually used for encrypting, there were
-      /// situations when the decrypting failed due to the fact that the received frame was not encrypted
-      /// yet and ratcheting, of course, did not solve the problem. So if we fail RATCHET_WINDOW_SIZE times,
-      ///  we come back to the initial key.
-      if (initialKeySet != null) {
-        logger.warning(
-            'decryption failed, ratcheting back to initial key, keyIndex: $initialKeyIndex');
-        await keyHandler.setKeySetFromMaterial(initialKeySet, initialKeyIndex);
-      }
       keyHandler.decryptionFailure();
     }
   }
