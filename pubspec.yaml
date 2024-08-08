@@ -13,7 +13,7 @@ dependencies:
   meta: ^1.8.0
   platform_detect: ^2.0.7
   synchronized: ^3.0.0+3
-  web: ^0.5.1
+  web: ^1.0.0
   webrtc_interface: ^1.1.2
 
 dev_dependencies:
