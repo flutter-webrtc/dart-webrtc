@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+
+[1.4.9] - 2024-09-04
+
+* bump web version to 1.0.0.
+
 [1.4.8] - 2024-07-12
 
 * fix: missing streamCompleter complete for getUserMedia.
@@ -9,8 +14,6 @@
 [1.4.7] - 2024-07-12
 
 * fix: MediaStreamTrack.getSettings.
-
-[1.4.6+hotfix.2] - 2024-06-07
 
 [1.4.6+hotfix.1] - 2024-06-07
 
