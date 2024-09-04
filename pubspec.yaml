@@ -7,12 +7,12 @@ environment:
   sdk: '>=3.3.0 <4.0.0'
 
 dependencies:
-  collection: ^1.17.1
+  collection: ^1.19.0
   js: ">0.6.0 <0.8.0"
-  logging: ^1.1.0
-  meta: ^1.8.0
-  platform_detect: ^2.0.7
-  synchronized: ^3.0.0+3
+  logging: ^1.2.0
+  meta: ^1.15.0
+  platform_detect: ^2.1.0
+  synchronized: ^3.2.0
   web: ^1.0.0
   webrtc_interface: ^1.2.0
 
