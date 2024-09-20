@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:js' as js;
 import 'dart:js_interop';
-import 'dart:js_util' as jsutil;
+import 'dart:js_interop_unsafe';
 
+import 'package:dart_webrtc/src/frame_cryptor_impl.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
@@ -52,10 +52,11 @@ class MediaDevicesWeb extends MediaDevices {
 
       final mediaDevices = web.window.navigator.mediaDevices;
 
-      if (jsutil.hasProperty(mediaDevices, 'getUserMedia')) {
-        var args = jsutil.jsify(mediaConstraints);
-        final jsStream = await jsutil.promiseToFuture<web.MediaStream>(
-            jsutil.callMethod(mediaDevices, 'getUserMedia', [args]));
+      if (mediaDevices.getProperty('getUserMedia'.toJS).isDefinedAndNotNull) {
+        var args = mediaConstraints.jsify();
+        final jsStream = await mediaDevices
+            .getUserMedia(args as web.MediaStreamConstraints)
+            .toDart;
 
         return MediaStreamWeb(jsStream, 'local');
       } else {
@@ -78,15 +79,18 @@ class MediaDevicesWeb extends MediaDevices {
     try {
       final mediaDevices = web.window.navigator.mediaDevices;
 
-      if (jsutil.hasProperty(mediaDevices, 'getDisplayMedia')) {
-        final arg = jsutil.jsify(mediaConstraints);
-        final jsStream = await jsutil.promiseToFuture<web.MediaStream>(
-            jsutil.callMethod(mediaDevices, 'getDisplayMedia', [arg]));
+      if (mediaDevices
+          .getProperty('getDisplayMedia'.toJS)
+          .isDefinedAndNotNull) {
+        final arg = mediaConstraints.jsify();
+        final jsStream = await mediaDevices
+            .getDisplayMedia(arg as web.DisplayMediaStreamOptions)
+            .toDart;
         return MediaStreamWeb(jsStream, 'local');
       } else {
         final jsStream = await web.window.navigator.mediaDevices
             .getUserMedia(web.MediaStreamConstraints(
-                video: jsutil.jsify({'mediaSource': 'screen'}),
+                video: {'mediaSource': 'screen'}.jsify()!,
                 audio: mediaConstraints['audio'] ?? false))
             .toDart;
         return MediaStreamWeb(jsStream, 'local');
@@ -165,11 +169,15 @@ class MediaDevicesWeb extends MediaDevices {
     try {
       final mediaDevices = web.window.navigator.mediaDevices;
 
-      if (jsutil.hasProperty(mediaDevices, 'selectAudioOutput')) {
+      if (mediaDevices
+          .getProperty('selectAudioOutput'.toJS)
+          .isDefinedAndNotNull) {
         if (options != null) {
-          final arg = jsutil.jsify(options);
-          final deviceInfo = await jsutil.promiseToFuture<web.MediaDeviceInfo>(
-              jsutil.callMethod(mediaDevices, 'selectAudioOutput', [arg]));
+          final arg = options.jsify();
+          final deviceInfo =
+              await (mediaDevices.callMethod('selectAudioOutput'.toJS, arg)
+                      as JSPromise<web.MediaDeviceInfo>)
+                  .toDart;
           return MediaDeviceInfo(
             kind: deviceInfo.kind,
             label: deviceInfo.label,
@@ -177,8 +185,10 @@ class MediaDevicesWeb extends MediaDevices {
             groupId: deviceInfo.groupId,
           );
         } else {
-          final deviceInfo = await jsutil.promiseToFuture<web.MediaDeviceInfo>(
-              jsutil.callMethod(mediaDevices, 'selectAudioOutput', []));
+          final deviceInfo =
+              await (mediaDevices.callMethod('selectAudioOutput'.toJS)
+                      as JSPromise<web.MediaDeviceInfo>)
+                  .toDart;
           return MediaDeviceInfo(
             kind: deviceInfo.kind,
             label: deviceInfo.label,
@@ -199,8 +209,9 @@ class MediaDevicesWeb extends MediaDevices {
     try {
       final mediaDevices = web.window.navigator.mediaDevices;
 
-      jsutil.setProperty(mediaDevices, 'ondevicechange',
-          js.allowInterop((evt) => listener?.call(evt)));
+      mediaDevices.ondevicechange = ((JSObject evt) {
+        listener?.call(evt);
+      }).toJS;
     } catch (e) {
       throw 'Unable to set ondevicechange: ${e.toString()}';
     }
@@ -211,7 +222,11 @@ class MediaDevicesWeb extends MediaDevices {
     try {
       final mediaDevices = web.window.navigator.mediaDevices;
 
-      jsutil.getProperty(mediaDevices, 'ondevicechange');
+      final fn = mediaDevices.ondevicechange;
+      if (fn.isUndefinedOrNull) {
+        return null;
+      }
+      return (dynamic event) => fn!.callAsFunction(event);
     } catch (e) {
       throw 'Unable to get ondevicechange: ${e.toString()}';
     }

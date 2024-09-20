@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:js' as js;
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -38,7 +38,7 @@ class MediaRecorderWeb extends MediaRecorder {
       _recorder.addEventListener(
           'dataavailable',
           (web.Event event) {
-            final web.Blob blob = js.JsObject.fromBrowserObject(event)['data'];
+            final web.Blob blob = event.getProperty('data'.toJS) as web.Blob;
             if (blob.size > 0) {
               _chunks.add(blob);
             }
@@ -58,7 +58,7 @@ class MediaRecorderWeb extends MediaRecorder {
           'dataavailable',
           (web.Event event) {
             onDataChunk(
-              js.JsObject.fromBrowserObject(event)['data'],
+              event.getProperty('data'.toJS),
               _recorder.state == 'inactive',
             );
           }.toJS);

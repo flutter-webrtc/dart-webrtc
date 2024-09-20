@@ -5,7 +5,6 @@ import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
-import 'package:js/js_util.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
@@ -377,7 +376,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
     worker.addEventListener(
         'message',
         (web.MessageEvent msg) {
-          final data = dartify(msg.data) as Map;
+          final data = msg.data.dartify() as Map;
           //print('master got $data');
           var type = data['type'];
           var msgId = data['msgId'];

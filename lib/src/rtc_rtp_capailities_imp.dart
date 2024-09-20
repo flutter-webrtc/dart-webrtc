@@ -1,15 +1,17 @@
-import 'dart:js_util' as jsutil;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
+import 'package:dart_webrtc/src/rtc_data_channel_impl.dart';
 import 'package:webrtc_interface/webrtc_interface.dart';
+import 'package:web/web.dart' as web;
 
 class RTCRtpCapabilitiesWeb {
-  static RTCRtpCapabilities fromJsObject(Object object) {
+  static RTCRtpCapabilities fromJsObject(web.RTCRtpCapabilities object) {
     return RTCRtpCapabilities.fromMap({
-      'codecs': jsutil.dartify(jsutil.getProperty(object, 'codecs')),
+      'codecs': object.codecs.toDart.map((e) => e.dartify()),
       'headerExtensions':
-          jsutil.dartify(jsutil.getProperty(object, 'headerExtensions')),
-      'fecMechanisms':
-          jsutil.dartify(jsutil.getProperty(object, 'fecMechanisms')) ?? []
+          object.headerExtensions.toDart.map((e) => e.dartify()),
+      'fecMechanisms': object.getProperty('fecMechanisms'.toJS).dartify()
     });
   }
 }

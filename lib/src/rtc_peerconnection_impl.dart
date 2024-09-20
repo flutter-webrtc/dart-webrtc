@@ -467,7 +467,8 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     assert(trackOrKind != null, 'track or kind must not be null');
 
     final transceiver = init != null
-        ? _jsPc.addTransceiver(trackOrKind.jsify()!, init.toJsObject())
+        ? _jsPc.addTransceiver(trackOrKind.jsify()!,
+            init.toJsObject() as web.RTCRtpTransceiverInit)
         : _jsPc.addTransceiver(trackOrKind.jsify()!);
 
     return RTCRtpTransceiverWeb.fromJsObject(
