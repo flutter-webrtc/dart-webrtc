@@ -1,14 +1,15 @@
 import 'dart:async';
-import 'dart:js';
+
 import 'dart:js_interop';
-import 'dart:js_util' as jsutil;
+import 'dart:js_interop_unsafe';
+
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:dart_webrtc/src/e2ee.worker/crypto.dart';
 import 'package:web/web.dart' as web;
 
 import 'package:dart_webrtc/src/rtc_transform_stream.dart';
-import 'crypto.dart' as crypto;
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
 import 'e2ee.sfi_guard.dart';
@@ -226,8 +227,8 @@ class FrameCryptor {
 
   Future<void> setupTransform({
     required String operation,
-    required ReadableStream readable,
-    required WritableStream writable,
+    required web.ReadableStream readable,
+    required web.WritableStream writable,
     required String trackId,
     required String kind,
     String? codec,
@@ -238,12 +239,13 @@ class FrameCryptor {
       logger.info('setting codec on cryptor to $codec');
       this.codec = codec;
     }
-    var transformer = TransformStream(jsutil.jsify({
-      'transform':
-          allowInterop(operation == 'encode' ? encodeFunction : decodeFunction)
-    }));
+    var transformer = web.TransformStream({
+      'transform': operation == 'encode' ? encodeFunction : decodeFunction
+    }.jsify() as JSObject);
     try {
-      readable.pipeThrough(transformer).pipeTo(writable);
+      readable
+          .pipeThrough(transformer as web.ReadableWritablePair)
+          .pipeTo(writable);
     } catch (e) {
       logger.warning('e ${e.toString()}');
       if (lastError != CryptorError.kInternalError) {
@@ -260,9 +262,9 @@ class FrameCryptor {
     this.trackId = trackId;
   }
 
-  int getUnencryptedBytes(RTCEncodedFrame frame, String? codec) {
+  int getUnencryptedBytes(web.RTCEncodedVideoFrame frame, String? codec) {
     if (codec != null && codec.toLowerCase() == 'h264') {
-      var data = frame.data.asUint8List();
+      var data = frame.data.toDart.asUint8List();
       var naluIndices = findNALUIndices(data);
       for (var index in naluIndices) {
         var type = parseNALUType(data[index]);
@@ -293,10 +295,10 @@ class FrameCryptor {
   }
 
   Future<void> encodeFunction(
-    RTCEncodedFrame frame,
-    TransformStreamDefaultController controller,
+    web.RTCEncodedVideoFrame frame,
+    web.TransformStreamDefaultController controller,
   ) async {
-    var buffer = frame.data.asUint8List();
+    var buffer = frame.data.toDart.asUint8List();
 
     if (!enabled ||
         // skip for encryption for empty dtx frames
@@ -333,32 +335,35 @@ class FrameCryptor {
       var metaData = frame.getMetadata();
       var iv = makeIv(
           synchronizationSource: metaData.synchronizationSource,
-          timestamp: frame.timestamp);
+          timestamp:
+              (frame.getProperty('timestamp'.toJS) as JSNumber).toDartInt);
 
       var frameTrailer = ByteData(2);
       frameTrailer.setInt8(0, IV_LENGTH);
       frameTrailer.setInt8(1, keyIndex);
 
-      var cipherText = await jsutil.promiseToFuture<ByteBuffer>(crypto.encrypt(
-        crypto.AesGcmParams(
-          name: 'AES-GCM',
-          iv: crypto.jsArrayBufferFrom(iv),
-          additionalData:
-              crypto.jsArrayBufferFrom(buffer.sublist(0, headerLength)),
-        ),
-        secretKey,
-        crypto.jsArrayBufferFrom(buffer.sublist(headerLength, buffer.length)),
-      ));
+      var cipherText = Uint8List.view(((await web.window.crypto.subtle
+              .encrypt(
+                {
+                  'name': 'AES-GCM',
+                  'iv': iv.toJS,
+                  'additionalData': buffer.sublist(0, headerLength).toJS,
+                }.jsify() as JSAny,
+                secretKey,
+                buffer.sublist(headerLength, buffer.length).toJS,
+              )
+              .toDart) as JSArrayBuffer)
+          .toDart);
 
-      logger.finer(
-          'buffer: ${buffer.length}, cipherText: ${cipherText.asUint8List().length}');
+      logger
+          .finer('buffer: ${buffer.length}, cipherText: ${cipherText.length}');
       var finalBuffer = BytesBuilder();
 
       finalBuffer.add(Uint8List.fromList(buffer.sublist(0, headerLength)));
-      finalBuffer.add(cipherText.asUint8List());
+      finalBuffer.add(cipherText);
       finalBuffer.add(iv);
       finalBuffer.add(frameTrailer.buffer.asUint8List());
-      frame.data = crypto.jsArrayBufferFrom(finalBuffer.toBytes());
+      frame.data = finalBuffer.toBytes().buffer.toJS;
 
       controller.enqueue(frame);
 
@@ -376,7 +381,7 @@ class FrameCryptor {
       }
 
       logger.finer(
-          'encrypto kind $kind,codec $codec headerLength: $headerLength,  timestamp: ${frame.timestamp}, ssrc: ${metaData.synchronizationSource}, data length: ${buffer.length}, encrypted length: ${finalBuffer.toBytes().length}, iv $iv');
+          'encrypto kind $kind,codec $codec headerLength: $headerLength,  timestamp: ${frame.getProperty('timestamp'.toJS)}, ssrc: ${metaData.synchronizationSource}, data length: ${buffer.length}, encrypted length: ${finalBuffer.toBytes().length}, iv $iv');
     } catch (e) {
       logger.warning('encrypt: e ${e.toString()}');
       if (lastError != CryptorError.kEncryptError) {
@@ -395,18 +400,18 @@ class FrameCryptor {
   }
 
   Future<void> decodeFunction(
-    RTCEncodedFrame frame,
-    TransformStreamDefaultController controller,
+    web.RTCEncodedVideoFrame frame,
+    web.TransformStreamDefaultController controller,
   ) async {
     var ratchetCount = 0;
-    var buffer = frame.data.asUint8List();
+    var buffer = frame.data.toDart;
     ByteBuffer? decrypted;
     KeySet? initialKeySet;
     var initialKeyIndex = currentKeyIndex;
 
     if (!enabled ||
         // skip for encryption for empty dtx frames
-        buffer.isEmpty) {
+        buffer.lengthInBytes == 0) {
       sifGuard.recordUserFrame();
       if (keyOptions.discardFrameWhenCryptorNotReady) return;
       logger.fine('enqueing empty frame');
@@ -416,20 +421,22 @@ class FrameCryptor {
 
     if (keyOptions.uncryptedMagicBytes != null) {
       var magicBytes = keyOptions.uncryptedMagicBytes!;
-      if (buffer.length > magicBytes.length + 1) {
-        var magicBytesBuffer = buffer.sublist(
-            buffer.length - magicBytes.length - 1, buffer.length - 1);
+      if (buffer.lengthInBytes > magicBytes.length + 1) {
+        var magicBytesBuffer = buffer.asByteData(
+            buffer.lengthInBytes - magicBytes.length - 1,
+            buffer.lengthInBytes - 1);
         logger.finer(
             'magicBytesBuffer $magicBytesBuffer, magicBytes $magicBytes');
         if (magicBytesBuffer.toString() == magicBytes.toString()) {
           sifGuard.recordSif();
           if (sifGuard.isSifAllowed()) {
-            var frameType = buffer.sublist(buffer.length - 1)[0];
+            var frameType =
+                buffer.asByteData(buffer.lengthInBytes - 1).getInt8(0);
             logger.finer('skip uncrypted frame, type $frameType');
-            var finalBuffer = BytesBuilder();
-            finalBuffer.add(Uint8List.fromList(
-                buffer.sublist(0, buffer.length - (magicBytes.length + 1))));
-            frame.data = crypto.jsArrayBufferFrom(finalBuffer.toBytes());
+
+            final view = buffer.asByteData(
+                0, buffer.lengthInBytes - (magicBytes.length + 1));
+            frame.data = jsArrayBufferFrom(view);
             logger.fine('enqueing silent frame');
             controller.enqueue(frame);
           } else {
@@ -447,10 +454,11 @@ class FrameCryptor {
           kind == 'video' ? getUnencryptedBytes(frame, codec) : 1;
       var metaData = frame.getMetadata();
 
-      var frameTrailer = buffer.sublist(buffer.length - 2);
-      var ivLength = frameTrailer[0];
-      var keyIndex = frameTrailer[1];
-      var iv = buffer.sublist(buffer.length - ivLength - 2, buffer.length - 2);
+      var frameTrailer = buffer.asByteData(buffer.lengthInBytes - 2);
+      var ivLength = frameTrailer.getInt8(0);
+      var keyIndex = frameTrailer.getInt8(1);
+      var iv = buffer.asByteData(
+          buffer.lengthInBytes - ivLength - 2, buffer.lengthInBytes - 2);
 
       initialKeySet = keyHandler.getKeySet(keyIndex);
       initialKeyIndex = keyIndex;
@@ -480,20 +488,20 @@ class FrameCryptor {
       var currentkeySet = initialKeySet;
 
       Future<void> decryptFrameInternal() async {
-        decrypted = await jsutil.promiseToFuture<ByteBuffer>(
-          crypto.decrypt(
-            crypto.AesGcmParams(
-              name: 'AES-GCM',
-              iv: crypto.jsArrayBufferFrom(iv),
-              additionalData:
-                  crypto.jsArrayBufferFrom(buffer.sublist(0, headerLength)),
-            ),
-            currentkeySet.encryptionKey,
-            crypto.jsArrayBufferFrom(
-              buffer.sublist(headerLength, buffer.length - ivLength - 2),
-            ),
-          ),
-        );
+        decrypted = ((await web.window.crypto.subtle
+                .decrypt(
+                  {
+                    'name': 'AES-GCM',
+                    'iv': jsArrayBufferFrom(iv),
+                    'additionalData':
+                        jsArrayBufferFrom(buffer.asByteData(0, headerLength)),
+                  }.jsify() as JSAny,
+                  currentkeySet.encryptionKey,
+                  jsArrayBufferFrom(buffer.asByteData(
+                      headerLength, buffer.lengthInBytes - ivLength - 2)),
+                )
+                .toDart) as JSArrayBuffer)
+            .toDart;
         if (decrypted == null) {
           throw Exception('[decryptFrameInternal] could not decrypt');
         }
@@ -508,7 +516,7 @@ class FrameCryptor {
             lastError != CryptorError.kKeyRatcheted &&
             ratchetCount > 0) {
           logger.finer(
-              'KeyRatcheted: ssrc ${metaData.synchronizationSource} timestamp ${frame.timestamp} ratchetCount $ratchetCount  participantId: $participantIdentity');
+              'KeyRatcheted: ssrc ${metaData.synchronizationSource} timestamp ${frame.getProperty('timestamp'.toJS)} ratchetCount $ratchetCount  participantId: $participantIdentity');
           logger.finer(
               'ratchetKey: lastError != CryptorError.kKeyRatcheted, reset state to kKeyRatcheted');
 
@@ -531,10 +539,10 @@ class FrameCryptor {
           throw Exception('[ratchedKeyInternal] cannot ratchet anymore');
         }
 
-        var newKeyBuffer = crypto.jsArrayBufferFrom(await keyHandler.ratchet(
-            currentkeySet.material, keyOptions.ratchetSalt));
+        var newKeyBuffer = await keyHandler.ratchet(
+            currentkeySet.material, keyOptions.ratchetSalt);
         var newMaterial = await keyHandler.ratchetMaterial(
-            currentkeySet.material, newKeyBuffer);
+            currentkeySet.material, newKeyBuffer.buffer);
         currentkeySet =
             await keyHandler.deriveKeys(newMaterial, keyOptions.ratchetSalt);
         ratchetCount++;
@@ -560,13 +568,14 @@ class FrameCryptor {
       keyHandler.decryptionSuccess();
 
       logger.finer(
-          'buffer: ${buffer.length}, decrypted: ${decrypted!.asUint8List().length}');
+          'buffer: ${buffer.lengthInBytes}, decrypted: ${decrypted!.asUint8List().length}');
 
       var finalBuffer = BytesBuilder();
 
-      finalBuffer.add(Uint8List.fromList(buffer.sublist(0, headerLength)));
+      finalBuffer
+          .add(Uint8List.sublistView(buffer.asByteData(0, headerLength)));
       finalBuffer.add(decrypted!.asUint8List());
-      frame.data = crypto.jsArrayBufferFrom(finalBuffer.toBytes());
+      frame.data = finalBuffer.toBytes().buffer.toJS;
       controller.enqueue(frame);
 
       if (lastError != CryptorError.kOk) {
@@ -583,7 +592,7 @@ class FrameCryptor {
       }
 
       logger.finer(
-          'decrypto kind $kind,codec $codec headerLength: $headerLength, timestamp: ${frame.timestamp}, ssrc: ${metaData.synchronizationSource}, data length: ${buffer.length}, decrypted length: ${finalBuffer.toBytes().length}, keyindex $keyIndex iv $iv');
+          'decrypto kind $kind,codec $codec headerLength: $headerLength, timestamp: ${frame.getProperty("timestamp".toJS)}, ssrc: ${metaData.synchronizationSource}, data length: ${buffer.lengthInBytes}, decrypted length: ${finalBuffer.toBytes().length}, keyindex $keyIndex iv $iv');
     } catch (e) {
       if (lastError != CryptorError.kDecryptError) {
         lastError = CryptorError.kDecryptError;

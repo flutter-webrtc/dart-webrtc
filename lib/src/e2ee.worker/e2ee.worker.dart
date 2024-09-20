@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:js_interop';
-import 'dart:js_util' as js_util;
+import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
+import 'package:dart_webrtc/src/frame_cryptor_impl.dart';
 import 'package:logging/logging.dart';
 import 'package:web/web.dart' as web;
 
@@ -14,11 +15,6 @@ import 'e2ee.logger.dart';
 
 @JS()
 external web.DedicatedWorkerGlobalScope get self;
-
-extension PropsRTCTransformEventHandler on web.DedicatedWorkerGlobalScope {
-  set onrtctransform(Function(dynamic) callback) =>
-      js_util.setProperty<Function>(this, 'onrtctransform', callback);
-}
 
 var participantCryptors = <FrameCryptor>[];
 var keyProviders = <String, KeyProvider>{};
@@ -63,21 +59,21 @@ void main() async {
 
   logger.info('Worker created');
 
-  if (js_util.getProperty(self, 'RTCTransformEvent') != null) {
+  if (web.window.getProperty('RTCTransformEvent'.toJS).isDefinedAndNotNull) {
     logger.info('setup RTCTransformEvent event handler');
     self.onrtctransform = (web.RTCTransformEvent event) {
       logger.info('Got onrtctransform event');
-      var transformer = (event as RTCTransformEvent).transformer;
+      var transformer = (event as web.RTCTransformEvent).transformer;
 
       transformer.handled = true;
 
-      var options = transformer.options;
-      var kind = js_util.getProperty(options, 'kind');
-      var participantId = js_util.getProperty(options, 'participantId');
-      var trackId = js_util.getProperty(options, 'trackId');
-      var codec = js_util.getProperty(options, 'codec');
-      var msgType = js_util.getProperty(options, 'msgType');
-      var keyProviderId = js_util.getProperty(options, 'keyProviderId');
+      var options = transformer.options as JSObject;
+      var kind = options.getProperty('kind'.toJS) as JSString;
+      var participantId = options.getProperty('participantId'.toJS) as JSString;
+      var trackId = options.getProperty('trackId'.toJS) as JSString;
+      var codec = options.getProperty('codec'.toJS) as JSString;
+      var msgType = options.getProperty('msgType'.toJS) as JSString;
+      var keyProviderId = options.getProperty('keyProviderId'.toJS);
 
       var keyProvider = keyProviders[keyProviderId];
 
@@ -86,15 +82,16 @@ void main() async {
         return;
       }
 
-      var cryptor = getTrackCryptor(participantId, trackId, keyProvider);
+      var cryptor =
+          getTrackCryptor(participantId.toDart, trackId.toDart, keyProvider);
 
       cryptor.setupTransform(
-          operation: msgType,
+          operation: msgType.toDart,
           readable: transformer.readable,
           writable: transformer.writable,
-          trackId: trackId,
-          kind: kind,
-          codec: codec);
+          trackId: trackId.toDart,
+          kind: kind.toDart,
+          codec: codec.toDart);
     }.toJS;
   }
 
@@ -175,8 +172,8 @@ void main() async {
             var exist = msg['exist'] as bool;
             var participantId = msg['participantId'] as String;
             var trackId = msg['trackId'];
-            var readable = msg['readableStream'] as ReadableStream;
-            var writable = msg['writableStream'] as WritableStream;
+            var readable = msg['readableStream'] as web.ReadableStream;
+            var writable = msg['writableStream'] as web.WritableStream;
             var keyProviderId = msg['keyProviderId'] as String;
 
             logger.config(
