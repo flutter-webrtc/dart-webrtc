@@ -11,7 +11,7 @@ class RTCRtpCapabilitiesWeb {
       'codecs': object.codecs.toDart.map((e) => e.dartify()),
       'headerExtensions':
           object.headerExtensions.toDart.map((e) => e.dartify()),
-      'fecMechanisms': object.getProperty('fecMechanisms'.toJS).dartify()
+      'fecMechanisms': object.getProperty('fecMechanisms'.toJS).dartify() ?? []
     });
   }
 }
