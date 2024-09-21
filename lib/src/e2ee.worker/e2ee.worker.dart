@@ -71,9 +71,9 @@ void main() async {
       var trackId = options.getProperty('trackId'.toJS) as JSString;
       var codec = options.getProperty('codec'.toJS) as JSString;
       var msgType = options.getProperty('msgType'.toJS) as JSString;
-      var keyProviderId = options.getProperty('keyProviderId'.toJS);
+      var keyProviderId = options.getProperty('keyProviderId'.toJS) as JSString;
 
-      var keyProvider = keyProviders[keyProviderId];
+      var keyProvider = keyProviders[keyProviderId.toDart];
 
       if (keyProvider == null) {
         logger.warning('KeyProvider not found for $keyProviderId');
