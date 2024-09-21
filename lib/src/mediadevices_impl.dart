@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
-import 'package:dart_webrtc/src/frame_cryptor_impl.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
@@ -230,26 +229,5 @@ class MediaDevicesWeb extends MediaDevices {
     } catch (e) {
       throw 'Unable to get ondevicechange: ${e.toString()}';
     }
-    return null;
   }
-}
-
-extension _MediaTrackConstraints on web.MediaTrackSupportedConstraints {
-  external bool get brightness;
-  external bool get colorTemperature;
-  external bool get contrast;
-  external bool get exposureCompensation;
-  external bool get exposureMode;
-  external bool get exposureTime;
-  external bool get focusDistance;
-  external bool get focusMode;
-  external bool get iso;
-  external bool get pan;
-  external bool get pointsOfInterest;
-  external bool get saturation;
-  external bool get sharpness;
-  external bool get tilt;
-  external bool get torch;
-  external bool get whiteBalanceMode;
-  external bool get zoom;
 }

@@ -1,12 +1,8 @@
 import 'dart:js' as js;
-import 'dart:typed_data';
 import 'dart:js_interop';
-
-import 'package:dart_webrtc/src/frame_cryptor_impl.dart';
+import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
-
-import 'crypto.dart' as crypto;
 
 bool isE2EESupported() {
   return isInsertableStreamSupported() || isScriptTransformSupported();

@@ -4,11 +4,9 @@ import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
-import 'package:dart_webrtc/src/frame_cryptor_impl.dart';
 import 'package:logging/logging.dart';
 import 'package:web/web.dart' as web;
 
-import 'package:dart_webrtc/src/rtc_transform_stream.dart';
 import 'e2ee.cryptor.dart';
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
@@ -63,9 +61,9 @@ void main() async {
     logger.info('setup RTCTransformEvent event handler');
     self.onrtctransform = (web.RTCTransformEvent event) {
       logger.info('Got onrtctransform event');
-      var transformer = (event as web.RTCTransformEvent).transformer;
+      var transformer = event.transformer;
 
-      transformer.handled = true;
+      transformer.setProperty('handled'.toJS, true.toJS);
 
       var options = transformer.options as JSObject;
       var kind = options.getProperty('kind'.toJS) as JSString;

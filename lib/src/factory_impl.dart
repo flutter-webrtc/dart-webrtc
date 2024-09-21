@@ -12,8 +12,6 @@ import 'navigator_impl.dart';
 import 'rtc_peerconnection_impl.dart';
 import 'rtc_rtp_capailities_imp.dart';
 
-import 'package:web/web.dart' as web;
-
 @JS('RTCRtpSender')
 @staticInterop
 class RTCRtpSenderJs {

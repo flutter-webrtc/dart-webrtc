@@ -1,7 +1,8 @@
-import 'package:dart_webrtc/src/rtc_data_channel_impl.dart';
+import 'dart:js_interop';
+
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
-import 'dart:js_interop';
+
 import 'media_stream_track_impl.dart';
 import 'rtc_rtp_parameters_impl.dart';
 

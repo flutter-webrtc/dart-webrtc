@@ -1,9 +1,8 @@
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
-import 'package:dart_webrtc/src/rtc_data_channel_impl.dart';
-import 'package:webrtc_interface/webrtc_interface.dart';
 import 'package:web/web.dart' as web;
+import 'package:webrtc_interface/webrtc_interface.dart';
 
 class RTCRtpCapabilitiesWeb {
   static RTCRtpCapabilities fromJsObject(web.RTCRtpCapabilities object) {

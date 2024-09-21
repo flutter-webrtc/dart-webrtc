@@ -38,7 +38,7 @@ class MediaRecorderWeb extends MediaRecorder {
       _recorder.addEventListener(
           'dataavailable',
           (web.Event event) {
-            final web.Blob blob = event.getProperty('data'.toJS) as web.Blob;
+            final blob = event.getProperty('data'.toJS) as web.Blob;
             if (blob.size > 0) {
               _chunks.add(blob);
             }
