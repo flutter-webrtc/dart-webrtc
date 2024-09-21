@@ -20,10 +20,13 @@ class RTCRtpParametersWeb {
 
   static List<RTCHeaderExtension> headerExtensionsFromJsObject(
       web.RTCRtpParameters object) {
-    return object.headerExtensions.toDart
-        .map(
-            (e) => RTCHeaderExtension.fromMap((e as JSObject).dartify() as Map))
-        .toList();
+    return object.headerExtensions.toDart.map((e) {
+      final map = (e as JSObject).dartify() as Map;
+      if (map.containsKey('id')) {
+        map['id'] = (map['id'] as num).toInt();
+      }
+      return RTCHeaderExtension.fromMap(map);
+    }).toList();
   }
 
   static List<RTCRtpEncoding> encodingsFromJsObject(JSObject object) {
@@ -70,7 +73,7 @@ class RTCRtpEncodingWeb {
       'rid': object.rid,
       'active': object.active,
       'maxBitrate': object.maxBitrate,
-      'maxFramerate': object.maxFramerate,
+      'maxFramerate': object.maxFramerate.toInt(),
       'minBitrate': object.getProperty<JSNumber?>('minBitrate'.toJS)?.toDartInt,
       'numTemporalLayers':
           object.getProperty<JSNumber?>('numTemporalLayers'.toJS)?.toDartInt,
