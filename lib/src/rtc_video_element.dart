@@ -65,7 +65,3 @@ class RTCVideoElement {
 
   Future<void> setSinkId(String sinkId) => _html.setSinkId(sinkId).toDart;
 }
-
-extension _SetSinkId on web.HTMLMediaElement {
-  external JSPromise setSinkId(String sinkId);
-}
