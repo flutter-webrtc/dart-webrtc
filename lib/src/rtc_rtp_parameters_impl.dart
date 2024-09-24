@@ -92,7 +92,7 @@ class RTCRTPCodecWeb {
       'clockRate': object.clockRate,
       'numChannels':
           object.getProperty<JSNumber?>('numChannels'.toJS)?.toDartInt,
-      'parameters': object.getProperty<JSObject>('parameters'.toJS).dartify(),
+      'parameters': object.getProperty<JSObject?>('parameters'.toJS)?.dartify(),
     });
   }
 }
