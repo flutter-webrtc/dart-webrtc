@@ -27,7 +27,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   RTCPeerConnectionWeb(this._peerConnectionId, this._jsPc) {
     _jsPc.addEventListener(
         'datachannel',
-        (dataChannelEvent) {
+        (web.RTCDataChannelEvent dataChannelEvent) {
           if (dataChannelEvent.channel != null) {
             onDataChannel?.call(RTCDataChannelWeb(dataChannelEvent.channel!));
           }
@@ -35,7 +35,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
     _jsPc.addEventListener(
         'icecandidate',
-        (iceEvent) {
+        (web.RTCPeerConnectionIceEvent iceEvent) {
           if (iceEvent.candidate != null) {
             onIceCandidate?.call(_iceFromJs(iceEvent.candidate!));
           }
@@ -43,7 +43,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
     _jsPc.addEventListener(
         'iceconnectionstatechange',
-        (_) {
+        (web.Event _) {
           _iceConnectionState =
               iceConnectionStateForString(_jsPc.iceConnectionState);
           onIceConnectionState?.call(_iceConnectionState!);
@@ -88,7 +88,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
     _jsPc.addEventListener(
         'signalingstatechange',
-        (_) {
+        (web.Event _) {
           _signalingState = signalingStateForString(_jsPc.signalingState);
           onSignalingState?.call(_signalingState!);
         }.toJS);
@@ -96,7 +96,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     if (!browser.isFirefox) {
       _jsPc.addEventListener(
           'connectionstatechange',
-          (_) {
+          (web.Event _) {
             _connectionState =
                 peerConnectionStateForString(_jsPc.connectionState);
             onConnectionState?.call(_connectionState!);
@@ -105,7 +105,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
     _jsPc.addEventListener(
         'negotiationneeded',
-        (_) {
+        (web.Event _) {
           onRenegotiationNeeded?.call();
         }.toJS);
 
