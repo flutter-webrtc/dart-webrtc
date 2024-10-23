@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:js_interop';
-import 'dart:js_util' as js;
 import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
@@ -10,9 +9,18 @@ import 'utils.dart';
 
 class MediaStreamTrackWeb extends MediaStreamTrack {
   MediaStreamTrackWeb(this.jsTrack) {
-    jsTrack.addEventListener('ended', ((event) => onEnded?.call()).toJS);
-    jsTrack.addEventListener('mute', ((event) => onMute?.call()).toJS);
-    jsTrack.addEventListener('unmute', ((event) => onUnMute?.call()).toJS);
+    if (onEnded != null) {
+      void Function(JSAny) onEndedCallback = (event) => onEnded?.call();
+      jsTrack.addEventListener('ended', onEndedCallback.toJS);
+    }
+    if (onMute != null) {
+      void Function(JSAny) onMuteCallback = (event) => onMute?.call();
+      jsTrack.addEventListener('mute', onMuteCallback.toJS);
+    }
+    if (onUnMute != null) {
+      void Function(JSAny) onUnmuteCallback = (event) => onUnMute?.call();
+      jsTrack.addEventListener('unmute', onUnmuteCallback.toJS);
+    }
   }
 
   final web.MediaStreamTrack jsTrack;
@@ -48,12 +56,9 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
   Future<void> applyConstraints([Map<String, dynamic>? constraints]) async {
     // TODO(wermathurin): Wait for: https://github.com/dart-lang/sdk/commit/1a861435579a37c297f3be0cf69735d5b492bc6c
     // to be merged to use jsTrack.applyConstraints() directly
-    final arg = js.jsify(constraints ?? {});
+    final arg = (constraints ?? {}).jsify();
 
-    final _val = await js.promiseToFuture<void>(
-      js.callMethod(jsTrack, 'applyConstraints', [arg]),
-    );
-    return _val;
+    await jsTrack.applyConstraints(arg as web.MediaTrackConstraints).toDart;
   }
 
   // TODO(wermathurin): https://github.com/dart-lang/sdk/issues/44319
@@ -100,12 +105,13 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
     canvas.height = bitmap.height;
     final renderer =
         canvas.getContext('bitmaprenderer') as web.ImageBitmapRenderingContext;
-    js.callMethod(renderer, 'transferFromImageBitmap', [bitmap]);
+    renderer.transferFromImageBitmap(bitmap);
 
     final blobCompleter = Completer<web.Blob>();
-    canvas.toBlob((web.Blob blob) {
+    final void Function(web.Blob blob) toBlob = (web.Blob blob) {
       blobCompleter.complete(blob);
-    }.toJS);
+    };
+    canvas.toBlob(toBlob.toJS);
 
     final blod = await blobCompleter.future;
 
