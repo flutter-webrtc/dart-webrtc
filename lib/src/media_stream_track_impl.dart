@@ -9,9 +9,15 @@ import 'utils.dart';
 
 class MediaStreamTrackWeb extends MediaStreamTrack {
   MediaStreamTrackWeb(this.jsTrack) {
-    jsTrack.addEventListener('ended', ((event) => onEnded?.call()).toJS);
-    jsTrack.addEventListener('mute', ((event) => onMute?.call()).toJS);
-    jsTrack.addEventListener('unmute', ((event) => onUnMute?.call()).toJS);
+    if (onEnded != null) {
+      jsTrack.addEventListener('ended', onEnded?.toJS);
+    }
+    if (onMute != null) {
+      jsTrack.addEventListener('mute', onMute?.toJS);
+    }
+    if (onUnMute != null) {
+      jsTrack.addEventListener('unmute', onUnMute?.toJS);
+    }
   }
 
   final web.MediaStreamTrack jsTrack;
@@ -99,9 +105,10 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
     renderer.transferFromImageBitmap(bitmap);
 
     final blobCompleter = Completer<web.Blob>();
-    canvas.toBlob((web.Blob blob) {
+    final void Function(web.Blob blob) toBlob = (web.Blob blob) {
       blobCompleter.complete(blob);
-    }.toJS);
+    };
+    canvas.toBlob(toBlob.toJS);
 
     final blod = await blobCompleter.future;
 

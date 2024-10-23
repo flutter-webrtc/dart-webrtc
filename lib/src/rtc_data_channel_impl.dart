@@ -8,36 +8,33 @@ class RTCDataChannelWeb extends RTCDataChannel {
   RTCDataChannelWeb(this._jsDc) {
     stateChangeStream = _stateChangeController.stream;
     messageStream = _messageController.stream;
-    _jsDc.addEventListener(
-        'close',
-        (_) {
-          _state = RTCDataChannelState.RTCDataChannelClosed;
-          _stateChangeController.add(_state);
-          onDataChannelState?.call(_state);
-        }.toJS,
-        false.toJS);
-    _jsDc.addEventListener(
-        'open',
-        (_) {
-          _state = RTCDataChannelState.RTCDataChannelOpen;
-          _stateChangeController.add(_state);
-          onDataChannelState?.call(_state);
-        }.toJS,
-        false.toJS);
-    _jsDc.addEventListener(
-        'message',
+    final void Function(JSAny) onClose = (_) {
+      _state = RTCDataChannelState.RTCDataChannelClosed;
+      _stateChangeController.add(_state);
+      onDataChannelState?.call(_state);
+    };
+
+    final void Function(JSAny) onOpen = (_) {
+      _state = RTCDataChannelState.RTCDataChannelOpen;
+      _stateChangeController.add(_state);
+      onDataChannelState?.call(_state);
+    };
+
+    final void Function(web.MessageEvent event) onMessageCb =
         (web.MessageEvent event) async {
-          var msg = await _parse(event.data);
-          _messageController.add(msg);
-          onMessage?.call(msg);
-        }.toJS,
-        false.toJS);
-    _jsDc.addEventListener(
-        'bufferedamountlow',
-        (_) {
-          onBufferedAmountLow?.call(bufferedAmount ?? 0);
-        }.toJS,
-        false.toJS);
+      var msg = await _parse(event.data);
+      _messageController.add(msg);
+      onMessage?.call(msg);
+    };
+
+    final void Function(JSAny) toLow = (_) {
+      onBufferedAmountLow?.call(bufferedAmount ?? 0);
+    };
+
+    _jsDc.addEventListener('close', onClose.toJS, false.toJS);
+    _jsDc.addEventListener('open', onOpen.toJS, false.toJS);
+    _jsDc.addEventListener('message', onMessageCb.toJS, false.toJS);
+    _jsDc.addEventListener('bufferedamountlow', toLow.toJS, false.toJS);
   }
 
   final web.RTCDataChannel _jsDc;

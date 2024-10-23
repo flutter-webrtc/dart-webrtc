@@ -372,63 +372,60 @@ class KeyProviderImpl implements KeyProvider {
 class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   FrameCryptorFactoryImpl._internal() {
     worker = web.Worker('e2ee.worker.dart.js'.toJS);
-    worker.addEventListener(
-        'message',
-        (web.MessageEvent msg) {
-          final data = msg.data.dartify() as Map;
-          //print('master got $data');
-          var type = data['type'];
-          var msgId = data['msgId'];
-          var msgType = data['msgType'];
 
-          if (msgType == 'response') {
-            events.emit(WorkerResponse(msgId, data));
-          } else if (msgType == 'event') {
-            if (type == 'cryptorState') {
-              var trackId = data['trackId'];
-              var participantId = data['participantId'];
-              var frameCryptor = _frameCryptors.values.firstWhereOrNull(
-                  (element) =>
-                      (element as FrameCryptorImpl).trackId == trackId);
-              var state = data['state'];
-              var frameCryptorState = FrameCryptorState.FrameCryptorStateNew;
-              switch (state) {
-                case 'ok':
-                  frameCryptorState = FrameCryptorState.FrameCryptorStateOk;
-                  break;
-                case 'decryptError':
-                  frameCryptorState =
-                      FrameCryptorState.FrameCryptorStateDecryptionFailed;
-                  break;
-                case 'encryptError':
-                  frameCryptorState =
-                      FrameCryptorState.FrameCryptorStateEncryptionFailed;
-                  break;
-                case 'missingKey':
-                  frameCryptorState =
-                      FrameCryptorState.FrameCryptorStateMissingKey;
-                  break;
-                case 'internalError':
-                  frameCryptorState =
-                      FrameCryptorState.FrameCryptorStateInternalError;
-                  break;
-                case 'keyRatcheted':
-                  frameCryptorState =
-                      FrameCryptorState.FrameCryptorStateKeyRatcheted;
-                  break;
-              }
-              frameCryptor?.onFrameCryptorStateChanged
-                  ?.call(participantId, frameCryptorState);
-            }
+    void Function(web.MessageEvent) onMessage = (web.MessageEvent msg) {
+      final data = msg.data.dartify() as Map;
+      //print('master got $data');
+      var type = data['type'];
+      var msgId = data['msgId'];
+      var msgType = data['msgType'];
+
+      if (msgType == 'response') {
+        events.emit(WorkerResponse(msgId, data));
+      } else if (msgType == 'event') {
+        if (type == 'cryptorState') {
+          var trackId = data['trackId'];
+          var participantId = data['participantId'];
+          var frameCryptor = _frameCryptors.values.firstWhereOrNull(
+              (element) => (element as FrameCryptorImpl).trackId == trackId);
+          var state = data['state'];
+          var frameCryptorState = FrameCryptorState.FrameCryptorStateNew;
+          switch (state) {
+            case 'ok':
+              frameCryptorState = FrameCryptorState.FrameCryptorStateOk;
+              break;
+            case 'decryptError':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateDecryptionFailed;
+              break;
+            case 'encryptError':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateEncryptionFailed;
+              break;
+            case 'missingKey':
+              frameCryptorState = FrameCryptorState.FrameCryptorStateMissingKey;
+              break;
+            case 'internalError':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateInternalError;
+              break;
+            case 'keyRatcheted':
+              frameCryptorState =
+                  FrameCryptorState.FrameCryptorStateKeyRatcheted;
+              break;
           }
-        }.toJS,
-        false.toJS);
-    worker.addEventListener(
-        'error',
-        (web.ErrorEvent err) {
-          print('worker error: $err');
-        }.toJS,
-        false.toJS);
+          frameCryptor?.onFrameCryptorStateChanged
+              ?.call(participantId, frameCryptorState);
+        }
+      }
+    };
+
+    worker.addEventListener('message', onMessage.toJS, false.toJS);
+
+    void Function(web.ErrorEvent err) onError = (web.ErrorEvent err) {
+      print('worker error: $err');
+    };
+    worker.addEventListener('error', onError.toJS, false.toJS);
   }
 
   static final FrameCryptorFactoryImpl instance =

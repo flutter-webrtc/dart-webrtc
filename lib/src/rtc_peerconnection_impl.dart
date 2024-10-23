@@ -21,105 +21,108 @@ extension on web.RTCDataChannelInit {
  */
 class RTCPeerConnectionWeb extends RTCPeerConnection {
   RTCPeerConnectionWeb(this._peerConnectionId, this._jsPc) {
-    _jsPc.addEventListener(
-        'datachannel',
-        (dataChannelEvent) {
-          if (dataChannelEvent.channel != null) {
-            onDataChannel?.call(RTCDataChannelWeb(dataChannelEvent.channel!));
-          }
-        }.toJS);
+    final void Function(web.RTCDataChannelEvent) toDataChannel =
+        (web.RTCDataChannelEvent dataChannelEvent) {
+      if (dataChannelEvent.channel != null) {
+        onDataChannel?.call(RTCDataChannelWeb(dataChannelEvent.channel!));
+      }
+    };
+
+    final void Function(web.RTCPeerConnectionIceEvent) onIceCandidateCb =
+        (web.RTCPeerConnectionIceEvent iceEvent) {
+      if (iceEvent.candidate != null) {
+        onIceCandidate?.call(_iceFromJs(iceEvent.candidate!));
+      }
+    };
+
+    _jsPc.addEventListener('datachannel', toDataChannel.toJS);
+
+    _jsPc.addEventListener('icecandidate', onIceCandidateCb.toJS);
+
+    void Function(JSAny) onIceConnectionStateChange = (_) {
+      _iceConnectionState =
+          iceConnectionStateForString(_jsPc.iceConnectionState);
+      onIceConnectionState?.call(_iceConnectionState!);
+
+      if (browser.isFirefox) {
+        switch (_iceConnectionState!) {
+          case RTCIceConnectionState.RTCIceConnectionStateNew:
+            _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateChecking:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateConnecting;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateConnected:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateConnected;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateFailed:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateFailed;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateDisconnected;
+            break;
+          case RTCIceConnectionState.RTCIceConnectionStateClosed:
+            _connectionState =
+                RTCPeerConnectionState.RTCPeerConnectionStateClosed;
+            break;
+          default:
+            break;
+        }
+        onConnectionState?.call(_connectionState!);
+      }
+    };
 
     _jsPc.addEventListener(
-        'icecandidate',
-        (iceEvent) {
-          if (iceEvent.candidate != null) {
-            onIceCandidate?.call(_iceFromJs(iceEvent.candidate!));
-          }
-        }.toJS);
+        'iceconnectionstatechange', onIceConnectionStateChange.toJS);
 
-    _jsPc.addEventListener(
-        'iceconnectionstatechange',
-        (_) {
-          _iceConnectionState =
-              iceConnectionStateForString(_jsPc.iceConnectionState);
-          onIceConnectionState?.call(_iceConnectionState!);
-
-          if (browser.isFirefox) {
-            switch (_iceConnectionState!) {
-              case RTCIceConnectionState.RTCIceConnectionStateNew:
-                _connectionState =
-                    RTCPeerConnectionState.RTCPeerConnectionStateNew;
-                break;
-              case RTCIceConnectionState.RTCIceConnectionStateChecking:
-                _connectionState =
-                    RTCPeerConnectionState.RTCPeerConnectionStateConnecting;
-                break;
-              case RTCIceConnectionState.RTCIceConnectionStateConnected:
-                _connectionState =
-                    RTCPeerConnectionState.RTCPeerConnectionStateConnected;
-                break;
-              case RTCIceConnectionState.RTCIceConnectionStateFailed:
-                _connectionState =
-                    RTCPeerConnectionState.RTCPeerConnectionStateFailed;
-                break;
-              case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
-                _connectionState =
-                    RTCPeerConnectionState.RTCPeerConnectionStateDisconnected;
-                break;
-              case RTCIceConnectionState.RTCIceConnectionStateClosed:
-                _connectionState =
-                    RTCPeerConnectionState.RTCPeerConnectionStateClosed;
-                break;
-              default:
-                break;
-            }
-            onConnectionState?.call(_connectionState!);
-          }
-        }.toJS);
-
-    _jsPc.onicegatheringstatechange = ((_) {
+    void Function(JSAny) onIceGatheringStateChange = (_) {
       _iceGatheringState = iceGatheringStateforString(_jsPc.iceGatheringState);
       onIceGatheringState?.call(_iceGatheringState!);
-    }).toJS;
+    };
 
-    _jsPc.addEventListener(
-        'signalingstatechange',
-        (_) {
-          _signalingState = signalingStateForString(_jsPc.signalingState);
-          onSignalingState?.call(_signalingState!);
-        }.toJS);
+    _jsPc.onicegatheringstatechange = onIceGatheringStateChange.toJS;
+
+    void Function(JSAny) onSignalingStateChange = (_) {
+      _signalingState = signalingStateForString(_jsPc.signalingState);
+      onSignalingState?.call(_signalingState!);
+    };
+
+    _jsPc.addEventListener('signalingstatechange', onSignalingStateChange.toJS);
 
     if (!browser.isFirefox) {
+      final void Function(JSAny) onConnectionStateChange = (_) {
+        _connectionState = peerConnectionStateForString(_jsPc.connectionState);
+        onConnectionState?.call(_connectionState!);
+      };
       _jsPc.addEventListener(
-          'connectionstatechange',
-          (_) {
-            _connectionState =
-                peerConnectionStateForString(_jsPc.connectionState);
-            onConnectionState?.call(_connectionState!);
-          }.toJS);
+          'connectionstatechange', onConnectionStateChange.toJS);
     }
 
-    _jsPc.addEventListener(
-        'negotiationneeded',
-        (_) {
-          onRenegotiationNeeded?.call();
-        }.toJS);
+    void Function(JSAny) onNegotationNeeded = (_) {
+      onRenegotiationNeeded?.call();
+    };
 
-    _jsPc.addEventListener(
-        'track',
+    _jsPc.addEventListener('negotiationneeded', onNegotationNeeded.toJS);
+
+    void Function(web.RTCTrackEvent) onTrackEvent =
         (web.RTCTrackEvent trackEvent) {
-          onTrack?.call(
-            RTCTrackEvent(
-                track: MediaStreamTrackWeb(trackEvent.track),
-                receiver: RTCRtpReceiverWeb(trackEvent.receiver),
-                transceiver:
-                    RTCRtpTransceiverWeb.fromJsObject(trackEvent.transceiver),
-                streams: trackEvent.streams.toDart
-                    .map((dynamic stream) =>
-                        MediaStreamWeb(stream, _peerConnectionId))
-                    .toList()),
-          );
-        }.toJS);
+      onTrack?.call(
+        RTCTrackEvent(
+            track: MediaStreamTrackWeb(trackEvent.track),
+            receiver: RTCRtpReceiverWeb(trackEvent.receiver),
+            transceiver:
+                RTCRtpTransceiverWeb.fromJsObject(trackEvent.transceiver),
+            streams: trackEvent.streams.toDart
+                .map((dynamic stream) =>
+                    MediaStreamWeb(stream, _peerConnectionId))
+                .toList()),
+      );
+    };
+    _jsPc.addEventListener('track', onTrackEvent.toJS);
   }
 
   final String _peerConnectionId;
