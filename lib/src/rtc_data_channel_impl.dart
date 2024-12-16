@@ -11,7 +11,7 @@ class RTCDataChannelWeb extends RTCDataChannel {
     messageStream = _messageController.stream;
     _jsDc.addEventListener(
         'close',
-        (_) {
+        (web.Event _) {
           _state = RTCDataChannelState.RTCDataChannelClosed;
           _stateChangeController.add(_state);
           onDataChannelState?.call(_state);
@@ -19,7 +19,7 @@ class RTCDataChannelWeb extends RTCDataChannel {
         false.toJS);
     _jsDc.addEventListener(
         'open',
-        (_) {
+        (web.Event _) {
           _state = RTCDataChannelState.RTCDataChannelOpen;
           _stateChangeController.add(_state);
           onDataChannelState?.call(_state);
@@ -27,15 +27,16 @@ class RTCDataChannelWeb extends RTCDataChannel {
         false.toJS);
     _jsDc.addEventListener(
         'message',
-        (web.MessageEvent event) async {
-          var msg = await _parse(event.data);
-          _messageController.add(msg);
-          onMessage?.call(msg);
+        (web.MessageEvent event) {
+          _parse(event.data).then((msg) {
+            _messageController.add(msg);
+            onMessage?.call(msg);
+          });
         }.toJS,
         false.toJS);
     _jsDc.addEventListener(
         'bufferedamountlow',
-        (_) {
+        (web.Event _) {
           onBufferedAmountLow?.call(bufferedAmount ?? 0);
         }.toJS,
         false.toJS);
