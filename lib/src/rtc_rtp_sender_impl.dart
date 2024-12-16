@@ -4,7 +4,7 @@ import 'dart:js_util' as jsutil;
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
-import 'package:dart_webrtc/src/media_stream_impl.dart';
+import 'media_stream_impl.dart';
 import 'media_stream_track_impl.dart';
 import 'rtc_dtmf_sender_impl.dart';
 import 'rtc_rtp_parameters_impl.dart';

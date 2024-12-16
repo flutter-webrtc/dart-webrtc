@@ -12,7 +12,6 @@ import 'media_stream_impl.dart';
 import 'navigator_impl.dart';
 import 'rtc_peerconnection_impl.dart';
 import 'rtc_rtp_capailities_imp.dart';
-import 'utils.dart';
 
 @JS('RTCRtpSender')
 @anonymous

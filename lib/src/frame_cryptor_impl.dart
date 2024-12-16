@@ -10,8 +10,8 @@ import 'package:js/js_util.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
-import 'package:dart_webrtc/src/e2ee.worker/e2ee.logger.dart';
-import 'package:dart_webrtc/src/event.dart';
+import 'e2ee.worker/e2ee.logger.dart';
+import 'event.dart';
 import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'rtc_transform_stream.dart';

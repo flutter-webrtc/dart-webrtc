@@ -167,7 +167,7 @@ void loopBackTest() async {
     }
   });
 */
-  var dc = await pc1.createDataChannel(
+  await pc1.createDataChannel(
       'label', RTCDataChannelInit()..binaryType = 'binary');
   var offer = await pc1.createOffer();
 
