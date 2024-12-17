@@ -57,7 +57,7 @@ void main() async {
 
   logger.info('Worker created');
 
-  if (web.window.getProperty('RTCTransformEvent'.toJS).isDefinedAndNotNull) {
+  if (self.getProperty('RTCTransformEvent'.toJS).isDefinedAndNotNull) {
     logger.info('setup RTCTransformEvent event handler');
     self.onrtctransform = (web.RTCTransformEvent event) {
       logger.info('Got onrtctransform event');
