@@ -9,18 +9,21 @@ import 'utils.dart';
 
 class MediaStreamTrackWeb extends MediaStreamTrack {
   MediaStreamTrackWeb(this.jsTrack) {
-    if (onEnded != null) {
-      void Function(JSAny) onEndedCallback = (event) => onEnded?.call();
-      jsTrack.addEventListener('ended', onEndedCallback.toJS);
-    }
-    if (onMute != null) {
-      void Function(JSAny) onMuteCallback = (event) => onMute?.call();
-      jsTrack.addEventListener('mute', onMuteCallback.toJS);
-    }
-    if (onUnMute != null) {
-      void Function(JSAny) onUnmuteCallback = (event) => onUnMute?.call();
-      jsTrack.addEventListener('unmute', onUnmuteCallback.toJS);
-    }
+    jsTrack.addEventListener(
+        'ended',
+        (web.Event event) {
+          onEnded?.call();
+        }.toJS);
+    jsTrack.addEventListener(
+        'mute',
+        (web.Event event) {
+          onMute?.call();
+        }.toJS);
+    jsTrack.addEventListener(
+        'unmute',
+        (web.Event event) {
+          onUnMute?.call();
+        }.toJS);
   }
 
   final web.MediaStreamTrack jsTrack;

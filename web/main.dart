@@ -165,7 +165,7 @@ void loopBackTest() async {
       pc1FrameCryptors.add(fc);
     }
   });
-
+/*
   var transceivers = await pc1.getTransceivers();
   transceivers.forEach((transceiver) {
     print('transceiver: ${transceiver.sender.track!.kind!}');
@@ -181,7 +181,7 @@ void loopBackTest() async {
           .toList());
     }
   });
-
+*/
   await pc1.createDataChannel(
       'label', RTCDataChannelInit()..binaryType = 'binary');
   var offer = await pc1.createOffer();

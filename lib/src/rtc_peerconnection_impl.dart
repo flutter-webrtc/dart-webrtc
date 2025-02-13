@@ -23,9 +23,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   RTCPeerConnectionWeb(this._peerConnectionId, this._jsPc) {
     final void Function(web.RTCDataChannelEvent) toDataChannel =
         (web.RTCDataChannelEvent dataChannelEvent) {
-      if (dataChannelEvent.channel != null) {
-        onDataChannel?.call(RTCDataChannelWeb(dataChannelEvent.channel!));
-      }
+      onDataChannel?.call(RTCDataChannelWeb(dataChannelEvent.channel));
     };
 
     final void Function(web.RTCPeerConnectionIceEvent) onIceCandidateCb =
