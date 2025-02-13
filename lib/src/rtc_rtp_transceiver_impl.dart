@@ -113,9 +113,10 @@ class RTCRtpTransceiverWeb extends RTCRtpTransceiver {
   @override
   Future<void> setCodecPreferences(List<RTCRtpCodecCapability> codecs) async {
     try {
-      _jsTransceiver.setCodecPreferences([
-        codecs.map((e) => e.toMap().jsify()).toList().toJS
-      ] as JSArray<web.RTCRtpCodec>);
+      _jsTransceiver.setCodecPreferences(codecs
+          .map((e) => e.toMap().jsify() as web.RTCRtpCodec)
+          .toList()
+          .toJS);
     } on Exception catch (e) {
       throw 'Unable to RTCRtpTransceiver::setCodecPreferences: ${e..toString()}';
     }

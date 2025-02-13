@@ -8,8 +8,8 @@ import 'package:collection/collection.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
-import 'package:dart_webrtc/src/e2ee.worker/e2ee.logger.dart';
-import 'package:dart_webrtc/src/event.dart';
+import 'e2ee.worker/e2ee.logger.dart';
+import 'event.dart';
 import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'utils.dart';
@@ -373,7 +373,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   FrameCryptorFactoryImpl._internal() {
     worker = web.Worker('e2ee.worker.dart.js'.toJS);
 
-    void Function(web.MessageEvent) onMessage = (web.MessageEvent msg) {
+    var onMessage = (web.MessageEvent msg) {
       final data = msg.data.dartify() as Map;
       //print('master got $data');
       var type = data['type'];
@@ -455,9 +455,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
     var trackId = jsReceiver.hashCode.toString();
     var kind = jsReceiver.track.kind;
 
-    if (web.window
-        .getProperty('RTCRtpScriptTransform'.toJS)
-        .isDefinedAndNotNull) {
+    if (web.window.hasProperty('RTCRtpScriptTransform'.toJS).toDart) {
       print('support RTCRtpScriptTransform');
       var msgId = randomString(12);
       var options = {
@@ -516,9 +514,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
     var trackId = jsSender.hashCode.toString();
     var kind = jsSender.track!.kind;
 
-    if (!web.window
-        .getProperty('RTCRtpScriptTransform'.toJS)
-        .isDefinedAndNotNull) {
+    if (web.window.hasProperty('RTCRtpScriptTransform'.toJS).toDart) {
       print('support RTCRtpScriptTransform');
       var msgId = randomString(12);
       var options = {
