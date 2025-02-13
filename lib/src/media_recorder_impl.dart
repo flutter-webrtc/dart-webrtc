@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:js' as js;
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
@@ -35,33 +35,30 @@ class MediaRecorderWeb extends MediaRecorder {
     if (onDataChunk == null) {
       var _chunks = <web.Blob>[];
       _completer = Completer<String>();
-      _recorder.addEventListener(
-          'dataavailable',
-          (web.Event event) {
-            final web.Blob blob = js.JsObject.fromBrowserObject(event)['data'];
-            if (blob.size > 0) {
-              _chunks.add(blob);
-            }
-            if (_recorder.state == 'inactive') {
-              final blob =
-                  web.Blob(_chunks.toJS, web.BlobPropertyBag(type: mimeType));
-              _completer.complete(web.URL.createObjectURL(blob));
-            }
-          }.toJS);
-      _recorder.addEventListener(
-          'error',
-          (JSAny error) {
-            _completer.completeError(error);
-          }.toJS);
+      final void Function(web.Event event) callback = (web.Event event) {
+        final blob = event.getProperty('data'.toJS) as web.Blob;
+        if (blob.size > 0) {
+          _chunks.add(blob);
+        }
+        if (_recorder.state == 'inactive') {
+          final blob =
+              web.Blob(_chunks.toJS, web.BlobPropertyBag(type: mimeType));
+          _completer.complete(web.URL.createObjectURL(blob));
+        }
+      };
+      final void Function(JSAny) onError = (JSAny error) {
+        _completer.completeError(error);
+      };
+      _recorder.addEventListener('dataavailable', callback.toJS);
+      _recorder.addEventListener('error', onError.toJS);
     } else {
-      _recorder.addEventListener(
-          'dataavailable',
-          (web.Event event) {
-            onDataChunk(
-              js.JsObject.fromBrowserObject(event)['data'],
-              _recorder.state == 'inactive',
-            );
-          }.toJS);
+      final void Function(web.Event event) callback = (web.Event event) {
+        onDataChunk(
+          event.getProperty('data'.toJS),
+          _recorder.state == 'inactive',
+        );
+      };
+      _recorder.addEventListener('dataavailable', callback.toJS);
     }
     _recorder.start(timeSlice);
   }

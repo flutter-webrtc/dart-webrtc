@@ -1,34 +1,37 @@
-import 'dart:js_util' as jsutil;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
+import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
 class RTCRtpParametersWeb {
-  static RTCRtpParameters fromJsObject(Object object) {
+  static RTCRtpParameters fromJsObject(web.RTCRtpParameters object) {
+    final transactionId =
+        object.getProperty<JSString?>('transactionId'.toJS)?.toDart;
     return RTCRtpParameters(
-        transactionId: jsutil.getProperty(object, 'transactionId'),
-        rtcp: jsutil.hasProperty(object, 'transactionId')
-            ? RTCRTCPParametersWeb.fromJsObject(
-                jsutil.getProperty(object, 'rtcp'))
+        transactionId: transactionId,
+        rtcp: transactionId != null
+            ? RTCRTCPParametersWeb.fromJsObject(object.rtcp)
             : null,
         headerExtensions: headerExtensionsFromJsObject(object),
         encodings: encodingsFromJsObject(object),
         codecs: codecsFromJsObject(object));
   }
 
-  static List<RTCHeaderExtension> headerExtensionsFromJsObject(Object object) {
-    var headerExtensions = jsutil.hasProperty(object, 'headerExtensions')
-        ? jsutil.getProperty(object, 'headerExtensions')
-        : [];
-    var list = <RTCHeaderExtension>[];
-    headerExtensions.forEach((e) {
-      list.add(RTCHeaderExtensionWeb.fromJsObject(e));
-    });
-    return list;
+  static List<RTCHeaderExtension> headerExtensionsFromJsObject(
+      web.RTCRtpParameters object) {
+    return object.headerExtensions.toDart.map((e) {
+      final map = (e as JSObject).dartify() as Map;
+      if (map.containsKey('id')) {
+        map['id'] = (map['id'] as num).toInt();
+      }
+      return RTCHeaderExtension.fromMap(map);
+    }).toList();
   }
 
-  static List<RTCRtpEncoding> encodingsFromJsObject(Object object) {
-    var encodings = jsutil.hasProperty(object, 'encodings')
-        ? jsutil.getProperty(object, 'encodings')
+  static List<RTCRtpEncoding> encodingsFromJsObject(JSObject object) {
+    var encodings = object.hasProperty('encodings'.toJS).toDart
+        ? object.getProperty<JSArray>('encodings'.toJS).toDart
         : [];
     var list = <RTCRtpEncoding>[];
     encodings.forEach((e) {
@@ -37,9 +40,9 @@ class RTCRtpParametersWeb {
     return list;
   }
 
-  static List<RTCRTPCodec> codecsFromJsObject(Object object) {
-    var encodings = jsutil.hasProperty(object, 'codecs')
-        ? jsutil.getProperty(object, 'codecs')
+  static List<RTCRTPCodec> codecsFromJsObject(JSObject object) {
+    var encodings = object.hasProperty('codecs'.toJS).toDart
+        ? object.getProperty<JSArray>('codecs'.toJS).toDart
         : [];
     var list = <RTCRTPCodec>[];
     encodings.forEach((e) {
@@ -50,49 +53,46 @@ class RTCRtpParametersWeb {
 }
 
 class RTCRTCPParametersWeb {
-  static RTCRTCPParameters fromJsObject(Object object) {
-    return RTCRTCPParameters.fromMap({
-      'cname': jsutil.getProperty(object, 'cname'),
-      'reducedSize': jsutil.getProperty(object, 'reducedSize')
-    });
+  static RTCRTCPParameters fromJsObject(web.RTCRtcpParameters object) {
+    return RTCRTCPParameters.fromMap(
+        {'cname': object.cname, 'reducedSize': object.reducedSize});
   }
 }
 
 class RTCHeaderExtensionWeb {
-  static RTCHeaderExtension fromJsObject(Object object) {
-    return RTCHeaderExtension.fromMap({
-      'uri': jsutil.getProperty(object, 'uri'),
-      'id': jsutil.getProperty(object, 'id'),
-      'encrypted': jsutil.getProperty(object, 'encrypted')
-    });
+  static RTCHeaderExtension fromJsObject(
+      web.RTCRtpHeaderExtensionParameters object) {
+    return RTCHeaderExtension.fromMap(
+        {'uri': object.uri, 'id': object.id, 'encrypted': object.encrypted});
   }
 }
 
 class RTCRtpEncodingWeb {
-  static RTCRtpEncoding fromJsObject(Object object) {
+  static RTCRtpEncoding fromJsObject(web.RTCRtpEncodingParameters object) {
     return RTCRtpEncoding.fromMap({
-      'rid': jsutil.getProperty(object, 'rid'),
-      'active': jsutil.getProperty(object, 'active'),
-      'maxBitrate': jsutil.getProperty(object, 'maxBitrate'),
-      'maxFramerate': jsutil.getProperty(object, 'maxFramerate'),
-      'minBitrate': jsutil.getProperty(object, 'minBitrate'),
-      'numTemporalLayers': jsutil.getProperty(object, 'numTemporalLayers'),
-      'scaleResolutionDownBy':
-          jsutil.getProperty(object, 'scaleResolutionDownBy'),
-      'ssrc': jsutil.getProperty(object, 'ssrc')
+      'rid': object.rid,
+      'active': object.active,
+      'maxBitrate': object.maxBitrate,
+      'maxFramerate': object.maxFramerate.toInt(),
+      'minBitrate': object.getProperty<JSNumber?>('minBitrate'.toJS)?.toDartInt,
+      'numTemporalLayers':
+          object.getProperty<JSNumber?>('numTemporalLayers'.toJS)?.toDartInt,
+      'scaleResolutionDownBy': object.scaleResolutionDownBy,
+      'ssrc': object.getProperty<JSString?>('ssrc'.toJS)?.toDart
     });
   }
 }
 
 class RTCRTPCodecWeb {
-  static RTCRTPCodec fromJsObject(Object object) {
+  static RTCRTPCodec fromJsObject(web.RTCRtpCodecParameters object) {
     return RTCRTPCodec.fromMap({
-      'payloadType': jsutil.getProperty(object, 'payloadType'),
-      'name': jsutil.getProperty(object, 'name'),
-      'kind': jsutil.getProperty(object, 'kind'),
-      'clockRate': jsutil.getProperty(object, 'clockRate'),
-      'numChannels': jsutil.getProperty(object, 'numChannels'),
-      'parameters': jsutil.getProperty(object, 'parameters')
+      'payloadType': object.payloadType,
+      'name': object.getProperty<JSString?>('name'.toJS)?.toDart,
+      'kind': object.getProperty<JSString?>('kind'.toJS)?.toDart,
+      'clockRate': object.clockRate,
+      'numChannels':
+          object.getProperty<JSNumber?>('numChannels'.toJS)?.toDartInt,
+      'parameters': object.getProperty<JSObject?>('parameters'.toJS)?.dartify(),
     });
   }
 }

@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop';
 
-import 'package:js/js.dart';
-import 'package:js/js_util.dart';
 import 'package:web/web.dart' as web;
 import 'package:webrtc_interface/webrtc_interface.dart';
 
@@ -14,15 +13,15 @@ import 'rtc_peerconnection_impl.dart';
 import 'rtc_rtp_capailities_imp.dart';
 
 @JS('RTCRtpSender')
-@anonymous
+@staticInterop
 class RTCRtpSenderJs {
-  external static Object getCapabilities(String kind);
+  external static web.RTCRtpCapabilities getCapabilities(String kind);
 }
 
 @JS('RTCRtpReceiver')
-@anonymous
+@staticInterop
 class RTCRtpReceiverJs {
-  external static Object getCapabilities(String kind);
+  external static web.RTCRtpCapabilities getCapabilities(String kind);
 }
 
 class RTCFactoryWeb extends RTCFactory {
@@ -42,7 +41,7 @@ class RTCFactoryWeb extends RTCFactory {
             ],
           };
     final jsRtcPc = web.RTCPeerConnection(
-        jsify({...constr, ...configuration}) as web.RTCConfiguration);
+        {...constr, ...configuration}.jsify() as web.RTCConfiguration);
     final _peerConnectionId = base64Encode(jsRtcPc.toString().codeUnits);
     return RTCPeerConnectionWeb(_peerConnectionId, jsRtcPc);
   }

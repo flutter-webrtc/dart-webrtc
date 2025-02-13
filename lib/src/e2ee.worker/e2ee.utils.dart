@@ -1,62 +1,52 @@
-import 'dart:js' as js;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
 import 'package:js/js_util.dart';
 import 'package:web/web.dart' as web;
-
-import 'crypto.dart' as crypto;
 
 bool isE2EESupported() {
   return isInsertableStreamSupported() || isScriptTransformSupported();
 }
 
 bool isScriptTransformSupported() {
-  return js.context['RTCRtpScriptTransform'] != null;
+  return web.window.hasProperty('RTCRtpScriptTransform'.toJS).toDart;
 }
 
 bool isInsertableStreamSupported() {
-  return js.context['RTCRtpSender'] != null &&
-      js.context['RTCRtpSender']['prototype']['createEncodedStreams'] != null;
-}
-
-Future<web.CryptoKey> importKey(
-    Uint8List keyBytes, String algorithm, String usage) {
-  // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey
-  return promiseToFuture<web.CryptoKey>(crypto.importKey(
-    'raw',
-    crypto.jsArrayBufferFrom(keyBytes),
-    js.JsObject.jsify({'name': algorithm}),
-    false,
-    usage == 'derive' ? ['deriveBits', 'deriveKey'] : ['encrypt', 'decrypt'],
-  ));
+  return web.window.hasProperty('RTCRtpSender'.toJS).toDart &&
+      web.window
+          .getProperty<web.RTCRtpSender>('RTCRtpSender'.toJS)
+          .hasProperty('createEncodedStreams'.toJS)
+          .toDart;
 }
 
 Future<web.CryptoKey> createKeyMaterialFromString(
     Uint8List keyBytes, String algorithm, String usage) {
   // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey
-  return promiseToFuture<web.CryptoKey>(crypto.importKey(
+  return promiseToFuture<web.CryptoKey>(web.window.crypto.subtle.importKey(
     'raw',
-    crypto.jsArrayBufferFrom(keyBytes),
-    js.JsObject.jsify({'name': 'PBKDF2'}),
+    keyBytes.toJS,
+    {'name': 'PBKDF2'}.jsify() as web.AlgorithmIdentifier,
     false,
-    ['deriveBits', 'deriveKey'],
+    ['deriveBits', 'deriveKey'].jsify() as JSArray<JSString>,
   ));
 }
 
-dynamic getAlgoOptions(String algorithmName, Uint8List salt) {
+Map<String, dynamic> getAlgoOptions(String algorithmName, Uint8List salt) {
   switch (algorithmName) {
     case 'HKDF':
       return {
         'name': 'HKDF',
-        'salt': crypto.jsArrayBufferFrom(salt),
+        'salt': salt,
         'hash': 'SHA-256',
-        'info': crypto.jsArrayBufferFrom(Uint8List(128)),
+        'info': Uint8List(128),
       };
     case 'PBKDF2':
       {
         return {
           'name': 'PBKDF2',
-          'salt': crypto.jsArrayBufferFrom(salt),
+          'salt': salt,
           'hash': 'SHA-256',
           'iterations': 100000,
         };
