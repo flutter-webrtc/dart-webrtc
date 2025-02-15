@@ -68,7 +68,7 @@ void main() async {
       var kind = options.getProperty('kind'.toJS) as JSString;
       var participantId = options.getProperty('participantId'.toJS) as JSString;
       var trackId = options.getProperty('trackId'.toJS) as JSString;
-      var codec = options.getProperty('codec'.toJS) as JSString;
+      var codec = options.getProperty('codec'.toJS) as JSString?;
       var msgType = options.getProperty('msgType'.toJS) as JSString;
       var keyProviderId = options.getProperty('keyProviderId'.toJS) as JSString;
 
@@ -88,7 +88,7 @@ void main() async {
           writable: transformer.writable,
           trackId: trackId.toDart,
           kind: kind.toDart,
-          codec: codec.toDart);
+          codec: codec?.toDart);
     }.toJS;
   }
 
