@@ -430,7 +430,7 @@ class FrameCryptor {
           .toDart as JSArrayBuffer;
 
       logger.finer(
-          'encodeFunction, buffer: ${srcFrame.buffer.length}, cipherText: ${cipherText.toDart.asUint8List().length}');
+          'encodeFunction: encrypted buffer: ${srcFrame.buffer.length}, cipherText: ${cipherText.toDart.asUint8List().length}');
       var finalBuffer = BytesBuilder();
 
       finalBuffer
@@ -440,8 +440,6 @@ class FrameCryptor {
       finalBuffer.add(frameTrailer.buffer.asUint8List());
 
       enqueueFrame(frameObj, controller, finalBuffer);
-      logger.finer(
-          'encodeFunction: ssrc ${srcFrame.ssrc} buffer length ${srcFrame.buffer.length}, encrypted: ${finalBuffer.length}, headerLength $headerLength cipherText ${cipherText.toDart.asUint8List().length} iv ${iv.length} frameTrailer ${frameTrailer.buffer.asUint8List().length}');
 
       if (lastError != CryptorError.kOk) {
         lastError = CryptorError.kOk;
@@ -457,7 +455,7 @@ class FrameCryptor {
       }
 
       logger.finer(
-          'encrypto kind $kind,codec $codec headerLength: $headerLength,  timestamp: ${srcFrame.timestamp}, ssrc: ${srcFrame.ssrc}, data length: ${srcFrame.buffer.length}, encrypted length: ${finalBuffer.toBytes().length}, iv $iv');
+          'encodeFunction[CryptorError.kOk]: frame enqueued kind $kind,codec $codec headerLength: $headerLength,  timestamp: ${srcFrame.timestamp}, ssrc: ${srcFrame.ssrc}, data length: ${srcFrame.buffer.length}, encrypted length: ${finalBuffer.toBytes().length}, iv $iv');
     } catch (e) {
       logger.warning('encodeFunction encrypt: e ${e.toString()}');
       if (lastError != CryptorError.kEncryptError) {
@@ -482,7 +480,7 @@ class FrameCryptor {
     var srcFrame = readFrameInfo(frameObj);
     var ratchetCount = 0;
 
-    logger.fine('decodeFunction: frame ${srcFrame.buffer.length}');
+    logger.fine('decodeFunction: frame lenght ${srcFrame.buffer.length}');
 
     ByteBuffer? decrypted;
     KeySet? initialKeySet;
@@ -512,17 +510,18 @@ class FrameCryptor {
           if (sifGuard.isSifAllowed()) {
             var frameType =
                 srcFrame.buffer.sublist(srcFrame.buffer.length - 1)[0];
-            logger.finer('skip uncrypted frame, type $frameType');
+            logger
+                .finer('ecodeFunction: skip uncrypted frame, type $frameType');
             var finalBuffer = BytesBuilder();
             finalBuffer.add(Uint8List.fromList(srcFrame.buffer
                 .sublist(0, srcFrame.buffer.length - (magicBytes.length + 1))));
             enqueueFrame(frameObj, controller, finalBuffer);
-            logger.fine('enqueing silent frame');
+            logger.fine('ecodeFunction: enqueing silent frame');
             controller.enqueue(frameObj);
           } else {
-            logger.finer('SIF limit reached, dropping frame');
+            logger.finer('ecodeFunction: SIF limit reached, dropping frame');
           }
-          logger.finer('enqueing silent frame');
+          logger.finer('ecodeFunction: enqueing silent frame');
           controller.enqueue(frameObj);
           return;
         } else {
@@ -546,9 +545,6 @@ class FrameCryptor {
 
       logger.finer(
           'decodeFunction: start decrypting frame headerLength $headerLength ${srcFrame.buffer.length} frameTrailer $frameTrailer, ivLength $ivLength, keyIndex $keyIndex, iv $iv');
-
-      logger.finer(
-          'decodeFunction: ssrc ${srcFrame.ssrc} buffer length ${srcFrame.buffer.length}, encrypted: ${srcFrame.buffer.length}, headerLength $headerLength cipherText ${srcFrame.buffer.sublist(headerLength, srcFrame.buffer.length - ivLength - 2).length} iv ${iv.length} frameTrailer ${frameTrailer.buffer.asUint8List().length}');
 
       /// missingKey flow:
       /// tries to decrypt once, fails, tries to ratchet once and decrypt again,
@@ -591,15 +587,16 @@ class FrameCryptor {
                 .toDart) as JSArrayBuffer)
             .toDart;
         logger.finer(
-            'decodeFunction: decryptFrameInternal: decrypted: ${decrypted!.asUint8List().length}');
+            'decodeFunction::decryptFrameInternal: decrypted: ${decrypted!.asUint8List().length}');
 
         if (decrypted == null) {
           throw Exception('[decryptFrameInternal] could not decrypt');
         }
         logger.finer(
-            'decryptFrameInternal: decrypted: ${decrypted!.asUint8List().length}');
+            'decodeFunction::decryptFrameInternal: decrypted: ${decrypted!.asUint8List().length}');
         if (currentkeySet != initialKeySet) {
-          logger.fine('ratchetKey: decryption ok, newState: kKeyRatcheted');
+          logger.fine(
+              'decodeFunction::decryptFrameInternal: ratchetKey: decryption ok, newState: kKeyRatcheted');
           await keyHandler.setKeySetFromMaterial(
               currentkeySet, initialKeyIndex);
         }
@@ -608,9 +605,9 @@ class FrameCryptor {
             lastError != CryptorError.kKeyRatcheted &&
             ratchetCount > 0) {
           logger.finer(
-              'KeyRatcheted: ssrc ${srcFrame.ssrc} timestamp ${srcFrame.timestamp} ratchetCount $ratchetCount  participantId: $participantIdentity');
+              'decodeFunction::decryptFrameInternal: KeyRatcheted: ssrc ${srcFrame.ssrc} timestamp ${srcFrame.timestamp} ratchetCount $ratchetCount  participantId: $participantIdentity');
           logger.finer(
-              'ratchetKey: lastError != CryptorError.kKeyRatcheted, reset state to kKeyRatcheted');
+              'decodeFunction::decryptFrameInternal: ratchetKey: lastError != CryptorError.kKeyRatcheted, reset state to kKeyRatcheted');
 
           lastError = CryptorError.kKeyRatcheted;
           postMessage({
@@ -661,7 +658,7 @@ class FrameCryptor {
       keyHandler.decryptionSuccess();
 
       logger.finer(
-          'decodeFunction: buffer length ${srcFrame.buffer.length}, decrypted: ${decrypted!.asUint8List().length}');
+          'decodeFunction: decryption success, buffer length ${srcFrame.buffer.length}, decrypted: ${decrypted!.asUint8List().length}');
 
       var finalBuffer = BytesBuilder();
 
@@ -684,7 +681,7 @@ class FrameCryptor {
       }
 
       logger.fine(
-          'decrypt kind $kind, headerLength: $headerLength, timestamp: ${srcFrame.timestamp}, ssrc: ${srcFrame.ssrc}, data length: ${srcFrame.buffer.length}, decrypted length: ${finalBuffer.toBytes().length}, keyindex $keyIndex iv $iv');
+          'decodeFunction[CryptorError.kOk]: decryption success kind $kind, headerLength: $headerLength, timestamp: ${srcFrame.timestamp}, ssrc: ${srcFrame.ssrc}, data length: ${srcFrame.buffer.length}, decrypted length: ${finalBuffer.toBytes().length}, keyindex $keyIndex iv $iv');
     } catch (e) {
       if (lastError != CryptorError.kDecryptError) {
         lastError = CryptorError.kDecryptError;
