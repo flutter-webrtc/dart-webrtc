@@ -120,13 +120,11 @@ enum CryptorError {
 
 class FrameInfo {
   FrameInfo({
-    required this.mimeType,
     required this.ssrc,
     required this.timestamp,
     required this.buffer,
     required this.frameType,
   });
-  String? mimeType;
   String frameType;
   int ssrc;
   int timestamp;
@@ -144,7 +142,6 @@ class FrameCryptor {
   String? participantIdentity;
   String? trackId;
   String? codec;
-  String? mineType;
   ParticipantKeyHandler keyHandler;
   KeyOptions get keyOptions => keyHandler.keyOptions;
   late String kind;
@@ -282,8 +279,7 @@ class FrameCryptor {
       data = obj.data.toDart.asUint8List();
       if (obj.hasProperty('type'.toJS).toDart) {
         frameType = obj.type;
-        logger.finer(
-            'frameType: $frameType, mineTye ${obj.getMetadata().mimeType}');
+        logger.finer('frameType: $frameType');
       }
     }
 
@@ -318,7 +314,7 @@ class FrameCryptor {
   }
 
   FrameInfo readFrameInfo(JSObject frameObj) {
-    Uint8List buffer;
+    var buffer = Uint8List(0);
     var synchronizationSource = 0;
     var timestamp = 0;
     var frameType = '';
@@ -326,17 +322,25 @@ class FrameCryptor {
       buffer = frameObj.data.toDart.asUint8List();
       if (frameObj.hasProperty('type'.toJS).toDart) {
         frameType = frameObj.type;
-        logger.finer(
-            'frameType: $frameType, mineTye ${frameObj.getMetadata().mimeType}');
+        logger.finer('frameType: $frameType');
       }
       synchronizationSource = frameObj.getMetadata().synchronizationSource;
-      timestamp = frameObj.getMetadata().rtpTimestamp.toInt();
-      mineType ??= frameObj.getMetadata().mimeType;
+      if (frameObj.getMetadata().hasProperty('rtpTimestamp'.toJS).toDart) {
+        timestamp = frameObj.getMetadata().rtpTimestamp.toInt();
+      } else if (frameObj.hasProperty('timestamp'.toJS).toDart) {
+        timestamp =
+            (frameObj.getProperty('timestamp'.toJS) as JSNumber).toDartInt;
+      }
     } else if (frameObj is web.RTCEncodedAudioFrame) {
       buffer = frameObj.data.toDart.asUint8List();
       synchronizationSource = frameObj.getMetadata().synchronizationSource;
-      timestamp = frameObj.getMetadata().rtpTimestamp.toInt();
-      mineType ??= frameObj.getMetadata().mimeType;
+
+      if (frameObj.getMetadata().hasProperty('rtpTimestamp'.toJS).toDart) {
+        timestamp = frameObj.getMetadata().rtpTimestamp.toInt();
+      } else if (frameObj.hasProperty('timestamp'.toJS).toDart) {
+        timestamp =
+            (frameObj.getProperty('timestamp'.toJS) as JSNumber).toDartInt;
+      }
       frameType = 'audio';
     } else {
       throw Exception(
@@ -344,7 +348,6 @@ class FrameCryptor {
     }
 
     return FrameInfo(
-      mimeType: mineType,
       ssrc: synchronizationSource,
       timestamp: timestamp,
       buffer: buffer,
@@ -366,43 +369,44 @@ class FrameCryptor {
     JSObject frameObj,
     web.TransformStreamDefaultController controller,
   ) async {
-    var srcFrame = readFrameInfo(frameObj);
-
-    mineType ??= srcFrame.mimeType;
-
-    logger.finer(
-        'encodeFunction: frame ${srcFrame.buffer.length}, synchronizationSource ${srcFrame.ssrc} mineType $mineType frameType ${srcFrame.frameType}');
-
-    if (!enabled ||
-        // skip for encryption for empty dtx frames
-        srcFrame.buffer.isEmpty) {
-      if (keyOptions.discardFrameWhenCryptorNotReady) {
+    try {
+      if (!enabled ||
+          // skip for encryption for empty dtx frames
+          ((frameObj is web.RTCEncodedVideoFrame &&
+                  frameObj.data.toDart.lengthInBytes == 0) ||
+              (frameObj is web.RTCEncodedAudioFrame &&
+                  frameObj.data.toDart.lengthInBytes == 0))) {
+        if (keyOptions.discardFrameWhenCryptorNotReady) {
+          return;
+        }
+        controller.enqueue(frameObj);
         return;
       }
-      controller.enqueue(frameObj);
-      return;
-    }
 
-    var secretKey = keyHandler.getKeySet(currentKeyIndex)?.encryptionKey;
-    var keyIndex = currentKeyIndex;
+      var srcFrame = readFrameInfo(frameObj);
 
-    if (secretKey == null) {
-      if (lastError != CryptorError.kMissingKey) {
-        lastError = CryptorError.kMissingKey;
-        postMessage({
-          'type': 'cryptorState',
-          'msgType': 'event',
-          'participantId': participantIdentity,
-          'trackId': trackId,
-          'kind': kind,
-          'state': 'missingKey',
-          'error': 'Missing key for track $trackId',
-        });
+      logger.fine(
+          'encodeFunction: buffer ${srcFrame.buffer.length}, synchronizationSource ${srcFrame.ssrc} frameType ${srcFrame.frameType}');
+
+      var secretKey = keyHandler.getKeySet(currentKeyIndex)?.encryptionKey;
+      var keyIndex = currentKeyIndex;
+
+      if (secretKey == null) {
+        if (lastError != CryptorError.kMissingKey) {
+          lastError = CryptorError.kMissingKey;
+          postMessage({
+            'type': 'cryptorState',
+            'msgType': 'event',
+            'participantId': participantIdentity,
+            'trackId': trackId,
+            'kind': kind,
+            'state': 'missingKey',
+            'error': 'Missing key for track $trackId',
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    try {
       var headerLength =
           kind == 'video' ? getUnencryptedBytes(frameObj, codec) : 1;
 
@@ -476,11 +480,9 @@ class FrameCryptor {
     web.TransformStreamDefaultController controller,
   ) async {
     var srcFrame = readFrameInfo(frameObj);
-    mineType ??= srcFrame.mimeType;
     var ratchetCount = 0;
 
-    logger.finer(
-        'decodeFunction: frame ${srcFrame.buffer.length} mineType $mineType');
+    logger.fine('decodeFunction: frame ${srcFrame.buffer.length}');
 
     ByteBuffer? decrypted;
     KeySet? initialKeySet;
@@ -681,8 +683,8 @@ class FrameCryptor {
         });
       }
 
-      logger.finer(
-          'decrypto kind $kind, codec $mineType headerLength: $headerLength, timestamp: ${srcFrame.timestamp}, ssrc: ${srcFrame.ssrc}, data length: ${srcFrame.buffer.length}, decrypted length: ${finalBuffer.toBytes().length}, keyindex $keyIndex iv $iv');
+      logger.fine(
+          'decrypt kind $kind, headerLength: $headerLength, timestamp: ${srcFrame.timestamp}, ssrc: ${srcFrame.ssrc}, data length: ${srcFrame.buffer.length}, decrypted length: ${finalBuffer.toBytes().length}, keyindex $keyIndex iv $iv');
     } catch (e) {
       if (lastError != CryptorError.kDecryptError) {
         lastError = CryptorError.kDecryptError;
