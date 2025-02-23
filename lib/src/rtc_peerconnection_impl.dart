@@ -4,7 +4,6 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:platform_detect/platform_detect.dart';
 import 'package:web/web.dart' as web;
 
 import 'media_stream_track_impl.dart';
@@ -44,7 +43,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
           iceConnectionStateForString(_jsPc.iceConnectionState);
       onIceConnectionState?.call(_iceConnectionState!);
 
-      if (browser.isFirefox) {
+      if (web.Device.isFirefox) {
         switch (_iceConnectionState!) {
           case RTCIceConnectionState.RTCIceConnectionStateNew:
             _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
@@ -93,7 +92,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
     _jsPc.addEventListener('signalingstatechange', onSignalingStateChange.toJS);
 
-    if (!browser.isFirefox) {
+    if (!web.Device.isFirefox) {
       final void Function(JSAny) onConnectionStateChange = (_) {
         _connectionState = peerConnectionStateForString(_jsPc.connectionState);
         onConnectionState?.call(_connectionState!);
@@ -159,7 +158,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   @override
   Future<RTCIceConnectionState?> getIceConnectionState() async {
     _iceConnectionState = iceConnectionStateForString(_jsPc.iceConnectionState);
-    if (browser.isFirefox) {
+    if (web.Device.isFirefox) {
       switch (_iceConnectionState!) {
         case RTCIceConnectionState.RTCIceConnectionStateNew:
           _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
@@ -196,7 +195,8 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<RTCPeerConnectionState?> getConnectionState() async {
-    if (browser.isFirefox) {
+    /// platform is Firefox
+    if (web.Device.isFirefox) {
       await getIceConnectionState();
     } else {
       _connectionState = peerConnectionStateForString(_jsPc.connectionState);
