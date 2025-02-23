@@ -8,37 +8,29 @@ class RTCDataChannelWeb extends RTCDataChannel {
   RTCDataChannelWeb(this._jsDc) {
     stateChangeStream = _stateChangeController.stream;
     messageStream = _messageController.stream;
-    _jsDc.addEventListener(
-        'close',
-        (web.Event _) {
-          _state = RTCDataChannelState.RTCDataChannelClosed;
-          _stateChangeController.add(_state);
-          onDataChannelState?.call(_state);
-        }.toJS,
-        false.toJS);
-    _jsDc.addEventListener(
-        'open',
-        (web.Event _) {
-          _state = RTCDataChannelState.RTCDataChannelOpen;
-          _stateChangeController.add(_state);
-          onDataChannelState?.call(_state);
-        }.toJS,
-        false.toJS);
-    _jsDc.addEventListener(
-        'message',
-        (web.MessageEvent event) {
-          _parse(event.data).then((msg) {
-            _messageController.add(msg);
-            onMessage?.call(msg);
-          });
-        }.toJS,
-        false.toJS);
-    _jsDc.addEventListener(
-        'bufferedamountlow',
-        (web.Event _) {
-          onBufferedAmountLow?.call(bufferedAmount ?? 0);
-        }.toJS,
-        false.toJS);
+
+    _jsDc.onclose = (web.Event _) {
+      _state = RTCDataChannelState.RTCDataChannelClosed;
+      _stateChangeController.add(_state);
+      onDataChannelState?.call(_state);
+    }.toJS;
+
+    _jsDc.onopen = (web.Event _) {
+      _state = RTCDataChannelState.RTCDataChannelOpen;
+      _stateChangeController.add(_state);
+      onDataChannelState?.call(_state);
+    }.toJS;
+
+    _jsDc.onmessage = (web.MessageEvent event) {
+      _parse(event.data.dartify()).then((msg) {
+        _messageController.add(msg);
+        onMessage?.call(msg);
+      });
+    }.toJS;
+
+    _jsDc.onbufferedamountlow = (web.Event _) {
+      onBufferedAmountLow?.call(bufferedAmount ?? 0);
+    }.toJS;
   }
 
   final web.RTCDataChannel _jsDc;

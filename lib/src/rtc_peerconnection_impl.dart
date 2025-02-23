@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:platform_detect/platform_detect.dart';
@@ -321,10 +323,20 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }
 
     var report = <StatsReport>[];
-    stats.forEach((key, value) {
-      report.add(
-          StatsReport(value['id'], value['type'], value['timestamp'], value));
-    });
+    stats.callMethodVarArgs('forEach'.toJS, [
+      (JSObject value, JSAny key) {
+        var map = value.dartify() as LinkedHashMap<Object?, Object?>;
+        var stats = <String, dynamic>{};
+        for (var entry in map.entries) {
+          stats[(entry.key as JSString).toDart] = entry.value;
+        }
+        report.add(StatsReport(
+            value.getProperty<JSString>('id'.toJS).toDart,
+            value.getProperty<JSString>('type'.toJS).toDart,
+            value.getProperty<JSNumber>('timestamp'.toJS).toDartDouble,
+            stats));
+      }.jsify()
+    ]);
     return report;
   }
 
