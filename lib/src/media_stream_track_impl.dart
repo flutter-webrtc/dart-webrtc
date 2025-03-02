@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
@@ -77,25 +78,49 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
     var settings = jsTrack.getSettings();
     var _converted = <String, dynamic>{};
     if (kind == 'audio') {
-      _converted['sampleRate'] = settings.sampleRate;
-      _converted['sampleSize'] = settings.sampleSize;
-      _converted['echoCancellation'] = settings.echoCancellation;
-      _converted['autoGainControl'] = settings.autoGainControl;
-      _converted['noiseSuppression'] = settings.noiseSuppression;
-      _converted['latency'] = settings.latency;
-      _converted['channelCount'] = settings.channelCount;
+      if (settings.has('sampleRate')) {
+        _converted['sampleRate'] = settings.sampleRate;
+      }
+      if (settings.has('sampleSize')) {
+        _converted['sampleSize'] = settings.sampleSize;
+      }
+      if (settings.has('echoCancellation')) {
+        _converted['echoCancellation'] = settings.echoCancellation;
+      }
+      if (settings.has('autoGainControl')) {
+        _converted['autoGainControl'] = settings.autoGainControl;
+      }
+      if (settings.has('noiseSuppression')) {
+        _converted['noiseSuppression'] = settings.noiseSuppression;
+      }
+      if (settings.has('latency')) _converted['latency'] = settings.latency;
+      if (settings.has('channelCount')) {
+        _converted['channelCount'] = settings.channelCount;
+      }
     } else {
-      _converted['width'] = settings.width;
-      _converted['height'] = settings.height;
-      _converted['aspectRatio'] = settings.aspectRatio;
-      _converted['frameRate'] = settings.frameRate;
-      if (isMobile) {
+      if (settings.has('width')) {
+        _converted['width'] = settings.width;
+      }
+      if (settings.has('height')) {
+        _converted['height'] = settings.height;
+      }
+      if (settings.has('aspectRatio')) {
+        _converted['aspectRatio'] = settings.aspectRatio;
+      }
+      if (settings.has('frameRate')) {
+        _converted['frameRate'] = settings.frameRate;
+      }
+      if (isMobile && settings.has('facingMode')) {
         _converted['facingMode'] = settings.facingMode;
       }
-      _converted['resizeMode'] = settings.resizeMode;
+      if (settings.has('resizeMode')) {
+        _converted['resizeMode'] = settings.resizeMode;
+      }
     }
-    _converted['deviceId'] = settings.deviceId;
-    _converted['groupId'] = settings.groupId;
+    if (settings.has('deviceId')) _converted['deviceId'] = settings.deviceId;
+    if (settings.has('groupId')) {
+      _converted['groupId'] = settings.groupId;
+    }
     return _converted;
   }
 
