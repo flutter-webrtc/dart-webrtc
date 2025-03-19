@@ -314,7 +314,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<List<StatsReport>> getStats([MediaStreamTrack? track]) async {
-    var stats;
+    web.RTCStatsReport stats;
     if (track != null) {
       var jsTrack = (track as MediaStreamTrackWeb).jsTrack;
       stats = await _jsPc.getStats(jsTrack).toDart;
@@ -335,7 +335,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
             value.getProperty<JSString>('type'.toJS).toDart,
             value.getProperty<JSNumber>('timestamp'.toJS).toDartDouble,
             stats));
-      }.jsify()
+      }.toJS,
     ]);
     return report;
   }
