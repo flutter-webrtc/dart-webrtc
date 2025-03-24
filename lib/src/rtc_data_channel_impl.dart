@@ -49,6 +49,11 @@ class RTCDataChannelWeb extends RTCDataChannel {
   int? get bufferedAmount => _jsDc.bufferedAmount;
 
   @override
+  Future<int> getBufferedAmount() async {
+    return _jsDc.bufferedAmount;
+  }
+
+  @override
   set bufferedAmountLowThreshold(int? bufferedAmountLowThreshold) {
     _jsDc.bufferedAmountLowThreshold = bufferedAmountLowThreshold ?? 0;
   }

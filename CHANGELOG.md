@@ -2,6 +2,10 @@
 
 --------------------------------------------
 
+[1.5.3] - 2025-03-24
+
+* add getBufferedAmount for DC.
+
 [1.5.2+hotfix.1] - 2025-02-23.
 
 * remove platform_detect.
