@@ -254,4 +254,26 @@ void loopBackTest() async {
       key: Uint8List.fromList('testkey2'.codeUnits));
 
   */
+
+  Timer.periodic(Duration(seconds: 1), (timer) async {
+    var senders = await pc1.getSenders();
+    var receivers = await pc2.getReceivers();
+
+    print('senders: ${senders.length}');
+    print('receivers: ${receivers.length}');
+
+    senders.forEach((sender) {
+      sender.getStats().then((stats) {
+        print(
+            'sender stats: ${stats.map((e) => 'id: ${e.id}, type:  ${e.type}, timestamp: ${e.timestamp}, values: ${e.values.toString()} ')}');
+      });
+    });
+
+    receivers.forEach((receiver) {
+      receiver.getStats().then((stats) {
+        print(
+            'receiver stats: ${stats.map((e) => 'id: ${e.id}, type:  ${e.type}, timestamp: ${e.timestamp}, values: ${e.values.toString()} ')}');
+      });
+    });
+  });
 }

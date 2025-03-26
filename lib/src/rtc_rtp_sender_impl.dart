@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
@@ -85,10 +86,20 @@ class RTCRtpSenderWeb extends RTCRtpSender {
   Future<List<StatsReport>> getStats() async {
     var stats = await _jsRtpSender.getStats().toDart;
     var report = <StatsReport>[];
-    (stats.dartify() as Map<String, dynamic>).forEach((key, value) {
-      report.add(
-          StatsReport(value['id'], value['type'], value['timestamp'], value));
-    });
+    stats.callMethodVarArgs('forEach'.toJS, [
+      (JSObject value, JSAny key) {
+        var map = value.dartify() as LinkedHashMap<Object?, Object?>;
+        var stats = <String, dynamic>{};
+        for (var entry in map.entries) {
+          stats[(entry.key as JSString).toDart] = entry.value;
+        }
+        report.add(StatsReport(
+            value.getProperty<JSString>('id'.toJS).toDart,
+            value.getProperty<JSString>('type'.toJS).toDart,
+            value.getProperty<JSNumber>('timestamp'.toJS).toDartDouble,
+            stats));
+      }.toJS,
+    ]);
     return report;
   }
 

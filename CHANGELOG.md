@@ -2,6 +2,18 @@
 
 --------------------------------------------
 
+[1.5.3] - 2025-03-24
+
+* add getBufferedAmount for DC.
+
+[1.5.2+hotfix.1] - 2025-02-23.
+
+* remove platform_detect.
+
+[1.5.2] - 2025-02-23.
+
+* fix stats for web.
+
 [1.5.1] - 2025-02-15
 
 * fix E2EE for firefox.

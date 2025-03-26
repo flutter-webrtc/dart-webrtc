@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:platform_detect/platform_detect.dart';
 import 'package:web/web.dart' as web;
 
 import 'media_stream_track_impl.dart';
@@ -42,7 +43,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
           iceConnectionStateForString(_jsPc.iceConnectionState);
       onIceConnectionState?.call(_iceConnectionState!);
 
-      if (browser.isFirefox) {
+      if (web.Device.isFirefox) {
         switch (_iceConnectionState!) {
           case RTCIceConnectionState.RTCIceConnectionStateNew:
             _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
@@ -91,7 +92,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
     _jsPc.addEventListener('signalingstatechange', onSignalingStateChange.toJS);
 
-    if (!browser.isFirefox) {
+    if (!web.Device.isFirefox) {
       final void Function(JSAny) onConnectionStateChange = (_) {
         _connectionState = peerConnectionStateForString(_jsPc.connectionState);
         onConnectionState?.call(_connectionState!);
@@ -157,7 +158,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   @override
   Future<RTCIceConnectionState?> getIceConnectionState() async {
     _iceConnectionState = iceConnectionStateForString(_jsPc.iceConnectionState);
-    if (browser.isFirefox) {
+    if (web.Device.isFirefox) {
       switch (_iceConnectionState!) {
         case RTCIceConnectionState.RTCIceConnectionStateNew:
           _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
@@ -194,7 +195,8 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<RTCPeerConnectionState?> getConnectionState() async {
-    if (browser.isFirefox) {
+    /// platform is Firefox
+    if (web.Device.isFirefox) {
       await getIceConnectionState();
     } else {
       _connectionState = peerConnectionStateForString(_jsPc.connectionState);
@@ -312,7 +314,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<List<StatsReport>> getStats([MediaStreamTrack? track]) async {
-    var stats;
+    web.RTCStatsReport stats;
     if (track != null) {
       var jsTrack = (track as MediaStreamTrackWeb).jsTrack;
       stats = await _jsPc.getStats(jsTrack).toDart;
@@ -321,10 +323,20 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }
 
     var report = <StatsReport>[];
-    stats.forEach((key, value) {
-      report.add(
-          StatsReport(value['id'], value['type'], value['timestamp'], value));
-    });
+    stats.callMethodVarArgs('forEach'.toJS, [
+      (JSObject value, JSAny key) {
+        var map = value.dartify() as LinkedHashMap<Object?, Object?>;
+        var stats = <String, dynamic>{};
+        for (var entry in map.entries) {
+          stats[(entry.key as JSString).toDart] = entry.value;
+        }
+        report.add(StatsReport(
+            value.getProperty<JSString>('id'.toJS).toDart,
+            value.getProperty<JSString>('type'.toJS).toDart,
+            value.getProperty<JSNumber>('timestamp'.toJS).toDartDouble,
+            stats));
+      }.toJS,
+    ]);
     return report;
   }
 
