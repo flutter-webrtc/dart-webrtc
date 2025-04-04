@@ -36,7 +36,6 @@ class MediaRecorder extends _interface.MediaRecorder {
 
   @override
   Future<void> changeVideoTrack(MediaStreamTrack videoTrack) {
-    // TODO: implement changeVideoTrack
-    throw UnimplementedError();
+    throw 'Unimplemented on Web';
   }
 }
