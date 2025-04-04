@@ -7,12 +7,18 @@ class MediaRecorder extends _interface.MediaRecorder {
   final _interface.MediaRecorder _delegate;
 
   @override
-  Future<void> start(String path,
-          {MediaStreamTrack? videoTrack, RecorderAudioChannel? audioChannel}) =>
+  Future<void> start(
+    String path, {
+    MediaStreamTrack? videoTrack,
+    RecorderAudioChannel? audioChannel,
+    MediaStreamTrack? audioTrack,
+    int rotationDegrees = 0,
+  }) =>
       _delegate.start(path, videoTrack: videoTrack, audioChannel: audioChannel);
 
   @override
-  Future stop() => _delegate.stop();
+  Future stop({String? albumName}) =>
+      _delegate.stop(albumName: albumName ?? 'FlutterWebRtc');
 
   @override
   void startWeb(
@@ -27,4 +33,10 @@ class MediaRecorder extends _interface.MediaRecorder {
         mimeType: mimeType ?? 'video/webm',
         timeSlice: timeSlice,
       );
+
+  @override
+  Future<void> changeVideoTrack(MediaStreamTrack videoTrack) {
+    // TODO: implement changeVideoTrack
+    throw UnimplementedError();
+  }
 }

@@ -15,9 +15,9 @@ class MediaRecorderWeb extends MediaRecorder {
   Future<void> start(
     String path, {
     MediaStreamTrack? videoTrack,
-    MediaStreamTrack? audioTrack,
     RecorderAudioChannel? audioChannel,
-    int? rotation,
+    MediaStreamTrack? audioTrack,
+    int rotationDegrees = 0,
   }) {
     throw 'Use startWeb on Flutter Web!';
   }
@@ -64,8 +64,14 @@ class MediaRecorderWeb extends MediaRecorder {
   }
 
   @override
-  Future<dynamic> stop() {
+  Future<dynamic> stop({String? albumName}) {
     _recorder.stop();
     return _completer.future;
+  }
+
+  @override
+  Future<void> changeVideoTrack(MediaStreamTrack videoTrack) {
+    // TODO: implement changeVideoTrack
+    throw UnimplementedError();
   }
 }
