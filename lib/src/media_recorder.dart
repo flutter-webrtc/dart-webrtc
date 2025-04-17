@@ -11,8 +11,6 @@ class MediaRecorder extends _interface.MediaRecorder {
     String path, {
     MediaStreamTrack? videoTrack,
     RecorderAudioChannel? audioChannel,
-    MediaStreamTrack? audioTrack,
-    int rotationDegrees = 0,
   }) =>
       _delegate.start(path, videoTrack: videoTrack, audioChannel: audioChannel);
 
@@ -33,9 +31,4 @@ class MediaRecorder extends _interface.MediaRecorder {
         mimeType: mimeType ?? 'video/webm',
         timeSlice: timeSlice,
       );
-
-  @override
-  Future<void> changeVideoTrack(MediaStreamTrack videoTrack) {
-    throw 'Unimplemented on Web';
-  }
 }
