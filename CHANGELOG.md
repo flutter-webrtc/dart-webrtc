@@ -1,6 +1,9 @@
 # Changelog
 
 --------------------------------------------
+[1.5.3+hotfix.1] - 2025-04-25
+
+* add getter override for dc.bufferedAmountLowThreshold.
 
 [1.5.3] - 2025-03-24
 
