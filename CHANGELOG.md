@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.5.3+hotfix.2] - 2025-04-25
+
+* fix bug for dc.onMessage.
+
 [1.5.3+hotfix.1] - 2025-04-25
 
 * add getter override for dc.bufferedAmountLowThreshold.
