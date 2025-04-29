@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.5.4] - 2025-04-29
+
+* Media recording changes.
+
 [1.5.3+hotfix.2] - 2025-04-25
 
 * fix bug for dc.onMessage.
