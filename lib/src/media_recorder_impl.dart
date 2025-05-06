@@ -62,7 +62,7 @@ class MediaRecorderWeb extends MediaRecorder {
   }
 
   @override
-  Future<dynamic> stop({String? albumName}) {
+  Future<dynamic> stop() {
     _recorder.stop();
     return _completer.future;
   }

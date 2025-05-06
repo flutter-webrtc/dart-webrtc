@@ -15,8 +15,7 @@ class MediaRecorder extends _interface.MediaRecorder {
       _delegate.start(path, videoTrack: videoTrack, audioChannel: audioChannel);
 
   @override
-  Future stop({String? albumName}) =>
-      _delegate.stop(albumName: albumName ?? 'FlutterWebRtc');
+  Future stop() => _delegate.stop();
 
   @override
   void startWeb(
