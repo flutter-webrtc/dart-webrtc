@@ -5,6 +5,10 @@
 
 * Media recording changes.
 
+[1.5.3+hotfix.3] - 2025-07-24
+
+* fixed E2EE issue for Chrome.
+
 [1.5.3+hotfix.2] - 2025-04-25
 
 * fix bug for dc.onMessage.

@@ -254,7 +254,7 @@ void loopBackTest() async {
       key: Uint8List.fromList('testkey2'.codeUnits));
 
   */
-  /*
+
   Timer.periodic(Duration(seconds: 1), (timer) async {
     var senders = await pc1.getSenders();
     var receivers = await pc2.getReceivers();
@@ -276,5 +276,4 @@ void loopBackTest() async {
       });
     });
   });
-  */
 }
