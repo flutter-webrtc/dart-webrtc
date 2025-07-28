@@ -449,7 +449,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       required Algorithm algorithm,
       required KeyProvider keyProvider}) {
     var jsSender = (sender as RTCRtpSenderWeb).jsRtpSender;
-    var trackId = jsSender.hashCode.toString();
+    var trackId = jsSender.track?.id ?? sender.senderId;
     var kind = jsSender.track!.kind;
 
     if (web.window.hasProperty('RTCRtpScriptTransform'.toJS).toDart) {
