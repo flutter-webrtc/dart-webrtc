@@ -20,70 +20,6 @@ class WorkerResponse {
   dynamic data;
 }
 
-extension RtcRtpReceiverExt on web.RTCRtpReceiver {
-  static Map<int, web.ReadableStream> readableStreams_ = {};
-  static Map<int, web.WritableStream> writableStreams_ = {};
-
-  web.ReadableStream? get readable {
-    if (readableStreams_.containsKey(hashCode)) {
-      return readableStreams_[hashCode]!;
-    }
-    return null;
-  }
-
-  web.WritableStream? get writable {
-    if (writableStreams_.containsKey(hashCode)) {
-      return writableStreams_[hashCode]!;
-    }
-    return null;
-  }
-
-  set readableStream(web.ReadableStream stream) {
-    readableStreams_[hashCode] = stream;
-  }
-
-  set writableStream(web.WritableStream stream) {
-    writableStreams_[hashCode] = stream;
-  }
-
-  void closeStreams() {
-    readableStreams_.remove(hashCode);
-    writableStreams_.remove(hashCode);
-  }
-}
-
-extension RtcRtpSenderExt on web.RTCRtpSender {
-  static Map<int, web.ReadableStream> readableStreams_ = {};
-  static Map<int, web.WritableStream> writableStreams_ = {};
-
-  web.ReadableStream? get readable {
-    if (readableStreams_.containsKey(hashCode)) {
-      return readableStreams_[hashCode]!;
-    }
-    return null;
-  }
-
-  web.WritableStream? get writable {
-    if (writableStreams_.containsKey(hashCode)) {
-      return writableStreams_[hashCode]!;
-    }
-    return null;
-  }
-
-  set readableStream(web.ReadableStream stream) {
-    readableStreams_[hashCode] = stream;
-  }
-
-  set writableStream(web.WritableStream stream) {
-    writableStreams_[hashCode] = stream;
-  }
-
-  void closeStreams() {
-    readableStreams_.remove(hashCode);
-    writableStreams_.remove(hashCode);
-  }
-}
-
 class FrameCryptorImpl extends FrameCryptor {
   FrameCryptorImpl(
       this._factory, this.worker, this._participantId, this._trackId,
@@ -452,7 +388,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       required KeyProvider keyProvider}) {
     var jsReceiver = (receiver as RTCRtpReceiverWeb).jsRtpReceiver;
 
-    var trackId = jsReceiver.hashCode.toString();
+    var trackId = jsReceiver.track.id;
     var kind = jsReceiver.track.kind;
 
     if (web.window.hasProperty('RTCRtpScriptTransform'.toJS).toDart) {
@@ -469,33 +405,35 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
 
       jsReceiver.transform = web.RTCRtpScriptTransform(worker, options.jsify());
     } else {
-      var writable = jsReceiver.writable;
-      var readable = jsReceiver.readable;
-      var exist = true;
-      if (writable == null || readable == null) {
-        final streams =
-            jsReceiver.callMethod<JSObject>('createEncodedStreams'.toJS);
-        readable = streams.getProperty('readable'.toJS) as web.ReadableStream;
-        jsReceiver.readableStream = readable;
-        writable = streams.getProperty('writable'.toJS) as web.WritableStream;
-        jsReceiver.writableStream = writable;
-        exist = false;
-      }
+      var exist = false;
+      final streams =
+          jsReceiver.callMethod<JSObject>('createEncodedStreams'.toJS);
+      final readable =
+          streams.getProperty('readable'.toJS) as web.ReadableStream;
+      final writable =
+          streams.getProperty('writable'.toJS) as web.WritableStream;
+
       var msgId = randomString(12);
-      worker.postMessage(
-        {
-          'msgType': 'decode',
-          'msgId': msgId,
-          'keyProviderId': (keyProvider as KeyProviderImpl).id,
-          'kind': kind,
-          'exist': exist,
-          'participantId': participantId,
-          'trackId': trackId,
-          'readableStream': readable,
-          'writableStream': writable
-        }.jsify(),
-        [readable, writable].jsify() as JSObject,
-      );
+      try {
+        worker.postMessage(
+          {
+            'msgType': 'decode',
+            'msgId': msgId,
+            'keyProviderId': (keyProvider as KeyProviderImpl).id,
+            'kind': kind,
+            'exist': exist,
+            'participantId': participantId,
+            'trackId': trackId,
+            'options': keyProvider.options.toJson(),
+            'readableStream': readable,
+            'writableStream': writable
+          }.jsify(),
+          [readable, writable] as JSObject,
+        );
+      } catch (e) {
+        print('Error posting message: $e');
+        rethrow;
+      }
     }
     FrameCryptor cryptor = FrameCryptorImpl(
         this, worker, participantId, trackId,
@@ -511,7 +449,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       required Algorithm algorithm,
       required KeyProvider keyProvider}) {
     var jsSender = (sender as RTCRtpSenderWeb).jsRtpSender;
-    var trackId = jsSender.hashCode.toString();
+    var trackId = jsSender.track?.id ?? sender.senderId;
     var kind = jsSender.track!.kind;
 
     if (web.window.hasProperty('RTCRtpScriptTransform'.toJS).toDart) {
@@ -529,39 +467,42 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       print('object: ${options['keyProviderId']}');
       jsSender.transform = web.RTCRtpScriptTransform(worker, options.jsify());
     } else {
-      var writable = jsSender.writable;
-      var readable = jsSender.readable;
-      var exist = true;
-      if (writable == null || readable == null) {
-        final streams =
-            jsSender.callMethod<JSObject>('createEncodedStreams'.toJS);
-        readable = streams.getProperty('readable'.toJS) as web.ReadableStream;
-        jsSender.readableStream = readable;
-        writable = streams.getProperty('writable'.toJS) as web.WritableStream;
+      var exist = false;
+      final streams =
+          jsSender.callMethod<JSObject>('createEncodedStreams'.toJS);
+      final readable =
+          streams.getProperty('readable'.toJS) as web.ReadableStream;
+      final writable =
+          streams.getProperty('writable'.toJS) as web.WritableStream;
 
-        exist = false;
-      }
       var msgId = randomString(12);
-      worker.postMessage(
-        {
-          'msgType': 'encode',
-          'msgId': msgId,
-          'keyProviderId': (keyProvider as KeyProviderImpl).id,
-          'kind': kind,
-          'exist': exist,
-          'participantId': participantId,
-          'trackId': trackId,
-          'options': keyProvider.options.toJson(),
-          'readableStream': readable,
-          'writableStream': writable
-        }.jsify(),
-        [readable, writable].jsify() as JSObject,
-      );
+
+      try {
+        worker.postMessage(
+          {
+            'msgType': 'encode',
+            'msgId': msgId,
+            'keyProviderId': (keyProvider as KeyProviderImpl).id,
+            'kind': kind,
+            'exist': exist,
+            'participantId': participantId,
+            'trackId': trackId,
+            'options': keyProvider.options.toJson(),
+            'readableStream': readable,
+            'writableStream': writable
+          }.jsify(),
+          [readable, writable] as JSObject,
+        );
+      } catch (e) {
+        print('Error posting message: $e');
+        rethrow;
+      }
     }
     FrameCryptor cryptor = FrameCryptorImpl(
         this, worker, participantId, trackId,
         jsSender: jsSender, keyProvider: keyProvider);
     _frameCryptors[trackId] = cryptor;
+
     return Future.value(cryptor);
   }
 
