@@ -461,8 +461,8 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
 
       jsReceiver.transform = web.RTCRtpScriptTransform(worker, options.jsify());
     } else {
-      RTCInsertableStreams? insertableStreams = jsReceiver
-          .getProperty('insertableStreams'.toJS) as RTCInsertableStreams?;
+      var insertableStreams = jsReceiver.getProperty('insertableStreams'.toJS)
+          as RTCInsertableStreams?;
 
       var exist = insertableStreams != null;
 
@@ -473,8 +473,8 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
         jsReceiver.setProperty('insertableStreams'.toJS, insertableStreams);
       }
 
-      var readable = insertableStreams!.readable;
-      var writable = insertableStreams!.writable;
+      var readable = insertableStreams.readable;
+      var writable = insertableStreams.writable;
       var msgId = randomString(12);
 
       try {
@@ -536,8 +536,8 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       print('object: ${options['keyProviderId']}');
       jsSender.transform = web.RTCRtpScriptTransform(worker, options.jsify());
     } else {
-      RTCInsertableStreams? insertableStreams = jsSender
-          .getProperty('insertableStreams'.toJS) as RTCInsertableStreams?;
+      var insertableStreams = jsSender.getProperty('insertableStreams'.toJS)
+          as RTCInsertableStreams?;
 
       var exist = insertableStreams != null;
 
@@ -548,8 +548,8 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
         jsSender.setProperty('insertableStreams'.toJS, insertableStreams);
       }
 
-      var readable = insertableStreams!.readable;
-      var writable = insertableStreams!.writable;
+      var readable = insertableStreams.readable;
+      var writable = insertableStreams.writable;
 
       var msgId = randomString(12);
       try {

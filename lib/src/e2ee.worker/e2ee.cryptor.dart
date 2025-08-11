@@ -4,6 +4,7 @@ import 'dart:js_interop_unsafe';
 import 'dart:math';
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use
 import 'package:js/js.dart';
 import 'package:web/web.dart' as web;
 import 'e2ee.keyhandler.dart';
