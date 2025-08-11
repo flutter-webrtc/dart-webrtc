@@ -405,14 +405,21 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
 
       jsReceiver.transform = web.RTCRtpScriptTransform(worker, options.jsify());
     } else {
-      var exist = false;
-      final streams =
-          jsReceiver.callMethod<JSObject>('createEncodedStreams'.toJS);
-      final readable =
-          streams.getProperty('readable'.toJS) as web.ReadableStream;
-      final writable =
-          streams.getProperty('writable'.toJS) as web.WritableStream;
-
+      var writable =
+          jsReceiver.getProperty('writable'.toJS) as web.WritableStream?;
+      var readable =
+          jsReceiver.getProperty('readable'.toJS) as web.ReadableStream?;
+      var exist = true;
+      if (writable == null || readable == null) {
+        final streams = jsReceiver.callMethod<JSObject>(
+          'createEncodedStreams'.toJS,
+        );
+        readable = streams.getProperty('readable'.toJS) as web.ReadableStream;
+        jsReceiver.setProperty('readable'.toJS, readable);
+        writable = streams.getProperty('writable'.toJS) as web.WritableStream;
+        jsReceiver.setProperty('writable'.toJS, writable);
+        exist = false;
+      }
       var msgId = randomString(12);
       try {
         worker.postMessage(
@@ -426,7 +433,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
             'trackId': trackId,
             'options': keyProvider.options.toJson(),
             'readableStream': readable,
-            'writableStream': writable
+            'writableStream': writable,
           }.jsify(),
           [readable, writable] as JSObject,
         );
@@ -467,14 +474,21 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
       print('object: ${options['keyProviderId']}');
       jsSender.transform = web.RTCRtpScriptTransform(worker, options.jsify());
     } else {
-      var exist = false;
-      final streams =
-          jsSender.callMethod<JSObject>('createEncodedStreams'.toJS);
-      final readable =
-          streams.getProperty('readable'.toJS) as web.ReadableStream;
-      final writable =
-          streams.getProperty('writable'.toJS) as web.WritableStream;
-
+      var writable =
+          jsSender.getProperty('writable'.toJS) as web.WritableStream?;
+      var readable =
+          jsSender.getProperty('readable'.toJS) as web.ReadableStream?;
+      var exist = true;
+      if (writable == null || readable == null) {
+        final streams = jsSender.callMethod<JSObject>(
+          'createEncodedStreams'.toJS,
+        );
+        readable = streams.getProperty('readable'.toJS) as web.ReadableStream;
+        jsSender.setProperty('readable'.toJS, readable);
+        writable = streams.getProperty('writable'.toJS) as web.WritableStream;
+        jsSender.setProperty('writable'.toJS, writable);
+        exist = false;
+      }
       var msgId = randomString(12);
 
       try {
@@ -489,7 +503,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
             'trackId': trackId,
             'options': keyProvider.options.toJson(),
             'readableStream': readable,
-            'writableStream': writable
+            'writableStream': writable,
           }.jsify(),
           [readable, writable] as JSObject,
         );
