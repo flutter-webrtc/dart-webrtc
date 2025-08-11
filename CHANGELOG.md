@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.5.3+hotfix.5] - 2025-08-11
+
+* fixed E2EE bug for Chrome rejoin.
+
 [1.5.3+hotfix.4] - 2025-07-29
 
 * fixed E2EE issue for Chrome.
