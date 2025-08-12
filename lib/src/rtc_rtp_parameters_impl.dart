@@ -70,7 +70,7 @@ class RTCHeaderExtensionWeb {
 class RTCRtpEncodingWeb {
   static RTCRtpEncoding fromJsObject(web.RTCRtpEncodingParameters object) {
     return RTCRtpEncoding.fromMap({
-      'rid': object.getProperty<JSString?>('rid'.toJS)?.toDart,
+      'rid': object.getProperty<JSString?>('rid'.toJS).dartify(),
       'active': object.active,
       'maxBitrate': object.getProperty<JSNumber?>('maxBitrate'.toJS)?.toDartInt,
       'maxFramerate':
@@ -81,7 +81,7 @@ class RTCRtpEncodingWeb {
       'scaleResolutionDownBy': object
           .getProperty<JSNumber?>('scaleResolutionDownBy'.toJS)
           ?.toDartDouble,
-      'ssrc': object.getProperty<JSString?>('ssrc'.toJS)?.toDart
+      'ssrc': object.getProperty<JSNumber?>('ssrc'.toJS)?.toDartInt
     });
   }
 }
