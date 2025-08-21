@@ -2,6 +2,7 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use
 import 'package:js/js_util.dart';
 import 'package:web/web.dart' as web;
 
