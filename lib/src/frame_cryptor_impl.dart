@@ -354,7 +354,7 @@ class KeyProviderImpl implements KeyProvider {
 
 class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   FrameCryptorFactoryImpl._internal() {
-    worker = web.Worker('e2ee.worker.dart.js'.toJS);
+    worker = web.Worker('flutter/e2ee.worker.dart.js'.toJS);
 
     var onMessage = (web.MessageEvent msg) {
       final data = msg.data.dartify() as Map;
