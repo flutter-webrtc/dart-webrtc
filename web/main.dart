@@ -238,6 +238,26 @@ void loopBackTest() async {
       await keyProviderForSender.ratchetKey(index: 2, participantId: 'sender');
   print('ratchetKey key: ${key.toList()}');
 
+  var participantId = 'participantId_1';
+
+  await keyProviderForSender.setKey(
+      participantId: participantId, index: 0, key: key);
+
+  final dataPacketCryptor =
+      await dataPacketCryptorFactory.createDataPacketCryptor(
+          algorithm: Algorithm.kAesGcm, keyProvider: keyProviderForSender!);
+
+  var data = Uint8List.fromList('Hello world!'.codeUnits);
+  print('plain data: $data');
+  var encryptedPacket = await dataPacketCryptor.encrypt(
+      participantId: participantId, keyIndex: 0, data: data);
+  print(
+      'encrypted data: ${encryptedPacket?.data}, keyIndex: ${encryptedPacket?.keyIndex}, iv: ${encryptedPacket?.iv}');
+  var decryptedData = await dataPacketCryptor.decrypt(
+      participantId: participantId, encryptedPacket: encryptedPacket!);
+  print('decrypted data: $decryptedData');
+  print('decrypted string: ${String.fromCharCodes(decryptedData!)}');
+
   /*
   var key1 =
       await keyProviderForSender.ratchetKey(index: 0, participantId: 'sender');
@@ -254,7 +274,7 @@ void loopBackTest() async {
       key: Uint8List.fromList('testkey2'.codeUnits));
 
   */
-
+  /*
   Timer.periodic(Duration(seconds: 1), (timer) async {
     var senders = await pc1.getSenders();
     var receivers = await pc2.getReceivers();
@@ -276,4 +296,5 @@ void loopBackTest() async {
       });
     });
   });
+  */
 }
