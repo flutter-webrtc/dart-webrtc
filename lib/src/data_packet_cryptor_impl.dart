@@ -18,7 +18,7 @@ class DataPacketCryptorImpl implements DataPacketCryptor {
   final KeyProviderImpl keyProvider;
   final Algorithm algorithm;
   web.Worker get worker => keyProvider.worker;
-  final String _dataCyrptorId = randomString(24);
+  final String _dataCryptorId = randomString(24);
   EventsEmitter<WorkerResponse> get events => keyProvider.events;
 
   @override
@@ -30,10 +30,10 @@ class DataPacketCryptorImpl implements DataPacketCryptor {
     var msgId = randomString(12);
     worker.postMessage(
       {
-        'msgType': 'dataCyrptorEncrypt',
+        'msgType': 'dataCryptorEncrypt',
         'msgId': msgId,
         'keyProviderId': keyProvider.id,
-        'dataCyrptorId': _dataCyrptorId,
+        'dataCryptorId': _dataCryptorId,
         'participantId': participantId,
         'keyIndex': keyIndex,
         'data': data,
@@ -65,10 +65,10 @@ class DataPacketCryptorImpl implements DataPacketCryptor {
     var msgId = randomString(12);
     worker.postMessage(
       {
-        'msgType': 'dataCyrptorDecrypt',
+        'msgType': 'dataCryptorDecrypt',
         'msgId': msgId,
         'keyProviderId': keyProvider.id,
-        'dataCyrptorId': _dataCyrptorId,
+        'dataCryptorId': _dataCryptorId,
         'participantId': participantId,
         'keyIndex': encryptedPacket.keyIndex,
         'data': encryptedPacket.data,
@@ -94,9 +94,9 @@ class DataPacketCryptorImpl implements DataPacketCryptor {
     var msgId = randomString(12);
     worker.postMessage(
       {
-        'msgType': 'dataCyrptorDispose',
+        'msgType': 'dataCryptorDispose',
         'msgId': msgId,
-        'dataCyrptorId': _dataCyrptorId
+        'dataCryptorId': _dataCryptorId
       }.jsify(),
     );
 

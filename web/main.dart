@@ -245,18 +245,21 @@ void loopBackTest() async {
 
   final dataPacketCryptor =
       await dataPacketCryptorFactory.createDataPacketCryptor(
-          algorithm: Algorithm.kAesGcm, keyProvider: keyProviderForSender!);
+          algorithm: Algorithm.kAesGcm, keyProvider: keyProviderForSender);
 
   var data = Uint8List.fromList('Hello world!'.codeUnits);
+  print('plain string: ${String.fromCharCodes(data)}');
   print('plain data: $data');
   var encryptedPacket = await dataPacketCryptor.encrypt(
       participantId: participantId, keyIndex: 0, data: data);
   print(
-      'encrypted data: ${encryptedPacket?.data}, keyIndex: ${encryptedPacket?.keyIndex}, iv: ${encryptedPacket?.iv}');
+      'encrypted data: ${encryptedPacket.data}, keyIndex: ${encryptedPacket.keyIndex}, iv: ${encryptedPacket.iv}');
   var decryptedData = await dataPacketCryptor.decrypt(
-      participantId: participantId, encryptedPacket: encryptedPacket!);
+      participantId: participantId, encryptedPacket: encryptedPacket);
   print('decrypted data: $decryptedData');
-  print('decrypted string: ${String.fromCharCodes(decryptedData!)}');
+  print('decrypted string: ${String.fromCharCodes(decryptedData)}');
+
+  await dataPacketCryptor.dispose();
 
   /*
   var key1 =

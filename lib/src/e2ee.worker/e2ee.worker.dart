@@ -469,18 +469,19 @@ void main() async {
             }.jsify());
           }
         }
-      case 'dataCyrptorEncrypt':
+        break;
+      case 'dataCryptorEncrypt':
         {
           var participantId = msg['participantId'] as String;
           var data = msg['data'] as Uint8List;
           var keyIndex = msg['keyIndex'] as int;
-          var dataCryptorId = msg['dataCyrptorId'] as String;
+          var dataCryptorId = msg['dataCryptorId'] as String;
           var algorithmStr = msg['algorithm'] as String;
           var algorithm =
               Algorithm.values.firstWhereOrNull((a) => a.name == algorithmStr);
           if (algorithm == null) {
             self.postMessage({
-              'type': 'dataCyrptorEncrypt',
+              'type': 'dataCryptorEncrypt',
               'error': 'algorithm not found',
               'msgId': msgId,
               'msgType': 'response',
@@ -494,7 +495,7 @@ void main() async {
           if (keyProvider == null) {
             logger.warning('KeyProvider not found for $keyProviderId');
             self.postMessage({
-              'type': 'dataCyrptorEncrypt',
+              'type': 'dataCryptorEncrypt',
               'error': 'KeyProvider not found',
               'msgId': msgId,
               'msgType': 'response',
@@ -507,7 +508,7 @@ void main() async {
             var encryptedPacket =
                 await cryptor.encrypt(cryptor.keyHandler, data);
             self.postMessage({
-              'type': 'dataCyrptorEncrypt',
+              'type': 'dataCryptorEncrypt',
               'participantId': participantId,
               'dataCryptorId': dataCryptorId,
               'data': encryptedPacket!.data,
@@ -519,27 +520,27 @@ void main() async {
           } catch (e) {
             logger.warning('Error encrypting data: $e');
             self.postMessage({
-              'type': 'dataCyrptorEncrypt',
+              'type': 'dataCryptorEncrypt',
               'error': e.toString(),
               'msgId': msgId,
               'msgType': 'response',
             }.jsify());
-            break;
           }
         }
-      case 'dataCyrptorDecrypt':
+        break;
+      case 'dataCryptorDecrypt':
         {
           var participantId = msg['participantId'] as String;
           var data = msg['data'] as Uint8List;
           var iv = msg['iv'] as Uint8List;
           var keyIndex = msg['keyIndex'] as int;
-          var dataCryptorId = msg['dataCyrptorId'] as String;
+          var dataCryptorId = msg['dataCryptorId'] as String;
           var algorithmStr = msg['algorithm'] as String;
           var algorithm =
               Algorithm.values.firstWhereOrNull((a) => a.name == algorithmStr);
           if (algorithm == null) {
             self.postMessage({
-              'type': 'dataCyrptorDecrypt',
+              'type': 'dataCryptorDecrypt',
               'error': 'algorithm not found',
               'msgId': msgId,
               'msgType': 'response',
@@ -553,7 +554,7 @@ void main() async {
           if (keyProvider == null) {
             logger.warning('KeyProvider not found for $keyProviderId');
             self.postMessage({
-              'type': 'dataCyrptorDecrypt',
+              'type': 'dataCryptorDecrypt',
               'error': 'KeyProvider not found',
               'msgId': msgId,
               'msgType': 'response',
@@ -571,7 +572,7 @@ void main() async {
                   iv: iv,
                 ));
             self.postMessage({
-              'type': 'dataCyrptorDecrypt',
+              'type': 'dataCryptorDecrypt',
               'participantId': participantId,
               'dataCryptorId': dataCryptorId,
               'data': decryptedData,
@@ -581,16 +582,15 @@ void main() async {
           } catch (e) {
             logger.warning('Error decrypting data: $e');
             self.postMessage({
-              'type': 'dataCyrptorDecrypt',
+              'type': 'dataCryptorDecrypt',
               'error': e.toString(),
               'msgId': msgId,
               'msgType': 'response',
             }.jsify());
-            break;
           }
-          break;
         }
-      case 'dataCyrptorDispose':
+        break;
+      case 'dataCryptorDispose':
         {
           var dataCryptorId = msg['dataCryptorId'] as String;
           logger.config('Dispose for dataCryptorId $dataCryptorId');

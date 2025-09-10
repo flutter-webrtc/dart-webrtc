@@ -1,14 +1,10 @@
 import 'dart:async';
 import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
 import 'dart:math';
 import 'dart:typed_data';
 
-// ignore: deprecated_member_use
-import 'package:dart_webrtc/src/e2ee.worker/e2ee.frame_cryptor.dart'
-    show IV_LENGTH;
-import 'package:js/js.dart';
 import 'package:web/web.dart' as web;
+
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
 
@@ -62,7 +58,7 @@ class E2EEDataPacketCryptor {
       sendCount_ = Random.secure().nextInt(0xffff);
     }
 
-    var sendCount = sendCount_ ?? 0;
+    var sendCount = sendCount_;
     final randomBytes =
         Random.secure().nextInt(max(0, 0xffffffff)).toUnsigned(32);
 
@@ -70,7 +66,7 @@ class E2EEDataPacketCryptor {
     iv.setUint32(4, timestamp);
     iv.setUint32(8, timestamp - (sendCount % 0xffff));
 
-    sendCount = sendCount + 1;
+    sendCount_ = sendCount + 1;
 
     return iv.buffer.asUint8List();
   }
