@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.6.0] - 2025-09-13
+
+* feat: data packet cryptor.
+
 [1.5.3+hotfix.5] - 2025-08-11
 
 * fixed E2EE bug for Chrome rejoin.
