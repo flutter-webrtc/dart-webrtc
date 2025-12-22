@@ -11,8 +11,6 @@ import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
 import 'e2ee.sfi_guard.dart';
 
-const IV_LENGTH = 12;
-
 const kNaluTypeMask = 0x1f;
 
 /// Coded slice of a non-IDR picture

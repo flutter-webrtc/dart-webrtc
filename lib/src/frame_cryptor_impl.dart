@@ -148,7 +148,8 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for init on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () => throw Exception('waiting for init on msg timed out'),
     );
   }
 
@@ -168,7 +169,8 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for dispose on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () => throw Exception('waiting for dispose on msg timed out'),
     );
 
     _keys.clear();
@@ -197,7 +199,8 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for setKey on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(minutes: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () => throw Exception('waiting for setKey on msg timed out'),
     );
 
     _keys[participantId] ??= [];
@@ -230,7 +233,9 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for ratchetKey on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () =>
+          throw Exception('waiting for ratchetKey on msg timed out'),
     );
 
     return base64Decode(res.data['newKey']);
@@ -257,7 +262,9 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for exportKey on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () =>
+          throw Exception('waiting for exportKey on msg timed out'),
     );
 
     return base64Decode(res.data['exportedKey']);
@@ -280,7 +287,9 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for exportSharedKey on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () =>
+          throw Exception('waiting for exportSharedKey on msg timed out'),
     );
 
     return base64Decode(res.data['exportedKey']);
@@ -302,7 +311,9 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for ratchetSharedKey on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () =>
+          throw Exception('waiting for ratchetSharedKey on msg timed out'),
     );
 
     return base64Decode(res.data['newKey']);
@@ -326,7 +337,9 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for setSharedKey on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () =>
+          throw Exception('waiting for setSharedKey on msg timed out'),
     );
   }
 
@@ -347,7 +360,9 @@ class KeyProviderImpl implements KeyProvider {
         logger.fine('waiting for setSifTrailer on msg: $msgId');
         return event.msgId == msgId;
       },
-      duration: Duration(seconds: 15),
+      duration: Duration(seconds: 5),
+      onTimeout: () =>
+          throw Exception('waiting for setSifTrailer on msg timed out'),
     );
   }
 }
