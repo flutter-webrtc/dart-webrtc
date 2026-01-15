@@ -14,6 +14,9 @@ import 'rtc_rtp_receiver_impl.dart';
 import 'rtc_rtp_sender_impl.dart';
 import 'utils.dart';
 
+const _WEB_WORKER_PREFIX =
+    String.fromEnvironment('DART_WEBRTC_WEB_WORKER_PREFIX', defaultValue:  '');
+
 extension type RTCInsertableStreams._(JSObject _) implements JSObject {
   external web.WritableStream get writable;
   external web.ReadableStream get readable;
@@ -369,7 +372,7 @@ class KeyProviderImpl implements KeyProvider {
 
 class FrameCryptorFactoryImpl implements FrameCryptorFactory {
   FrameCryptorFactoryImpl._internal() {
-    worker = web.Worker('flutter/e2ee.worker.dart.js'.toJS);
+    worker = web.Worker('${_WEB_WORKER_PREFIX}e2ee.worker.dart.js'.toJS);
 
     var onMessage = (web.MessageEvent msg) {
       final data = msg.data.dartify() as Map;
