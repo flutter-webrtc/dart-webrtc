@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.7.0] - 2026-01-22
+
+* feat: Priority control APIs.
+
 [1.6.0] - 2025-09-13
 
 * feat: data packet cryptor.
