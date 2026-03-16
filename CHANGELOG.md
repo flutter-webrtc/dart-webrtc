@@ -1,7 +1,7 @@
 # Changelog
 
 --------------------------------------------
-[1.7.0] - 2026-03-16
+[1.8.0] - 2026-03-16
 
 * Add enum KeyDerivationAlgorithm to KeyProviderOptions.
 
