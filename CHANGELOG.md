@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[1.7.0] - 2026-03-16
+
+* Add enum KeyDerivationAlgorithm to KeyProviderOptions.
+
 [1.7.0] - 2026-01-22
 
 * feat: Priority control APIs.

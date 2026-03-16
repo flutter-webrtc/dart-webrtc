@@ -137,18 +137,21 @@ void main() async {
           var options = msg['keyOptions'];
           var keyProviderId = msg['keyProviderId'] as String;
           var keyProviderOptions = KeyOptions(
-              sharedKey: options['sharedKey'],
-              ratchetSalt: Uint8List.fromList(
-                  base64Decode(options['ratchetSalt'] as String)),
-              ratchetWindowSize: options['ratchetWindowSize'],
-              failureTolerance: options['failureTolerance'] ?? -1,
-              uncryptedMagicBytes: options['uncryptedMagicBytes'] != null
-                  ? Uint8List.fromList(
-                      base64Decode(options['uncryptedMagicBytes'] as String))
-                  : null,
-              keyRingSze: options['keyRingSize'] ?? KEYRING_SIZE,
-              discardFrameWhenCryptorNotReady:
-                  options['discardFrameWhenCryptorNotReady'] ?? false);
+            sharedKey: options['sharedKey'],
+            ratchetSalt: Uint8List.fromList(
+                base64Decode(options['ratchetSalt'] as String)),
+            ratchetWindowSize: options['ratchetWindowSize'],
+            failureTolerance: options['failureTolerance'] ?? -1,
+            uncryptedMagicBytes: options['uncryptedMagicBytes'] != null
+                ? Uint8List.fromList(
+                    base64Decode(options['uncryptedMagicBytes'] as String))
+                : null,
+            keyRingSze: options['keyRingSize'] ?? KEYRING_SIZE,
+            discardFrameWhenCryptorNotReady:
+                options['discardFrameWhenCryptorNotReady'] ?? false,
+            keyDerivationAlgorithm: indexOfKeyDerivationAlgorithm(
+                options['keyDerivationAlgorithm']),
+          );
           logger.config(
               'Init with keyProviderOptions:\n ${keyProviderOptions.toString()}');
 

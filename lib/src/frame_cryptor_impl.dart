@@ -15,7 +15,7 @@ import 'rtc_rtp_sender_impl.dart';
 import 'utils.dart';
 
 const _WEB_WORKER_PREFIX =
-    String.fromEnvironment('DART_WEBRTC_WEB_WORKER_PREFIX', defaultValue:  '');
+    String.fromEnvironment('DART_WEBRTC_WEB_WORKER_PREFIX', defaultValue: '');
 
 extension type RTCInsertableStreams._(JSObject _) implements JSObject {
   external web.WritableStream get writable;
@@ -142,6 +142,7 @@ class KeyProviderImpl implements KeyProvider {
           'keyRingSize': options.keyRingSize,
           'discardFrameWhenCryptorNotReady':
               options.discardFrameWhenCryptorNotReady,
+          'keyDerivationAlgorithm': options.keyDerivationAlgorithm.index,
         },
       }.jsify(),
     );
