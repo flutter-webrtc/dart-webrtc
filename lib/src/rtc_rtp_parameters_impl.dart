@@ -85,6 +85,8 @@ class RTCRtpEncodingWeb {
       'priority': object.getProperty<JSString?>('priority'.toJS)?.toDart,
       'networkPriority':
           object.getProperty<JSString?>('networkPriority'.toJS)?.toDart,
+      'scalabilityMode':
+          object.getProperty<JSString?>('scalabilityMode'.toJS)?.toDart,
     });
   }
 }
