@@ -22,6 +22,18 @@ extension type RTCInsertableStreams._(JSObject _) implements JSObject {
   external web.ReadableStream get readable;
 }
 
+@JS('Array')
+extension type _TransferList._(JSObject _) implements JSObject {
+  external factory _TransferList();
+}
+
+JSObject _transferList(JSAny? first, JSAny? second) {
+  final transfer = _TransferList();
+  transfer.setProperty('0'.toJS, first);
+  transfer.setProperty('1'.toJS, second);
+  return transfer;
+}
+
 class WorkerResponse {
   WorkerResponse(this.msgId, this.data);
   String msgId;
@@ -510,7 +522,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
             'readableStream': readable,
             'writableStream': writable,
           }.jsify(),
-          [readable, writable] as JSObject,
+          _transferList(readable, writable),
         );
       } catch (e) {
         print('Error posting message: $e');
@@ -585,7 +597,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
             'readableStream': readable,
             'writableStream': writable,
           }.jsify(),
-          [readable, writable] as JSObject,
+          _transferList(readable, writable),
         );
       } catch (e) {
         print('Error posting message: $e');
