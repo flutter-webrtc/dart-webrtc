@@ -4,8 +4,6 @@ import 'dart:js_interop_unsafe';
 import 'dart:math';
 import 'dart:typed_data';
 
-// ignore: deprecated_member_use
-import 'package:js/js.dart';
 import 'package:web/web.dart' as web;
 import 'e2ee.keyhandler.dart';
 import 'e2ee.logger.dart';
@@ -249,7 +247,7 @@ class FrameCryptor {
     }
     var transformer = web.TransformStream({
       'transform':
-          allowInterop(operation == 'encode' ? encodeFunction : decodeFunction)
+          (operation == 'encode' ? encodeFunction : decodeFunction).toJS
     }.jsify() as JSObject);
     try {
       readable
