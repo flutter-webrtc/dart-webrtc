@@ -23,7 +23,7 @@ class RTCRtpReceiverWeb extends RTCRtpReceiver {
         var map = value.dartify() as LinkedHashMap<Object?, Object?>;
         var stats = <String, dynamic>{};
         for (var entry in map.entries) {
-          stats[(entry.key as JSString).toDart] = entry.value;
+          stats[entry.key.toString()] = entry.value;
         }
         report.add(StatsReport(
             value.getProperty<JSString>('id'.toJS).toDart,
