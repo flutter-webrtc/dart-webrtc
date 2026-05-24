@@ -246,8 +246,15 @@ class FrameCryptor {
       this.codec = codec;
     }
     var transformer = web.TransformStream({
-      'transform':
-          (operation == 'encode' ? encodeFunction : decodeFunction).toJS
+      'transform': (
+        JSObject frameObj,
+        web.TransformStreamDefaultController controller,
+      ) {
+        return (operation == 'encode' ? encodeFunction : decodeFunction)(
+          frameObj,
+          controller,
+        ).then((_) => null).toJS;
+      }.toJS,
     }.jsify() as JSObject);
     try {
       readable
