@@ -136,7 +136,7 @@ class MediaStreamTrackWeb extends MediaStreamTrack {
     renderer.transferFromImageBitmap(bitmap);
 
     final blobCompleter = Completer<web.Blob>();
-    final void Function(web.Blob blob) toBlob = (web.Blob blob) {
+    final toBlob = (web.Blob blob) {
       blobCompleter.complete(blob);
     };
     canvas.toBlob(toBlob.toJS);
