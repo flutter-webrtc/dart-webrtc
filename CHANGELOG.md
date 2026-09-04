@@ -1,6 +1,13 @@
 # Changelog
 
 --------------------------------------------
+[1.8.2] - 2026-09-04
+
+fix: add OpenHarmony to isMobile detection for HarmonyOS WebView
+feat: remove package:js usage for full wasm compatibility
+refactor: wrap transform fn to return a JSPromise
+fix: casting fails as value is a dart value
+
 [1.8.1] - 2026-03-26
 
 * Fix wasm-safe transfer lists for frame cryptor worker messages.
