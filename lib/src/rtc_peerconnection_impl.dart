@@ -6,7 +6,6 @@ import 'dart:js_interop_unsafe';
 import 'package:dart_webrtc/dart_webrtc.dart';
 import 'package:web/web.dart' as web;
 
-import 'media_stream_track_impl.dart';
 import 'rtc_data_channel_impl.dart';
 import 'rtc_dtmf_sender_impl.dart';
 import 'rtc_rtp_receiver_impl.dart';
@@ -22,13 +21,11 @@ extension on web.RTCDataChannelInit {
  */
 class RTCPeerConnectionWeb extends RTCPeerConnection {
   RTCPeerConnectionWeb(this._peerConnectionId, this._jsPc) {
-    final void Function(web.RTCDataChannelEvent) toDataChannel =
-        (web.RTCDataChannelEvent dataChannelEvent) {
+    final toDataChannel = (web.RTCDataChannelEvent dataChannelEvent) {
       onDataChannel?.call(RTCDataChannelWeb(dataChannelEvent.channel));
     };
 
-    final void Function(web.RTCPeerConnectionIceEvent) onIceCandidateCb =
-        (web.RTCPeerConnectionIceEvent iceEvent) {
+    final onIceCandidateCb = (web.RTCPeerConnectionIceEvent iceEvent) {
       if (iceEvent.candidate != null) {
         onIceCandidate?.call(_iceFromJs(iceEvent.candidate!));
       }
@@ -38,7 +35,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
     _jsPc.addEventListener('icecandidate', onIceCandidateCb.toJS);
 
-    void Function(JSAny) onIceConnectionStateChange = (_) {
+    var onIceConnectionStateChange = (JSAny _) {
       _iceConnectionState =
           iceConnectionStateForString(_jsPc.iceConnectionState);
       onIceConnectionState?.call(_iceConnectionState!);
@@ -78,14 +75,14 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     _jsPc.addEventListener(
         'iceconnectionstatechange', onIceConnectionStateChange.toJS);
 
-    void Function(JSAny) onIceGatheringStateChange = (_) {
+    var onIceGatheringStateChange = (JSAny _) {
       _iceGatheringState = iceGatheringStateforString(_jsPc.iceGatheringState);
       onIceGatheringState?.call(_iceGatheringState!);
     };
 
     _jsPc.onicegatheringstatechange = onIceGatheringStateChange.toJS;
 
-    void Function(JSAny) onSignalingStateChange = (_) {
+    var onSignalingStateChange = (JSAny _) {
       _signalingState = signalingStateForString(_jsPc.signalingState);
       onSignalingState?.call(_signalingState!);
     };
@@ -93,7 +90,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     _jsPc.addEventListener('signalingstatechange', onSignalingStateChange.toJS);
 
     if (!web.Device.isFirefox) {
-      final void Function(JSAny) onConnectionStateChange = (_) {
+      final onConnectionStateChange = (JSAny _) {
         _connectionState = peerConnectionStateForString(_jsPc.connectionState);
         onConnectionState?.call(_connectionState!);
       };
@@ -101,14 +98,13 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
           'connectionstatechange', onConnectionStateChange.toJS);
     }
 
-    void Function(JSAny) onNegotationNeeded = (_) {
+    var onNegotationNeeded = (JSAny _) {
       onRenegotiationNeeded?.call();
     };
 
     _jsPc.addEventListener('negotiationneeded', onNegotationNeeded.toJS);
 
-    void Function(web.RTCTrackEvent) onTrackEvent =
-        (web.RTCTrackEvent trackEvent) {
+    var onTrackEvent = (web.RTCTrackEvent trackEvent) {
       onTrack?.call(
         RTCTrackEvent(
             track: MediaStreamTrackWeb(trackEvent.track),

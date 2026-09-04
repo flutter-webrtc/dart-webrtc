@@ -76,7 +76,7 @@ class RTCRtpSenderWeb extends RTCRtpSender {
           (parameters.encodings?.map((e) => e.toMap()).toList().jsify() ??
               [].jsify()) as JSArray<web.RTCRtpEncodingParameters>;
       await _jsRtpSender.setParameters(oldParameters).toDart;
-      return Future<bool>.value(true);
+      return await Future<bool>.value(true);
     } on Exception catch (e) {
       throw 'Unable to RTCRtpSender::setParameters: ${e.toString()}';
     }
