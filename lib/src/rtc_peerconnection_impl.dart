@@ -361,11 +361,11 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
       dcInit.binaryType = 'arraybuffer'; // Avoid Blob in data channel
     }
 
-    if (dataChannelDict.maxRetransmits > 0) {
+    if (dataChannelDict.maxRetransmits >= 0) {
       dcInit.maxRetransmits = dataChannelDict.maxRetransmits;
     }
 
-    if (dataChannelDict.maxRetransmitTime > 0) {
+    if (dataChannelDict.maxRetransmitTime >= 0) {
       dcInit.maxPacketLifeTime = dataChannelDict.maxRetransmitTime;
     }
 
