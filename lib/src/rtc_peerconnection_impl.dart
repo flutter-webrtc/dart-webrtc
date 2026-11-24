@@ -274,6 +274,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
           sdp: description.sdp!,
         ))
         .toDart;
+    _listenForSelectedCandidatePair();
   }
 
   @override
@@ -284,6 +285,78 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
           sdp: description.sdp!,
         ))
         .toDart;
+    _listenForSelectedCandidatePair();
+  }
+
+  /// The ICE transport whose selected candidate pair is reported to
+  /// [onSelectedCandidatePairChanged]. It exists once a description with a
+  /// data channel or a sender is applied, and with BUNDLE every section
+  /// shares it.
+  JSObject? _iceTransport;
+
+  late final JSFunction _onSelectedCandidatePairChange =
+      ((web.Event _) => _reportSelectedCandidatePair()).toJS;
+
+  void _listenForSelectedCandidatePair() {
+    final transport = _findIceTransport();
+    if (transport == null ||
+        (_iceTransport != null &&
+            transport.strictEquals(_iceTransport).toDart)) {
+      return;
+    }
+    // browsers without the event (Firefox before 154) keep the field unused
+    if (!transport.has('getSelectedCandidatePair')) return;
+    (_iceTransport as web.EventTarget?)?.removeEventListener(
+        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    _iceTransport = transport;
+    (transport as web.EventTarget).addEventListener(
+        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    // a pair selected before the listener was added is reported too
+    _reportSelectedCandidatePair();
+  }
+
+  JSObject? _findIceTransport() {
+    JSObject? property(JSObject? object, String name) {
+      if (object == null || !object.has(name)) return null;
+      final value = object.getProperty<JSAny?>(name.toJS);
+      return value != null && value.typeofEquals('object')
+          ? value as JSObject
+          : null;
+    }
+
+    final fromSctp = property(
+        property(property(_jsPc, 'sctp'), 'transport'), 'iceTransport');
+    if (fromSctp != null) return fromSctp;
+    for (final sender in _jsPc.getSenders().toDart) {
+      final fromSender =
+          property(property(sender, 'transport'), 'iceTransport');
+      if (fromSender != null) return fromSender;
+    }
+    return null;
+  }
+
+  void _reportSelectedCandidatePair() {
+    final pair =
+        _iceTransport?.callMethod<JSAny?>('getSelectedCandidatePair'.toJS);
+    if (pair == null || !pair.typeofEquals('object')) return;
+    final local =
+        (pair as JSObject).getProperty<web.RTCIceCandidate?>('local'.toJS);
+    final remote = pair.getProperty<web.RTCIceCandidate?>('remote'.toJS);
+    if (local == null || remote == null) return;
+    onSelectedCandidatePairChanged?.call(RTCIceCandidatePair(
+        _pairCandidateFromJs(local), _pairCandidateFromJs(remote)));
+  }
+
+  // The candidate line of a pair does not always name the username fragment
+  // the way libwebrtc's lines on native platforms do. It is added from
+  // usernameFragment then, so callers read both the same way.
+  RTCIceCandidate _pairCandidateFromJs(web.RTCIceCandidate candidate) {
+    var line = candidate.candidate;
+    final ufrag = candidate.usernameFragment;
+    if (ufrag != null && ufrag.isNotEmpty && !line.contains(' ufrag ')) {
+      line = '$line ufrag $ufrag';
+    }
+    return RTCIceCandidate(line, candidate.sdpMid, candidate.sdpMLineIndex);
   }
 
   @override
@@ -389,6 +462,9 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<void> close() async {
+    (_iceTransport as web.EventTarget?)?.removeEventListener(
+        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    _iceTransport = null;
     _jsPc.close();
     return Future.value();
   }
