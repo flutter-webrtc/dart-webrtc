@@ -343,20 +343,8 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
         (pair as JSObject).getProperty<web.RTCIceCandidate?>('local'.toJS);
     final remote = pair.getProperty<web.RTCIceCandidate?>('remote'.toJS);
     if (local == null || remote == null) return;
-    onSelectedCandidatePairChanged?.call(RTCIceCandidatePair(
-        _pairCandidateFromJs(local), _pairCandidateFromJs(remote)));
-  }
-
-  // The candidate line of a pair does not always name the username fragment
-  // the way libwebrtc's lines on native platforms do. It is added from
-  // usernameFragment then, so callers read both the same way.
-  RTCIceCandidate _pairCandidateFromJs(web.RTCIceCandidate candidate) {
-    var line = candidate.candidate;
-    final ufrag = candidate.usernameFragment;
-    if (ufrag != null && ufrag.isNotEmpty && !line.contains(' ufrag ')) {
-      line = '$line ufrag $ufrag';
-    }
-    return RTCIceCandidate(line, candidate.sdpMid, candidate.sdpMLineIndex);
+    onSelectedCandidatePairChanged
+        ?.call(RTCIceCandidatePair(_iceFromJs(local), _iceFromJs(remote)));
   }
 
   @override
@@ -484,6 +472,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
         candidate.candidate,
         candidate.sdpMid,
         candidate.sdpMLineIndex,
+        usernameFragment: candidate.usernameFragment,
       );
 
   RTCSessionDescription _sessionFromJs(web.RTCSessionDescription? sd) =>
