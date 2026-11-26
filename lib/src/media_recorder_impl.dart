@@ -33,7 +33,7 @@ class MediaRecorderWeb extends MediaRecorder {
     if (onDataChunk == null) {
       var _chunks = <web.Blob>[];
       _completer = Completer<String>();
-      final void Function(web.Event event) callback = (web.Event event) {
+      final callback = (web.Event event) {
         final blob = event.getProperty('data'.toJS) as web.Blob;
         if (blob.size > 0) {
           _chunks.add(blob);
@@ -44,13 +44,13 @@ class MediaRecorderWeb extends MediaRecorder {
           _completer.complete(web.URL.createObjectURL(blob));
         }
       };
-      final void Function(JSAny) onError = (JSAny error) {
+      final onError = (JSAny error) {
         _completer.completeError(error);
       };
       _recorder.addEventListener('dataavailable', callback.toJS);
       _recorder.addEventListener('error', onError.toJS);
     } else {
-      final void Function(web.Event event) callback = (web.Event event) {
+      final callback = (web.Event event) {
         onDataChunk(
           event.getProperty('data'.toJS),
           _recorder.state == 'inactive',

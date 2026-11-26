@@ -439,7 +439,7 @@ class FrameCryptorFactoryImpl implements FrameCryptorFactory {
 
     worker.addEventListener('message', onMessage.toJS, false.toJS);
 
-    void Function(web.ErrorEvent err) onError = (web.ErrorEvent err) {
+    var onError = (web.ErrorEvent err) {
       print('worker error: $err');
     };
     worker.addEventListener('error', onError.toJS, false.toJS);

@@ -10,7 +10,8 @@ bool get isMobile {
     'iPad',
     'iPod',
     'BlackBerry',
-    'Windows Phone'
+    'Windows Phone',
+    'OpenHarmony'
   ];
   return toMatch.indexWhere((device) => web.window.navigator.userAgent
           .contains(RegExp(device, caseSensitive: false))) !=

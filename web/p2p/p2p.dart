@@ -1,5 +1,4 @@
 import 'package:dart_webrtc/dart_webrtc.dart';
-import 'package:js/js.dart';
 import 'package:test/test.dart';
 import 'package:web/web.dart' as web;
 
@@ -30,17 +29,17 @@ void main() {
 
   remote?.append(remoteVideo.htmlElement);
 
-  signaling.onLocalStream = allowInterop((MediaStream stream) {
+  signaling.onLocalStream = (MediaStream stream) {
     localVideo.srcObject = stream;
-  });
+  };
 
-  signaling.onAddRemoteStream = allowInterop((MediaStream stream) {
+  signaling.onAddRemoteStream = (MediaStream stream) {
     remoteVideo.srcObject = stream;
-  });
+  };
 
   signaling.connect();
   signaling.onStateChange = (SignalingState state) {
-    web.document.querySelector('#output')?.text = state.toString();
+    web.document.querySelector('#output')?.textContent = state.toString();
     if (state == SignalingState.CallStateBye) {
       localVideo.srcObject = null;
       remoteVideo.srcObject = null;
@@ -78,16 +77,16 @@ void dartWebRTCTest(VideoElement video) async {
 
   var pc = RTCPeerConnection();
   print('connectionState: ${pc.connectionState}');
-  pc.onaddstream = allowInterop((MediaStreamEvent event) {});
+  pc.onaddstream = (MediaStreamEvent event) {};
   var stream = await PromiseToFuture<MediaStream>(
       navigator.mediaDevices.getDisplayMedia()
       /*.getUserMedia(MediaStreamConstraints(audio: true, video: true))*/);
   print('getDisplayMedia: stream.id => ${stream.id}');
-  stream.oninactive = allowInterop((Event event) {
+  stream.oninactive = (Event event) {
     print('oninactive: stream.id => ${event.target.id}');
     video.srcObject = null;
     video.remove();
-  });
+  };
   pc.addStream(stream);
   var rtcVideo = ConvertToRTCVideoElement(video);
   rtcVideo.srcObject = stream;
