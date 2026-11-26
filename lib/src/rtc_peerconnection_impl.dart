@@ -270,6 +270,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
           sdp: description.sdp!,
         ))
         .toDart;
+    _listenForSelectedCandidatePair();
   }
 
   @override
@@ -280,6 +281,56 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
           sdp: description.sdp!,
         ))
         .toDart;
+    _listenForSelectedCandidatePair();
+  }
+
+  /// The ICE transport whose selected candidate pair is reported to
+  /// [onSelectedCandidatePairChanged]. It exists once a description with a
+  /// data channel or a sender is applied, and with BUNDLE every section
+  /// shares it.
+  web.RTCIceTransport? _iceTransport;
+
+  late final JSFunction _onSelectedCandidatePairChange =
+      ((web.Event _) => _reportSelectedCandidatePair()).toJS;
+
+  void _listenForSelectedCandidatePair() {
+    final transport = _findIceTransport();
+    if (transport == null || transport.strictEquals(_iceTransport).toDart) {
+      return;
+    }
+    // browsers without the method (Firefox before 154) do not report pairs
+    if (!transport.has('getSelectedCandidatePair')) return;
+    _iceTransport?.removeEventListener(
+        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    _iceTransport = transport;
+    transport.addEventListener(
+        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    // a pair selected before the listener was added is reported too
+    _reportSelectedCandidatePair();
+  }
+
+  web.RTCIceTransport? _findIceTransport() {
+    // iceTransport is missing on a DTLS transport in older browsers
+    web.RTCIceTransport? of(web.RTCDtlsTransport? dtls) =>
+        dtls != null && dtls.has('iceTransport') ? dtls.iceTransport : null;
+
+    final fromSctp = of(_jsPc.sctp?.transport);
+    if (fromSctp != null) return fromSctp;
+    for (final sender in _jsPc.getSenders().toDart) {
+      final fromSender = of(sender.transport);
+      if (fromSender != null) return fromSender;
+    }
+    return null;
+  }
+
+  void _reportSelectedCandidatePair() {
+    final pair =
+        _iceTransport?.getSelectedCandidatePair() as _JSIceCandidatePair?;
+    final local = pair?.local;
+    final remote = pair?.remote;
+    if (local == null || remote == null) return;
+    onSelectedCandidatePairChanged
+        ?.call(RTCIceCandidatePair(_iceFromJs(local), _iceFromJs(remote)));
   }
 
   @override
@@ -385,6 +436,9 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<void> close() async {
+    _iceTransport?.removeEventListener(
+        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    _iceTransport = null;
     _jsPc.close();
     return Future.value();
   }
@@ -404,6 +458,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
         candidate.candidate,
         candidate.sdpMid,
         candidate.sdpMLineIndex,
+        usernameFragment: candidate.usernameFragment,
       );
 
   RTCSessionDescription _sessionFromJs(web.RTCSessionDescription? sd) =>
@@ -496,4 +551,10 @@ extension _AddRemoveStream on web.RTCPeerConnection {
   external JSArray<web.MediaStream> getRemoteStreams();
 
   external web.RTCDTMFSender createDTMFSender(web.MediaStreamTrack track);
+}
+
+/// The dictionary `RTCIceTransport.getSelectedCandidatePair()` returns.
+extension type _JSIceCandidatePair._(JSObject _) implements JSObject {
+  external web.RTCIceCandidate? get local;
+  external web.RTCIceCandidate? get remote;
 }
