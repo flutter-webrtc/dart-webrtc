@@ -202,6 +202,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<void> dispose() {
+    _stopListeningForSelectedCandidatePair();
     _jsPc.close();
     return Future.value();
   }
@@ -300,13 +301,18 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
     }
     // browsers without the method (Firefox before 154) do not report pairs
     if (!transport.has('getSelectedCandidatePair')) return;
-    _iceTransport?.removeEventListener(
-        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    _stopListeningForSelectedCandidatePair();
     _iceTransport = transport;
     transport.addEventListener(
         'selectedcandidatepairchange', _onSelectedCandidatePairChange);
     // a pair selected before the listener was added is reported too
     _reportSelectedCandidatePair();
+  }
+
+  void _stopListeningForSelectedCandidatePair() {
+    _iceTransport?.removeEventListener(
+        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
+    _iceTransport = null;
   }
 
   web.RTCIceTransport? _findIceTransport() {
@@ -436,9 +442,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<void> close() async {
-    _iceTransport?.removeEventListener(
-        'selectedcandidatepairchange', _onSelectedCandidatePairChange);
-    _iceTransport = null;
+    _stopListeningForSelectedCandidatePair();
     _jsPc.close();
     return Future.value();
   }
