@@ -1,6 +1,13 @@
 # Changelog
 
 --------------------------------------------
+[1.9.0] - 2026-11-26
+
+* feat: report the selected candidate pair through RTCPeerConnection.onSelectedCandidatePairChanged.
+* feat: pass the browser's usernameFragment on ICE candidates.
+* fix: pass maxRetransmits and maxPacketLifeTime of 0 to createDataChannel.
+* Requires webrtc_interface 1.6.0.
+
 [1.8.2] - 2026-09-04
 
 fix: add OpenHarmony to isMobile detection for HarmonyOS WebView
