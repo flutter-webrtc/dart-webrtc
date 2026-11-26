@@ -292,44 +292,36 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
   /// [onSelectedCandidatePairChanged]. It exists once a description with a
   /// data channel or a sender is applied, and with BUNDLE every section
   /// shares it.
-  JSObject? _iceTransport;
+  web.RTCIceTransport? _iceTransport;
 
   late final JSFunction _onSelectedCandidatePairChange =
       ((web.Event _) => _reportSelectedCandidatePair()).toJS;
 
   void _listenForSelectedCandidatePair() {
     final transport = _findIceTransport();
-    if (transport == null ||
-        (_iceTransport != null &&
-            transport.strictEquals(_iceTransport).toDart)) {
+    if (transport == null || transport.strictEquals(_iceTransport).toDart) {
       return;
     }
-    // browsers without the event (Firefox before 154) keep the field unused
+    // browsers without the method (Firefox before 154) do not report pairs
     if (!transport.has('getSelectedCandidatePair')) return;
-    (_iceTransport as web.EventTarget?)?.removeEventListener(
+    _iceTransport?.removeEventListener(
         'selectedcandidatepairchange', _onSelectedCandidatePairChange);
     _iceTransport = transport;
-    (transport as web.EventTarget).addEventListener(
+    transport.addEventListener(
         'selectedcandidatepairchange', _onSelectedCandidatePairChange);
     // a pair selected before the listener was added is reported too
     _reportSelectedCandidatePair();
   }
 
-  JSObject? _findIceTransport() {
-    JSObject? property(JSObject? object, String name) {
-      if (object == null || !object.has(name)) return null;
-      final value = object.getProperty<JSAny?>(name.toJS);
-      return value != null && value.typeofEquals('object')
-          ? value as JSObject
-          : null;
-    }
+  web.RTCIceTransport? _findIceTransport() {
+    // iceTransport is missing on a DTLS transport in older browsers
+    web.RTCIceTransport? of(web.RTCDtlsTransport? dtls) =>
+        dtls != null && dtls.has('iceTransport') ? dtls.iceTransport : null;
 
-    final fromSctp = property(
-        property(property(_jsPc, 'sctp'), 'transport'), 'iceTransport');
+    final fromSctp = of(_jsPc.sctp?.transport);
     if (fromSctp != null) return fromSctp;
     for (final sender in _jsPc.getSenders().toDart) {
-      final fromSender =
-          property(property(sender, 'transport'), 'iceTransport');
+      final fromSender = of(sender.transport);
       if (fromSender != null) return fromSender;
     }
     return null;
@@ -337,11 +329,9 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   void _reportSelectedCandidatePair() {
     final pair =
-        _iceTransport?.callMethod<JSAny?>('getSelectedCandidatePair'.toJS);
-    if (pair == null || !pair.typeofEquals('object')) return;
-    final local =
-        (pair as JSObject).getProperty<web.RTCIceCandidate?>('local'.toJS);
-    final remote = pair.getProperty<web.RTCIceCandidate?>('remote'.toJS);
+        _iceTransport?.getSelectedCandidatePair() as _JSIceCandidatePair?;
+    final local = pair?.local;
+    final remote = pair?.remote;
     if (local == null || remote == null) return;
     onSelectedCandidatePairChanged
         ?.call(RTCIceCandidatePair(_iceFromJs(local), _iceFromJs(remote)));
@@ -450,7 +440,7 @@ class RTCPeerConnectionWeb extends RTCPeerConnection {
 
   @override
   Future<void> close() async {
-    (_iceTransport as web.EventTarget?)?.removeEventListener(
+    _iceTransport?.removeEventListener(
         'selectedcandidatepairchange', _onSelectedCandidatePairChange);
     _iceTransport = null;
     _jsPc.close();
@@ -565,4 +555,10 @@ extension _AddRemoveStream on web.RTCPeerConnection {
   external JSArray<web.MediaStream> getRemoteStreams();
 
   external web.RTCDTMFSender createDTMFSender(web.MediaStreamTrack track);
+}
+
+/// The dictionary `RTCIceTransport.getSelectedCandidatePair()` returns.
+extension type _JSIceCandidatePair._(JSObject _) implements JSObject {
+  external web.RTCIceCandidate? get local;
+  external web.RTCIceCandidate? get remote;
 }
